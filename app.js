@@ -2,6 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const userRouter = require('./routes/userRoutes');
 // Initialized and start express application
 const app = express();
 
@@ -19,6 +20,9 @@ app.use(
     limit: '20kb'
   })
 );
+
+// Routes
+app.use('/api/v1/users', userRouter);
 
 app.all('*', (req, res, next) => {
   next(new Error(`Can't find ${req.originalUrl} on this server!`, 404));

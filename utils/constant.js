@@ -22,7 +22,8 @@ exports.userPosition = {
   HR: 'Human Resources',
   FN: 'Finance',
   TE: 'Trainee',
-  IN: 'Interns'
+  IN: 'Interns',
+  OT: 'Other'
 };
 
 exports.projectTypes = {
