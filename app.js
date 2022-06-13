@@ -2,7 +2,10 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController');
 const userRouter = require('./routes/userRoutes');
+
 // Initialized and start express application
 const app = express();
 
@@ -25,7 +28,9 @@ app.use(
 app.use('/api/v1/users', userRouter);
 
 app.all('*', (req, res, next) => {
-  next(new Error(`Can't find ${req.originalUrl} on this server!`, 404));
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+app.use(globalErrorHandler);
 
 module.exports = app;
