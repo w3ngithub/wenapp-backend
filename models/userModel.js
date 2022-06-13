@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 
+const { userPosition, userRoles } = require('../utils/constant');
+
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -59,9 +61,30 @@ const userSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
+
+// Return user role value in response object as virtual field
+userSchema.virtual('roleValue').get(function () {
+  return userRoles[this.role];
+});
+
+// Return user position value in response object as virtual field
+userSchema.virtual('positionValue').get(function () {
+  return userPosition[this.position];
+});
+
+// Return user fullname value in response object as virtual field
+userSchema.virtual('fullName').get(function () {
+  const { firstName, middleName, lastName } = this;
+  if (middleName) {
+    return `${firstName} ${middleName} ${lastName}`;
+  }
+  return `${firstName} ${lastName}`;
+});
 
 // Document Middleware
 userSchema.pre('save', async function (next) {
