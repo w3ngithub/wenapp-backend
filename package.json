@@ -4,9 +4,12 @@
   "description": "Revamp of WENHUB",
   "author": "WEN",
   "license": "ISC",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "start:prod": "NODE_ENV=production nodemon server.js",
+    "debug": "ndb server.js"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
