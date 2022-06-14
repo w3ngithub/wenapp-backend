@@ -7,26 +7,17 @@ const { userPosition, userRoles } = require('../utils/constant');
 
 const userSchema = new mongoose.Schema(
   {
-    firstName: {
+    name: {
       type: String,
-      required: [true, 'Please provide your first name'],
-      trim: true
-    },
-    middleName: {
-      type: String,
-      trim: true
-    },
-    lastName: {
-      type: String,
-      required: [true, 'Please provide your last name'],
+      required: [true, 'Please provide your name.'],
       trim: true
     },
     email: {
       type: String,
-      required: [true, 'Please provide your email'],
+      required: [true, 'Please provide your email.'],
       unique: true,
       lowercase: true,
-      validate: [validator.isEmail, 'Please provide a valid email']
+      validate: [validator.isEmail, 'Please provide a valid email.']
     },
     password: {
       type: String,
@@ -36,7 +27,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordConfirm: {
       type: String,
-      required: [true, 'Please confirm your password'],
+      required: [true, 'Please confirm your password.'],
       validate: {
         // This only works on CREATE and SAVE!!!
         validator: function (el) {
@@ -45,9 +36,6 @@ const userSchema = new mongoose.Schema(
         message: 'Passwords are not same!'
       }
     },
-    passwordChangedAt: Date,
-    passwordResetToken: String,
-    passwordResetExpires: Date,
     role: {
       type: String,
       default: 'normal'
@@ -59,7 +47,41 @@ const userSchema = new mongoose.Schema(
     active: {
       type: Boolean,
       default: true
-    }
+    },
+    photo: {
+      type: String,
+      default: 'default.jpg'
+    },
+    dob: {
+      type: Date,
+      required: [true, 'Please provide your date of birth.']
+    },
+    gender: {
+      type: String,
+      default: 'Male'
+    },
+    primaryPhone: {
+      type: Number,
+      required: [true, 'Please provide your primary phone number.']
+    },
+    secondaryPhone: Number,
+    joinDate: {
+      type: Date,
+      required: [true, 'Please provide your join date.']
+    },
+    maritalStatus: {
+      type: String,
+      default: 'Unmarried'
+    },
+    lastReviewDate: Date,
+    exitDate: Date,
+    panNumber: Number,
+    citNumber: Number,
+    bankName: String,
+    bankAccNumber: String,
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date
   },
   {
     timestamps: true,
@@ -76,15 +98,6 @@ userSchema.virtual('roleValue').get(function () {
 // Return user position value in response object as virtual field
 userSchema.virtual('positionValue').get(function () {
   return userPosition[this.position];
-});
-
-// Return user fullname value in response object as virtual field
-userSchema.virtual('fullName').get(function () {
-  const { firstName, middleName, lastName } = this;
-  if (middleName) {
-    return `${firstName} ${middleName} ${lastName}`;
-  }
-  return `${firstName} ${lastName}`;
 });
 
 // Document Middleware
