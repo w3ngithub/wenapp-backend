@@ -48,10 +48,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
-    photo: {
-      type: String,
-      default: 'default.jpg'
-    },
     dob: {
       type: Date,
       required: [true, 'Please provide your date of birth.']
