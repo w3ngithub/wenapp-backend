@@ -25,7 +25,7 @@ inviteSchema.methods.createInviteToken = function () {
 
   this.inviteToken = crypto.createHash('sha256').update(token).digest('hex');
 
-  this.inviteTokenExpires = Date.now() + 30 * 60 * 1000;
+  this.inviteTokenExpires = Date.now() + 60 * 60 * 1000;
 
   return token;
 };

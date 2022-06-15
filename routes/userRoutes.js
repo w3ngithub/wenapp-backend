@@ -21,4 +21,17 @@ router.get('/me', userController.getMe, userController.getUser);
 router.patch('/updateMe', userController.updateMe);
 router.delete('/deleteMe', userController.deleteMe);
 
+// Restrict routes to admin only after this middleware
+router.use(authController.restrictTo('admin'));
+
+router.route('/').get(userController.getAllUsers);
+
+router
+  .route('/:id')
+  .get(userController.getUser)
+  .patch(userController.updateUser)
+  .delete(userController.deleteUser);
+
+router.route('/:id/disable').post(userController.disableUser);
+
 module.exports = router;

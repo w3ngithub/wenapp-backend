@@ -109,6 +109,13 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// Query Middleware : Select active users only
+userSchema.pre(/^find/, function (next) {
+  // this points to the current query
+  this.find({ active: { $ne: false } });
+  next();
+});
+
 // Check user password with saved db password
 userSchema.methods.correctPassword = async function (
   candidatePassword,
@@ -149,7 +156,7 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+  this.passwordResetExpires = Date.now() + 30 * 60 * 1000;
 
   return resetToken;
 };

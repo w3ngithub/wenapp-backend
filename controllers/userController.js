@@ -18,9 +18,6 @@ exports.getMe = (req, res, next) => {
   next();
 };
 
-// Get a single user details
-exports.getUser = factory.getOne(User);
-
 // Update current user
 exports.updateMe = asyncError(async (req, res, next) => {
   // Create error if user POSTs password data
@@ -68,3 +65,20 @@ exports.deleteMe = asyncError(async (req, res, next) => {
     message: null
   });
 });
+
+// Disable selected user
+exports.disableUser = asyncError(async (req, res, next) => {
+  await User.findByIdAndUpdate(req.params.id, { active: false });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: 'User disabled.'
+    }
+  });
+});
+
+exports.getUser = factory.getOne(User);
+exports.getAllUsers = factory.getAll(User);
+exports.updateUser = factory.updateOne(User);
+exports.deleteUser = factory.deleteOne(User);

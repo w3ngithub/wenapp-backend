@@ -65,7 +65,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
   try {
     await sendEmail({
       email,
-      subject: 'Your sign up link (valid for 30 mins) ',
+      subject: 'Your sign up link (valid for 60 mins) ',
       message
     });
 
@@ -176,7 +176,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
 
     await sendEmail({
       email: user.email,
-      subject: 'Your password reset token (valid for only 10 minutes) ',
+      subject: 'Your password reset token (valid for only 30 minutes) ',
       message
     });
 
