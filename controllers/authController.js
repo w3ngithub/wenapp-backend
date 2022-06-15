@@ -5,12 +5,18 @@ const { promisify } = require('util');
 const asyncError = require('../utils/asyncError');
 const AppError = require('../utils/appError');
 const User = require('../models/userModel');
+const Invite = require('../models/inviteModel');
+const sendEmail = require('../utils/email');
 
 // Create sign-in token
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN
   });
+
+// Hash token for user invite and password reset token
+const hashToken = (token) =>
+  crypto.createHash('sha256').update(token).digest('hex');
 
 // Create and send response for sign-in
 const createSendToken = (user, statusCode, req, res) => {
@@ -37,24 +43,88 @@ const createSendToken = (user, statusCode, req, res) => {
 };
 
 /**
+ * Send invitation link for user to signup and complete profile
+ */
+exports.inviteUser = asyncError(async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await Invite.create({
+    email: req.body.email
+  });
+
+  // Generate the random invite token
+  const token = user.createInviteToken();
+  await user.save({ validateBeforeSave: false });
+
+  const inviteURL = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/signup/${token}`;
+
+  const message = `Please signup and complete your profile by clicking the provided link : ${inviteURL}`;
+  // Send it to user's email
+  try {
+    await sendEmail({
+      email,
+      subject: 'Your sign up link (valid for 30 mins) ',
+      message
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Invitation for sign up sent to email!'
+    });
+  } catch (err) {
+    user.inviteToken = undefined;
+    user.inviteTokenExpires = undefined;
+    user.inviteTokenUsed = false;
+    await user.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError('There was an error sending the email. Try again later!'),
+      500
+    );
+  }
+});
+
+/**
  * Save user in db
  * Create jwt sign-in token
  * Finally send created user in api response
  */
 exports.signup = asyncError(async (req, res, next) => {
+  const hashedToken = hashToken(req.params.token);
+
+  const { email } = req.body;
+
+  const invitedUser = await Invite.findOne({
+    email,
+    inviteTokenExpires: { $gt: Date.now() },
+    inviteTokenUsed: false
+  });
+
+  if (!invitedUser || invitedUser.inviteToken !== hashedToken) {
+    return next(new AppError('Your sign up token has expired.', 400));
+  }
+
   const newUser = await User.create({
-    firstName: req.body.firstName,
-    middleName: req.body.middleName,
-    lastName: req.body.lastName,
-    email: req.body.email,
+    name: req.body.name,
+    email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
     role: req.body.role,
-    position: req.body.position
+    position: req.body.position,
+    photo: req.body.photo,
+    dob: req.body.dob,
+    gender: req.body.gender,
+    primaryPhone: req.body.primaryPhone,
+    secondaryPhone: req.body.secondaryPhone,
+    maritalStatus: req.body.maritalStatus,
+    joinDate: req.body.joinDate
   });
 
-  // TODO : send welcome email to user
-
+  if (newUser) {
+    await Invite.findByIdAndUpdate(invitedUser._id, { inviteTokenUsed: true });
+  }
   createSendToken(newUser, 201, req, res);
 });
 
@@ -93,12 +163,22 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
   }
 
   // Generate the random reset token
-  //const resetToken = user.createPasswordResetToken();
+  const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
   // Send it to user's email
   try {
-    // TODO : Send reset token to user email
+    const resetURL = `${req.protocol}://${req.get(
+      'host'
+    )}/api/v1/users/resetPassword/${resetToken}`;
+
+    const message = `Please use provided link for password reset : ${resetURL}`;
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Your password reset token (valid for only 10 minutes) ',
+      message
+    });
 
     res.status(200).json({
       status: 'success',
@@ -124,10 +204,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
  */
 exports.resetPassword = asyncError(async (req, res, next) => {
   // Get user based on the token
-  const hashedToken = crypto
-    .createHash('sha256')
-    .update(req.params.token)
-    .digest('hex');
+  const hashedToken = hashToken(req.params.token);
 
   const user = await User.findOne({
     passwordResetToken: hashedToken,
@@ -179,6 +256,9 @@ exports.logout = (req, res) => {
   res.status(200).json({ status: 'success' });
 };
 
+/**
+ * Protect route based on the user exist
+ */
 exports.protect = asyncError(async (req, res, next) => {
   // Getting token and check of it's there
   let token;
@@ -218,7 +298,22 @@ exports.protect = asyncError(async (req, res, next) => {
     );
   }
 
-  // GRANT ACCESS TO PROTECTED ROUTE
+  // Grant access to protected routes
   req.user = currentUser;
   next();
 });
+
+/**
+ * Check role for the permission
+ */
+exports.restrictTo =
+  (...roles) =>
+  (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to perform this action', 403)
+      );
+    }
+
+    next();
+  };
