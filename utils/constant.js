@@ -47,22 +47,6 @@ exports.projectStatus = {
   OH: 'On Hold'
 };
 
-exports.clients = {
-  360: '360',
-  BS: 'Brainsell',
-  CF: 'Cyber Family',
-  FS: 'Ferras',
-  FT: 'Fortress',
-  HT: 'Houston',
-  IW: 'ID Waiter',
-  KS: 'Kickstartup',
-  OK: 'Online Karma',
-  RS: 'Rysen',
-  VA: 'Vista Alliance',
-  WS: 'Websults',
-  MS: 'Miscellaneous'
-};
-
 exports.leaveType = {
   SL: 'Sick Leave',
   CL: 'Casual Leave',
