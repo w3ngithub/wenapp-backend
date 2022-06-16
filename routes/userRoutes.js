@@ -2,6 +2,7 @@ const express = require('express');
 
 const authController = require('../controllers/authController');
 const userController = require('../controllers/userController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
 // Protect all routes after this middleware
-router.use(authController.protect);
+router.use(authMiddleware.protect);
 
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
@@ -25,7 +26,7 @@ router.get('/roles', userController.getRoles);
 router.get('/positions', userController.getPositions);
 
 // Restrict routes to admin only after this middleware
-router.use(authController.restrictTo('admin'));
+router.use(authMiddleware.restrictTo('admin'));
 
 router.route('/').get(userController.getAllUsers);
 
