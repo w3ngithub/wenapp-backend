@@ -2,6 +2,7 @@ const User = require('../models/userModel');
 const asyncError = require('../utils/asyncError');
 const AppError = require('../utils/appError');
 const factory = require('./factoryController');
+const constant = require('../utils/constant');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -77,6 +78,24 @@ exports.disableUser = asyncError(async (req, res, next) => {
     }
   });
 });
+
+// Get all user roles object
+exports.getRoles = (req, res, next) => {
+  const { userRoles } = constant;
+  res.status(200).json({
+    status: 'success',
+    data: userRoles
+  });
+};
+
+// Get all user positions object
+exports.getPositions = (req, res, next) => {
+  const { userPosition } = constant;
+  res.status(200).json({
+    status: 'success',
+    data: userPosition
+  });
+};
 
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
