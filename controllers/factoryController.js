@@ -42,7 +42,9 @@ exports.getAll = (Model) =>
 
 exports.createOne = (Model) =>
   asyncError(async (req, res, next) => {
-    const doc = await Model.create(req.body);
+    const reqBody = { ...req.body, createdBy: req.user.id };
+
+    const doc = await Model.create(reqBody);
 
     res.status(201).json({
       status: 'success',
@@ -54,7 +56,9 @@ exports.createOne = (Model) =>
 
 exports.updateOne = (Model) =>
   asyncError(async (req, res, next) => {
-    const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
+    const reqBody = { ...req.body, updatedBy: req.user.id };
+
+    const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true
     });
