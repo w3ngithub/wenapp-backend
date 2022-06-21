@@ -4,12 +4,16 @@ const cors = require('cors');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
+
 const userRouter = require('./routes/users/userRoutes');
+const userRoleRouter = require('./routes/users/userRoleRoutes');
+const userPositionRouter = require('./routes/users/userPositionRoutes');
+
+const projectTypeRouter = require('./routes/projects/projectTypeRoutes');
+const projectStatusRouter = require('./routes/projects/projectStatusRoutes');
 const projectTagRouter = require('./routes/projects/projectTagRoutes');
 const clientRouter = require('./routes/projects/clientRoutes');
 const projectRouter = require('./routes/projects/projectRoutes');
-const userRoleRouter = require('./routes/users/userRoleRoutes');
-const userPositionRouter = require('./routes/users/userPositionRoutes');
 
 // Initialized and start express application
 const app = express();
@@ -34,6 +38,8 @@ app.use('/api/v1/users/roles', userRoleRouter);
 app.use('/api/v1/users/positions', userPositionRouter);
 app.use('/api/v1/users', userRouter);
 
+app.use('/api/v1/projects/types', projectTypeRouter);
+app.use('/api/v1/projects/status', projectStatusRouter);
 app.use('/api/v1/projects/tags', projectTagRouter);
 app.use('/api/v1/projects/clients', clientRouter);
 app.use('/api/v1/projects', projectRouter);

@@ -21,9 +21,15 @@ const projectSchema = new mongoose.Schema(
       required: [true, 'Please provide project start date.']
     },
     endDate: Date,
-    projectTypes: [String],
+    projectTypes: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Project_Type'
+      }
+    ],
     projectStatus: {
-      type: String,
+      type: mongoose.Schema.ObjectId,
+      ref: 'Project_Status',
       required: [true, 'Please provide project status.']
     },
     projectTags: [
@@ -93,19 +99,19 @@ projectSchema.pre('save', function (next) {
 projectSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'developers',
-    select: 'name'
+    select: '-role -position name'
   })
     .populate({
       path: 'designers',
-      select: 'name'
+      select: '-role -position name'
     })
     .populate({
       path: 'qa',
-      select: 'name'
+      select: '-role -position name'
     })
     .populate({
       path: 'devOps',
-      select: 'name'
+      select: '-role -position name'
     })
     .populate({
       path: 'projectTags',
@@ -113,6 +119,14 @@ projectSchema.pre(/^find/, function (next) {
     })
     .populate({
       path: 'client',
+      select: 'name'
+    })
+    .populate({
+      path: 'projectTypes',
+      select: 'name'
+    })
+    .populate({
+      path: 'projectStatus',
       select: 'name'
     });
   next();
