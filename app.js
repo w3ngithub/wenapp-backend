@@ -8,6 +8,8 @@ const userRouter = require('./routes/userRoutes');
 const projectTagRouter = require('./routes/projectTagRoutes');
 const clientRouter = require('./routes/clientRoutes');
 const projectRouter = require('./routes/projectRoutes');
+const userRoleRouter = require('./routes/userRoleRoutes');
+const userPositionRouter = require('./routes/userPositionRoutes');
 
 // Initialized and start express application
 const app = express();
@@ -28,7 +30,10 @@ app.use(
 );
 
 // Routes
+app.use('/api/v1/users/roles', userRoleRouter);
+app.use('/api/v1/users/positions', userPositionRouter);
 app.use('/api/v1/users', userRouter);
+
 app.use('/api/v1/projects/tags', projectTagRouter);
 app.use('/api/v1/projects/clients', clientRouter);
 app.use('/api/v1/projects', projectRouter);

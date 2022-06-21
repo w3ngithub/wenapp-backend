@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const asyncError = require('../utils/asyncError');
 const AppError = require('../utils/appError');
 const User = require('../models/userModel');
+const UserRole = require('../models/userRoleModel');
 
 /**
  * Protect route based on the user exist
@@ -49,6 +50,13 @@ exports.protect = asyncError(async (req, res, next) => {
 
   // Grant access to protected routes
   req.user = currentUser;
+
+  // Check user role and assign role key to current user object to check for permission
+  if (req.user.role) {
+    const userRole = await UserRole.findById(req.user.role);
+    req.user.roleKey = userRole.key;
+  }
+
   next();
 });
 
@@ -58,7 +66,7 @@ exports.protect = asyncError(async (req, res, next) => {
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(req.user.roleKey)) {
       return next(
         new AppError('You do not have permission to perform this action', 403)
       );

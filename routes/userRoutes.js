@@ -22,9 +22,6 @@ router.get('/me', userController.getMe, userController.getUser);
 router.patch('/updateMe', userController.updateMe);
 router.delete('/deleteMe', userController.deleteMe);
 
-router.get('/roles', userController.getRoles);
-router.get('/positions', userController.getPositions);
-
 // Restrict routes to admin only after this middleware
 router.use(authMiddleware.restrictTo('admin'));
 

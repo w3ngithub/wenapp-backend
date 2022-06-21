@@ -3,8 +3,6 @@ const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
-const { userPosition, userRoles } = require('../utils/constant');
-
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -37,12 +35,12 @@ const userSchema = new mongoose.Schema(
       }
     },
     role: {
-      type: String,
-      default: 'normal'
+      type: mongoose.Schema.ObjectId,
+      ref: 'User_Role'
     },
     position: {
-      type: String,
-      default: 'OT'
+      type: mongoose.Schema.ObjectId,
+      ref: 'User_Position'
     },
     active: {
       type: Boolean,
@@ -80,21 +78,9 @@ const userSchema = new mongoose.Schema(
     passwordResetExpires: Date
   },
   {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    timestamps: true
   }
 );
-
-// Return user role value in response object as virtual field
-userSchema.virtual('roleValue').get(function () {
-  return userRoles[this.role];
-});
-
-// Return user position value in response object as virtual field
-userSchema.virtual('positionValue').get(function () {
-  return userPosition[this.position];
-});
 
 // Document Middleware
 userSchema.pre('save', async function (next) {
@@ -113,6 +99,14 @@ userSchema.pre('save', async function (next) {
 userSchema.pre(/^find/, function (next) {
   // this points to the current query
   this.find({ active: { $ne: false } });
+
+  this.populate({
+    path: 'role',
+    select: 'key value'
+  }).populate({
+    path: 'position',
+    select: 'name'
+  });
   next();
 });
 

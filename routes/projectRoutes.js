@@ -5,6 +5,9 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
+router.get('/types', projectController.getProjectTypes);
+router.get('/status', projectController.getProjectStatus);
+
 router
   .route('/')
   .get(projectController.getAllProjects)
