@@ -1,5 +1,5 @@
-const UserPosition = require('../models/userPositionModel');
-const factory = require('./factoryController');
+const UserPosition = require('../../models/users/userPositionModel');
+const factory = require('../factoryController');
 
 exports.getUserPosition = factory.getOne(UserPosition);
 exports.getAllUserPositions = factory.getAll(UserPosition);

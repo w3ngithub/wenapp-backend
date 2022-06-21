@@ -1,7 +1,7 @@
-const User = require('../models/userModel');
-const asyncError = require('../utils/asyncError');
-const AppError = require('../utils/appError');
-const factory = require('./factoryController');
+const User = require('../../models/users/userModel');
+const asyncError = require('../../utils/asyncError');
+const AppError = require('../../utils/appError');
+const factory = require('../factoryController');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {

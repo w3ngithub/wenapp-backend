@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 
 const asyncError = require('../utils/asyncError');
 const AppError = require('../utils/appError');
-const User = require('../models/userModel');
-const UserRole = require('../models/userRoleModel');
+const User = require('../models/users/userModel');
+const UserRole = require('../models/users/userRoleModel');
 
 /**
  * Protect route based on the user exist

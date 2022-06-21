@@ -1,31 +1,31 @@
 const express = require('express');
 
-const userRoleController = require('../controllers/userRoleController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const userPositionController = require('../../controllers/users/userPositionController');
+const authMiddleware = require('../../middlewares/authMiddleware');
 
 const router = express.Router();
 
 router
   .route('/')
-  .get(userRoleController.getAllUserRoles)
+  .get(userPositionController.getAllUserPositions)
   .post(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'manager'),
-    userRoleController.createUserRole
+    userPositionController.createUserPosition
   );
 
 router
   .route('/:id')
-  .get(userRoleController.getUserRole)
+  .get(userPositionController.getUserPosition)
   .patch(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'manager'),
-    userRoleController.updateUserRole
+    userPositionController.updateUserPosition
   )
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'manager'),
-    userRoleController.deleteUserRole
+    userPositionController.deleteUserPosition
   );
 
 module.exports = router;

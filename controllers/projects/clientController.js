@@ -1,5 +1,5 @@
-const Client = require('../models/clientModel');
-const factory = require('./factoryController');
+const Client = require('../../models/projects/clientModel');
+const factory = require('../factoryController');
 
 exports.getClient = factory.getOne(Client);
 exports.getAllClients = factory.getAll(Client);

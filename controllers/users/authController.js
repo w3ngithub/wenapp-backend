@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const asyncError = require('../utils/asyncError');
-const AppError = require('../utils/appError');
-const User = require('../models/userModel');
-const Invite = require('../models/inviteModel');
-const sendEmail = require('../utils/email');
+const asyncError = require('../../utils/asyncError');
+const AppError = require('../../utils/appError');
+const User = require('../../models/users/userModel');
+const Invite = require('../../models/users/inviteModel');
+const sendEmail = require('../../utils/email');
 
 // Create sign-in token
 const signToken = (id) =>

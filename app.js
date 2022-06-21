@@ -4,12 +4,12 @@ const cors = require('cors');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
-const userRouter = require('./routes/userRoutes');
-const projectTagRouter = require('./routes/projectTagRoutes');
-const clientRouter = require('./routes/clientRoutes');
-const projectRouter = require('./routes/projectRoutes');
-const userRoleRouter = require('./routes/userRoleRoutes');
-const userPositionRouter = require('./routes/userPositionRoutes');
+const userRouter = require('./routes/users/userRoutes');
+const projectTagRouter = require('./routes/projects/projectTagRoutes');
+const clientRouter = require('./routes/projects/clientRoutes');
+const projectRouter = require('./routes/projects/projectRoutes');
+const userRoleRouter = require('./routes/users/userRoleRoutes');
+const userPositionRouter = require('./routes/users/userPositionRoutes');
 
 // Initialized and start express application
 const app = express();

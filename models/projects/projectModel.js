@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
-const { projectTypes, projectStatus } = require('../utils/constant');
 
 const projectSchema = new mongoose.Schema(
   {
@@ -84,16 +83,6 @@ const projectSchema = new mongoose.Schema(
     toObject: { virtuals: true }
   }
 );
-
-// Return project types value in response object as virtual field
-projectSchema.virtual('projectTypesValue').get(function () {
-  return projectTypes[this.projectTypes];
-});
-
-// Return project status value in response object as virtual field
-projectSchema.virtual('projectStatusValue').get(function () {
-  return projectStatus[this.projectStatus];
-});
 
 // Generate slug from project name before save and create document
 projectSchema.pre('save', function (next) {

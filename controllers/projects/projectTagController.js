@@ -1,5 +1,5 @@
-const ProjectTag = require('../models/projectTagModel');
-const factory = require('./factoryController');
+const ProjectTag = require('../../models/projects/projectTagModel');
+const factory = require('../factoryController');
 
 exports.getProjectTag = factory.getOne(ProjectTag);
 exports.getAllProjectTags = factory.getAll(ProjectTag);

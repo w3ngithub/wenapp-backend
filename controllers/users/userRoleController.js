@@ -1,5 +1,5 @@
-const UserRole = require('../models/userRoleModel');
-const factory = require('./factoryController');
+const UserRole = require('../../models/users/userRoleModel');
+const factory = require('../factoryController');
 
 exports.getUserRole = factory.getOne(UserRole);
 exports.getAllUserRoles = factory.getAll(UserRole);

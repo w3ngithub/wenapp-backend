@@ -1,12 +1,9 @@
 const express = require('express');
 
-const projectController = require('../controllers/projectController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const projectController = require('../../controllers/projects/projectController');
+const authMiddleware = require('../../middlewares/authMiddleware');
 
 const router = express.Router();
-
-router.get('/types', projectController.getProjectTypes);
-router.get('/status', projectController.getProjectStatus);
 
 router
   .route('/')

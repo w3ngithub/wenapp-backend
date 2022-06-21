@@ -1,31 +1,31 @@
 const express = require('express');
 
-const clientController = require('../controllers/clientController');
-const authMiddleware = require('../middlewares/authMiddleware');
+const projectTagController = require('../../controllers/projects/projectTagController');
+const authMiddleware = require('../../middlewares/authMiddleware');
 
 const router = express.Router();
 
 router
   .route('/')
-  .get(clientController.getAllClients)
+  .get(projectTagController.getAllProjectTags)
   .post(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
-    clientController.createClient
+    projectTagController.createProjectTag
   );
 
 router
   .route('/:id')
-  .get(clientController.getClient)
+  .get(projectTagController.getProjectTag)
   .patch(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
-    clientController.updateClient
+    projectTagController.updateProjectTag
   )
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
-    clientController.deleteClient
+    projectTagController.deleteProjectTag
   );
 
 module.exports = router;
