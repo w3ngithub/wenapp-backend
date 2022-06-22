@@ -9,6 +9,13 @@ class APIFeatures {
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
+    // Delete key/value from object is value is empty in query string
+    Object.keys(queryObj).forEach((key) => {
+      if (queryObj[key] === '') {
+        delete queryObj[key];
+      }
+    });
+
     // Advanced filtering
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
