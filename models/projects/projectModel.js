@@ -84,9 +84,7 @@ const projectSchema = new mongoose.Schema(
     updatedBy: String
   },
   {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    timestamps: true
   }
 );
 

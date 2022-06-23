@@ -15,6 +15,9 @@ const projectTagRouter = require('./routes/projects/projectTagRoutes');
 const clientRouter = require('./routes/projects/clientRoutes');
 const projectRouter = require('./routes/projects/projectRoutes');
 
+const timeLogTypeRouter = require('./routes/timelogs/timeLogTypeRoutes');
+const timeLogRouter = require('./routes/timelogs/timeLogRoutes');
+
 // Initialized and start express application
 const app = express();
 
@@ -43,6 +46,9 @@ app.use('/api/v1/projects/status', projectStatusRouter);
 app.use('/api/v1/projects/tags', projectTagRouter);
 app.use('/api/v1/projects/clients', clientRouter);
 app.use('/api/v1/projects', projectRouter);
+
+app.use('/api/v1/timelogs/types', timeLogTypeRouter);
+app.use('/api/v1/timelogs', timeLogRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

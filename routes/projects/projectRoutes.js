@@ -1,9 +1,12 @@
 const express = require('express');
 
 const projectController = require('../../controllers/projects/projectController');
+const timeLogRouter = require('../timelogs/timeLogRoutes');
 const authMiddleware = require('../../middlewares/authMiddleware');
 
 const router = express.Router();
+
+router.use('/:projectId/timelogs', timeLogRouter);
 
 router.route('/search/:term').get(projectController.searchProject);
 
