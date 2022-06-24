@@ -84,9 +84,17 @@ const projectSchema = new mongoose.Schema(
     updatedBy: String
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
+// Virtual populate
+projectSchema.virtual('timeLogs', {
+  ref: 'TimeLog',
+  foreignField: 'project',
+  localField: '_id'
+});
 
 // Generate slug from project name before save and create document
 projectSchema.pre('save', function (next) {

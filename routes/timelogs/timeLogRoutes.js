@@ -1,5 +1,6 @@
 const express = require('express');
 
+const projectController = require('../../controllers/projects/projectController');
 const timeLogController = require('../../controllers/timelogs/timeLogController');
 const authMiddleware = require('../../middlewares/authMiddleware');
 
@@ -10,7 +11,11 @@ router.use(authMiddleware.protect);
 router
   .route('/')
   .get(timeLogController.getAllTimeLogs)
-  .post(timeLogController.setProjectUserIds, timeLogController.createTimeLog);
+  .post(
+    projectController.setProjectUserIds,
+    projectController.checkProjectOfUser,
+    timeLogController.createTimeLog
+  );
 
 router
   .route('/:id')
