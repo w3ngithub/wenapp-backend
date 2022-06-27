@@ -11,6 +11,7 @@ exports.createProject = factory.createOne(Project);
 exports.updateProject = factory.updateOne(Project);
 exports.deleteProject = factory.deleteOne(Project);
 
+// Partial search for the project name
 exports.searchProject = asyncError(async (req, res, next) => {
   const searchTerm = `${req.params.term}`;
 
@@ -39,9 +40,6 @@ exports.setProjectUserIds = (req, res, next) => {
 
 // Check if project belongs to the user
 exports.checkProjectOfUser = asyncError(async (req, res, next) => {
-  if (!req.body.project) req.body.project = req.params.projectId;
-  if (!req.body.user) req.body.user = req.user.id;
-
   const projectId = mongoose.Types.ObjectId(req.body.project);
   const userId = mongoose.Types.ObjectId(req.body.user);
 

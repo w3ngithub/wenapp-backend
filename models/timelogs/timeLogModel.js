@@ -44,6 +44,10 @@ const timeLogSchema = new mongoose.Schema(
   }
 );
 
+timeLogSchema.virtual('totalHours').get(function () {
+  return this.hours + this.minutes / 60;
+});
+
 timeLogSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'user',
