@@ -69,3 +69,39 @@ exports.checkProjectOfUser = asyncError(async (req, res, next) => {
 
   next();
 });
+
+// Get total time spent on a single project
+exports.getTotalTimeSpent = asyncError(async (req, res, next) => {
+  const project = await Project.findById(req.params.projectId);
+
+  if (!project) {
+    return next(new AppError('Project not found.', 400));
+  }
+
+  const { totalTimeSpent } = project;
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      totalTimeSpent
+    }
+  });
+});
+
+// Get weekly time spent on a single project
+exports.getWeeklyTimeSpent = asyncError(async (req, res, next) => {
+  const project = await Project.findById(req.params.projectId);
+
+  if (!project) {
+    return next(new AppError('Project not found.', 400));
+  }
+
+  const { weeklyTimeSpent } = project;
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      weeklyTimeSpent
+    }
+  });
+});

@@ -80,6 +80,14 @@ const projectSchema = new mongoose.Schema(
         sendEmailTo: String
       }
     ],
+    totalTimeSpent: {
+      type: Number,
+      default: 0
+    },
+    weeklyTimeSpent: {
+      type: Number,
+      default: 0
+    },
     createdBy: String,
     updatedBy: String
   },

@@ -14,13 +14,18 @@ router
   .post(
     projectController.setProjectUserIds,
     projectController.checkProjectOfUser,
+    timeLogController.checkTimeLogDays,
     timeLogController.createTimeLog
   );
 
 router
   .route('/:id')
   .get(timeLogController.getTimeLog)
-  .patch(timeLogController.updateTimeLog)
+  .patch(
+    projectController.checkProjectOfUser,
+    timeLogController.checkTimeLogDays,
+    timeLogController.updateTimeLog
+  )
   .delete(
     authMiddleware.restrictTo('admin', 'manager'),
     timeLogController.deleteTimeLog
