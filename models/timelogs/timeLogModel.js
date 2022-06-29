@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Project = require('../projects/projectModel');
+const common = require('../../utils/common');
 
 const timeLogSchema = new mongoose.Schema(
   {
@@ -72,25 +73,6 @@ timeLogSchema.pre(/^find/, function (next) {
   next();
 });
 
-// Return start and end of week date as object
-const dateInThisWeek = () => {
-  const todayObj = new Date();
-  const todayDate = todayObj.getDate();
-  const todayDay = todayObj.getDay();
-
-  // get first date of week
-  const firstDayOfWeek = new Date(todayObj.setDate(todayDate - todayDay));
-
-  // get last date of week
-  const lastDayOfWeek = new Date(firstDayOfWeek);
-  lastDayOfWeek.setDate(lastDayOfWeek.getDate() + 5);
-
-  return {
-    firstDayOfWeek,
-    lastDayOfWeek
-  };
-};
-
 // Static method to calculate total time spent for the project
 timeLogSchema.statics.calcTotalTimeSpentOnProject = async function (projectId) {
   const totalProjectTime = await this.aggregate([
@@ -120,7 +102,7 @@ timeLogSchema.statics.calcTotalTimeSpentOnProject = async function (projectId) {
 timeLogSchema.statics.calcWeeklyTimeSpentOnProject = async function (
   projectId
 ) {
-  const { firstDayOfWeek, lastDayOfWeek } = dateInThisWeek();
+  const { firstDayOfWeek, lastDayOfWeek } = common.dateInThisWeek();
 
   const weeklyProjectTime = await this.aggregate([
     {
