@@ -137,3 +137,73 @@ exports.getUserTodayTimeSpent = asyncError(async (req, res, next) => {
     }
   });
 });
+
+// Get weekly time summary of user with time log details
+exports.getWeeklyReport = asyncError(async (req, res, next) => {
+  const { fromDate, toDate, projectStatus, logType, client } = req.query;
+
+  const matchConditions = [
+    { logDate: { $gte: new Date(fromDate) } },
+    { logDate: { $lte: new Date(toDate) } }
+  ];
+
+  if (logType) {
+    matchConditions.push({
+      logType: { $eq: mongoose.Types.ObjectId(logType) }
+    });
+  }
+
+  if (projectStatus) {
+    matchConditions.push({
+      'project.projectStatus': { $eq: mongoose.Types.ObjectId(projectStatus) }
+    });
+  }
+
+  if (client) {
+    matchConditions.push({
+      'project.client': { $eq: mongoose.Types.ObjectId(client) }
+    });
+  }
+
+  const report = await TimeLog.aggregate([
+    {
+      $lookup: {
+        from: 'projects',
+        localField: 'project',
+        foreignField: '_id',
+        as: 'project'
+      }
+    },
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $group: {
+        _id: '$project',
+        timeSpent: { $sum: '$totalHours' }
+      }
+    },
+    {
+      $addFields: { project: '$_id' }
+    },
+    {
+      $project: {
+        _id: 0,
+        'project._id': 1,
+        'project.name': 1,
+        'project.projectStatus': 1,
+        'project.client': 1,
+        timeSpent: 1
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      report
+    }
+  });
+});
