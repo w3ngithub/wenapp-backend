@@ -43,3 +43,10 @@ exports.todayTomorrowDate = () => {
     tomorrowDate
   };
 };
+
+exports.todayDate = () => {
+  let todayDate = new Date();
+  todayDate = todayDate.toISOString().split('T')[0];
+
+  return new Date(todayDate);
+};

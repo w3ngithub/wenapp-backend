@@ -3,6 +3,7 @@ const express = require('express');
 const authController = require('../../controllers/users/authController');
 const userController = require('../../controllers/users/userController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const leaveRouter = require('../leaves/leaveRoutes');
 
 const router = express.Router();
 
@@ -16,6 +17,8 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 
 // Protect all routes after this middleware
 router.use(authMiddleware.protect);
+
+router.use('/:userId/leaves', leaveRouter);
 
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
