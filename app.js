@@ -21,6 +21,9 @@ const timeLogRouter = require('./routes/timelogs/timeLogRoutes');
 const leaveTypeRouter = require('./routes/leaves/leaveTypeRoutes');
 const leaveRouter = require('./routes/leaves/leaveRoutes');
 
+const blogCategoryRouter = require('./routes/blogs/blogCategoryRoutes');
+const blogRouter = require('./routes/blogs/blogRoutes');
+
 // Initialized and start express application
 const app = express();
 
@@ -55,6 +58,9 @@ app.use('/api/v1/timelogs', timeLogRouter);
 
 app.use('/api/v1/leaves/types', leaveTypeRouter);
 app.use('/api/v1/leaves', leaveRouter);
+
+app.use('/api/v1/blogs/categories', blogCategoryRouter);
+app.use('/api/v1/blogs', blogRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
