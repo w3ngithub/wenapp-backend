@@ -74,3 +74,24 @@ exports.restrictTo =
 
     next();
   };
+
+// Set logged in user id for the routes
+exports.setUserIds = (req, res, next) => {
+  if (!req.body.user) req.body.user = req.user.id;
+  next();
+};
+
+exports.checkUserIP = (req, res, next) => {
+  let ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
+  ip = ip.split(`:`).pop();
+  if (ip !== '202.166.207.19') {
+    return next(
+      new AppError(
+        'You do not have permission to perform this action due to IP restriction.',
+        403
+      )
+    );
+  }
+
+  next();
+};
