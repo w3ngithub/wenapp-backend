@@ -5,72 +5,34 @@ const authMiddleware = require('../../middlewares/authMiddleware');
 
 const router = express.Router({ mergeParams: true });
 
-router
-  .route('/users/leavedays')
-  .get(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin'),
-    leaveController.calculateLeaveDaysOfUsers
-  );
+router.get('/', leaveController.getAllLeaves);
+router.get('/:id', leaveController.getLeave);
 
-router
-  .route('/users/today')
-  .get(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin'),
-    leaveController.getUsersOnLeaveToday
-  );
+// Protect all routes after this middleware
+router.use(authMiddleware.protect);
 
-router
-  .route('/:leaveId/:leaveDate')
-  .patch(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin'),
-    leaveController.deleteSelectedLeaveDate
-  );
+router.post('/', leaveController.setLeaveUserIds, leaveController.createLeave);
+router.patch('/:id', leaveController.updateLeave);
 
-router
-  .route('/:leaveId/:status')
-  .patch(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin'),
-    leaveController.updateLeaveStatus
-  );
+// Restrict all routes after this middleware
+router.use(authMiddleware.restrictTo('admin'));
 
-router
-  .route('/:userId/leavedays')
-  .get(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin'),
-    leaveController.setLeaveUserIds,
-    leaveController.calculateLeaveDays
-  );
+router.get('/users/leavedays', leaveController.calculateLeaveDaysOfUsers);
 
-router
-  .route('/filter')
-  .post(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin'),
-    leaveController.filterExportLeaves
-  );
+router.get('/users/today', leaveController.getUsersOnLeaveToday);
 
-router
-  .route('/')
-  .get(leaveController.getAllLeaves)
-  .post(
-    authMiddleware.protect,
-    leaveController.setLeaveUserIds,
-    leaveController.createLeave
-  );
+router.patch('/:leaveId/:leaveDate', leaveController.deleteSelectedLeaveDate);
 
-router
-  .route('/:id')
-  .get(leaveController.getLeave)
-  .patch(authMiddleware.protect, leaveController.updateLeave)
-  .delete(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin'),
-    leaveController.deleteLeave
-  );
+router.patch('/:leaveId/:status', leaveController.updateLeaveStatus);
+
+router.get(
+  '/:userId/leavedays',
+  leaveController.setLeaveUserIds,
+  leaveController.calculateLeaveDays
+);
+
+router.post('/filter', leaveController.filterExportLeaves);
+
+router.delete('/:id', leaveController.deleteLeave);
 
 module.exports = router;

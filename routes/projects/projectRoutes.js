@@ -8,13 +8,11 @@ const router = express.Router();
 
 router.use('/:projectId/timelogs', timeLogRouter);
 
-router.route('/search/:term').get(projectController.searchProject);
+router.get('/search/:term', projectController.searchProject);
 
-router.route('/:projectId/totaltime').get(projectController.getTotalTimeSpent);
+router.get('/:projectId/totaltime', projectController.getTotalTimeSpent);
 
-router
-  .route('/:projectId/weeklytime')
-  .get(projectController.getWeeklyTimeSpent);
+router.get('/:projectId/weeklytime', projectController.getWeeklyTimeSpent);
 
 router
   .route('/')

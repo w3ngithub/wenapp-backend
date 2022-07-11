@@ -10,7 +10,7 @@ router
   .get(blogController.getAllBlogs)
   .post(
     authMiddleware.protect,
-    blogController.setBlogUserIds,
+    authMiddleware.setUserIds,
     blogController.createBlog
   );
 
@@ -19,7 +19,7 @@ router
   .get(blogController.getBlog)
   .patch(
     authMiddleware.protect,
-    blogController.setBlogUserIds,
+    authMiddleware.setUserIds,
     blogController.updateBlog
   )
   .delete(authMiddleware.protect, blogController.deleteBlog);

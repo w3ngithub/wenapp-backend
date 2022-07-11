@@ -8,9 +8,9 @@ const router = express.Router({ mergeParams: true });
 
 router.use(authMiddleware.protect);
 
-router.route('/users/weeklytime').get(timeLogController.getUserWeeklyTimeSpent);
-router.route('/users/todaytime').get(timeLogController.getUserTodayTimeSpent);
-router.route('/weeklyreport').post(timeLogController.getWeeklyReport);
+router.get('/users/weeklytime', timeLogController.getUserWeeklyTimeSpent);
+router.get('/users/todaytime', timeLogController.getUserTodayTimeSpent);
+router.post('/weeklyreport', timeLogController.getWeeklyReport);
 
 router
   .route('/')
