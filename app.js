@@ -24,6 +24,9 @@ const leaveRouter = require('./routes/leaves/leaveRoutes');
 const blogCategoryRouter = require('./routes/blogs/blogCategoryRoutes');
 const blogRouter = require('./routes/blogs/blogRoutes');
 
+const noticeTypeRouter = require('./routes/notices/noticeTypeRoutes');
+const noticeRouter = require('./routes/notices/noticeRoutes');
+
 // Initialized and start express application
 const app = express();
 
@@ -61,6 +64,9 @@ app.use('/api/v1/leaves', leaveRouter);
 
 app.use('/api/v1/blogs/categories', blogCategoryRouter);
 app.use('/api/v1/blogs', blogRouter);
+
+app.use('/api/v1/notices/types', noticeTypeRouter);
+app.use('/api/v1/notices', noticeRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
