@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const common = require('../../utils/common');
 
 const attendanceSchema = new mongoose.Schema(
   {
@@ -8,18 +9,14 @@ const attendanceSchema = new mongoose.Schema(
     },
     attendanceDate: {
       type: Date,
-      default: Date.now()
+      default: common.todayDate()
     },
     punchInTime: {
       type: Date,
       default: Date.now(),
       required: [true, 'Please provide punch in time.']
     },
-    punchOutTime: {
-      type: Date,
-      default: Date.now(),
-      required: [true, 'Please provide punch out time.']
-    },
+    punchOutTime: Date,
     punchInNote: String,
     punchOutNote: String,
     midDayExit: {

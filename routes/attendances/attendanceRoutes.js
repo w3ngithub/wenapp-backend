@@ -3,25 +3,33 @@ const express = require('express');
 const attendanceController = require('../../controllers/attendances/attendanceController');
 const authMiddleware = require('../../middlewares/authMiddleware');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
+
+router.patch(
+  '/:id/punchout',
+  authMiddleware.protect,
+  attendanceController.updatePunchOutTime
+);
+
+router.get(
+  '/search',
+  authMiddleware.protect,
+  attendanceController.searchAttendances
+);
 
 router
   .route('/')
   .get(attendanceController.getAllAttendances)
   .post(
     authMiddleware.protect,
-    authMiddleware.setUserIds,
+    authMiddleware.setUserIdForNestedRoutes,
     attendanceController.createAttendance
   );
 
 router
   .route('/:id')
   .get(attendanceController.getAttendance)
-  .patch(
-    authMiddleware.protect,
-    authMiddleware.setUserIds,
-    attendanceController.updateAttendance
-  )
+  .patch(authMiddleware.protect, attendanceController.updateAttendance)
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
