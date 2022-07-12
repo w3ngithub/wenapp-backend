@@ -75,9 +75,13 @@ exports.restrictTo =
     next();
   };
 
-// Set logged in user id for the routes
-exports.setUserIds = (req, res, next) => {
-  if (!req.body.user) req.body.user = req.user.id;
+// Set user id for the nested routes via params
+exports.setUserIdForNestedRoutes = (req, res, next) => {
+  if (!req.params.userId) {
+    req.body.user = req.user.id;
+  } else {
+    req.body.user = req.params.userId;
+  }
   next();
 };
 
