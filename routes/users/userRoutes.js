@@ -4,6 +4,7 @@ const authController = require('../../controllers/users/authController');
 const userController = require('../../controllers/users/userController');
 const authMiddleware = require('../../middlewares/authMiddleware');
 const leaveRouter = require('../leaves/leaveRoutes');
+const attendanceRouter = require('../attendances/attendanceRoutes');
 
 const router = express.Router();
 
@@ -18,7 +19,9 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 // Protect all routes after this middleware
 router.use(authMiddleware.protect);
 
+// Assigning nested routes to create user leaves and attendance by admin using a single POST request
 router.use('/:userId/leaves', leaveRouter);
+router.use('/:userId/attendances', attendanceRouter);
 
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);

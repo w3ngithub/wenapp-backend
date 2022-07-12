@@ -9,9 +9,7 @@ const router = express.Router();
 router.use('/:projectId/timelogs', timeLogRouter);
 
 router.get('/search/:term', projectController.searchProject);
-
 router.get('/:projectId/totaltime', projectController.getTotalTimeSpent);
-
 router.get('/:projectId/weeklytime', projectController.getWeeklyTimeSpent);
 
 router
