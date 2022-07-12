@@ -16,16 +16,6 @@ const allocatedLeaveDays = process.env.ALLOCATED_TOTAL_LEAVE_DAYS * 1;
 const fiscalYearStarts = process.env.FISCAL_YEAR_STARTS;
 const fiscalYearEnds = process.env.FISCAL_YEAR_ENDS;
 
-// Set user id for the nested routes
-exports.setLeaveUserIds = (req, res, next) => {
-  if (!req.params.userId) {
-    req.body.user = req.user.id;
-  } else {
-    req.body.user = req.params.userId;
-  }
-  next();
-};
-
 // Update leave status of user for approve or cancel
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   const { leaveId, status } = req.params;
