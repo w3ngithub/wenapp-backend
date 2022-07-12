@@ -25,12 +25,28 @@ const attendanceSchema = new mongoose.Schema(
     midDayExit: {
       type: Boolean,
       default: false
+    },
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
+    },
+    updatedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
     }
   },
   {
     timestamps: true
   }
 );
+
+attendanceSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'user createdBy updatedBy',
+    select: '-role -position name'
+  });
+  next();
+});
 
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 module.exports = Attendance;

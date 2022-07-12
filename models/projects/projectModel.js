@@ -88,8 +88,14 @@ const projectSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    createdBy: String,
-    updatedBy: String
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
+    },
+    updatedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
+    }
   },
   {
     timestamps: true,
@@ -112,37 +118,12 @@ projectSchema.pre('save', function (next) {
 
 projectSchema.pre(/^find/, function (next) {
   this.populate({
-    path: 'developers',
+    path: 'developers designers qa devOps createdBy updatedBy',
     select: '-role -position name'
-  })
-    .populate({
-      path: 'designers',
-      select: '-role -position name'
-    })
-    .populate({
-      path: 'qa',
-      select: '-role -position name'
-    })
-    .populate({
-      path: 'devOps',
-      select: '-role -position name'
-    })
-    .populate({
-      path: 'projectTags',
-      select: 'name'
-    })
-    .populate({
-      path: 'client',
-      select: 'name'
-    })
-    .populate({
-      path: 'projectTypes',
-      select: 'name'
-    })
-    .populate({
-      path: 'projectStatus',
-      select: 'name'
-    });
+  }).populate({
+    path: 'projectTags client projectTypes projectStatus',
+    select: 'name'
+  });
   next();
 });
 

@@ -26,8 +26,14 @@ const blogSchema = new mongoose.Schema(
         ref: 'Blog_Category'
       }
     ],
-    createdBy: String,
-    updatedBy: String
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
+    },
+    updatedBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
+    }
   },
   {
     timestamps: true
@@ -44,6 +50,9 @@ blogSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'blogCategories',
     select: 'name'
+  }).populate({
+    path: 'user createdBy updatedBy',
+    select: '-role -position name'
   });
   next();
 });
