@@ -8,20 +8,12 @@ const router = express.Router();
 router
   .route('/')
   .get(blogController.getAllBlogs)
-  .post(
-    authMiddleware.protect,
-    authMiddleware.setUserIds,
-    blogController.createBlog
-  );
+  .post(authMiddleware.protect, blogController.createBlog);
 
 router
   .route('/:id')
   .get(blogController.getBlog)
-  .patch(
-    authMiddleware.protect,
-    authMiddleware.setUserIds,
-    blogController.updateBlog
-  )
+  .patch(authMiddleware.protect, blogController.updateBlog)
   .delete(authMiddleware.protect, blogController.deleteBlog);
 
 module.exports = router;

@@ -3,10 +3,6 @@ const slugify = require('slugify');
 
 const blogSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.ObjectId,
-      ref: 'User'
-    },
     title: {
       type: String,
       required: [true, 'Please provide blog title.'],
@@ -51,7 +47,7 @@ blogSchema.pre(/^find/, function (next) {
     path: 'blogCategories',
     select: 'name'
   }).populate({
-    path: 'user createdBy updatedBy',
+    path: 'createdBy updatedBy',
     select: '-role -position name'
   });
   next();
