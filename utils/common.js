@@ -50,12 +50,3 @@ exports.todayDate = () => {
 
   return new Date(todayDate);
 };
-
-exports.fiscalYearDate = () => {
-  const fiscalYearStartDate = '2022-07-15';
-  const fiscalYearEndDate = '2023-7-14';
-  return {
-    fiscalYearStartDate,
-    fiscalYearEndDate
-  };
-};
