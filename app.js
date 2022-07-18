@@ -32,6 +32,8 @@ const attendanceRouter = require('./routes/attendances/attendanceRoutes');
 const faqRouter = require('./routes/resources/faqRoutes');
 const policyRouter = require('./routes/resources/policyRoutes');
 
+const holidayRouter = require('./routes/holidays/holidayRoutes');
+
 // Initialized and start express application
 const app = express();
 
@@ -77,6 +79,8 @@ app.use('/api/v1/attendances', attendanceRouter);
 
 app.use('/api/v1/resources/faqs', faqRouter);
 app.use('/api/v1/resources/policies', policyRouter);
+
+app.use('/api/v1/holidays', holidayRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
