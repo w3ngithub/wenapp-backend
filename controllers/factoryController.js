@@ -6,7 +6,13 @@ exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
     let query = Model.findById(req.params.id);
     if (popOptions) query = query.populate(popOptions);
-    const doc = await query;
+
+    const features = new APIFeatures(query, req.query)
+      .filter()
+      .sort()
+      .limitFields();
+
+    const doc = await features.query;
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
