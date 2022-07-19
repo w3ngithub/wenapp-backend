@@ -1,15 +1,13 @@
-const Holiday = require('../../models/holidays/holidayModel');
+const Holiday = require('../../models/resources/holidayModel');
 const factory = require('../factoryController');
-
 const AppError = require('../../utils/appError');
-
 const asyncError = require('../../utils/asyncError');
 
+exports.getHoliday = factory.getOne(Holiday);
 exports.getAllHolidays = factory.getAll(Holiday);
-exports.getOneFiascalYearHolidays = factory.getOne(Holiday);
-exports.addNewFiscalYearHolidays = factory.createOne(Holiday);
-exports.updateFiscalYearHolidays = factory.updateOne(Holiday);
-exports.removeSingleHolidayYear = factory.deleteOne(Holiday);
+exports.createHoliday = factory.createOne(Holiday);
+exports.updateHoliday = factory.updateOne(Holiday);
+exports.deleteHoliday = factory.deleteOne(Holiday);
 
 exports.removeSingleHolidayOfYear = asyncError(async (req, res, next) => {
   const { id, holidayId } = req.params;

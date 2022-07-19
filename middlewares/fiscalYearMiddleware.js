@@ -1,8 +1,5 @@
 const asyncError = require('../utils/asyncError');
-
-const Holiday = require('../models/holidays/holidayModel');
-
-// const AppError = require('../utils/appError');
+const Holiday = require('../models/resources/holidayModel');
 
 /**
  * Get current fiscal Year start and end date
