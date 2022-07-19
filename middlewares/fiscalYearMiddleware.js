@@ -45,29 +45,31 @@ exports.getFiscalYear = asyncError(async (req, res, next) => {
   // get latest fiscal year holiday
   const latestHolidayYear = await Holiday.findOne().sort({ createdAt: -1 });
 
-  const holidaysList = latestHolidayYear.holidays.map((holiday) =>
-    holiday.date.toString()
-  );
-
-  // check if fiscal year start date and end date lies in holidays
-  if (holidaysList.includes(new Date(currentFiscalYearStartDate).toString())) {
-    currentFiscalYearStartDate = new Date(currentFiscalYearStartDate).setDate(
-      new Date(currentFiscalYearStartDate).getDate() + 1
+  if (latestHolidayYear) {
+    const holidaysList = latestHolidayYear.holidays.map((holiday) =>
+      holiday.date.toString()
     );
-  }
 
-  if (holidaysList.includes(new Date(currentFiscalYearEndDate).toString())) {
-    currentFiscalYearEndDate = new Date(currentFiscalYearEndDate).setDate(
-      new Date(currentFiscalYearEndDate).getDate() - 1
-    );
+    // check if fiscal year start date and end date lies in holidays
+    if (
+      holidaysList.includes(new Date(currentFiscalYearStartDate).toString())
+    ) {
+      currentFiscalYearStartDate = new Date(currentFiscalYearStartDate).setDate(
+        new Date(currentFiscalYearStartDate).getDate() + 1
+      );
+    }
+
+    if (holidaysList.includes(new Date(currentFiscalYearEndDate).toString())) {
+      currentFiscalYearEndDate = new Date(currentFiscalYearEndDate).setDate(
+        new Date(currentFiscalYearEndDate).getDate() - 1
+      );
+    }
   }
 
   req.fiscalYear = {
     currentFiscalYearStartDate: new Date(currentFiscalYearStartDate),
     currentFiscalYearEndDate: new Date(currentFiscalYearEndDate)
   };
-
-  console.log(req.fiscalYear);
 
   next();
 });

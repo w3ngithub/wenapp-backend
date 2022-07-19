@@ -7,6 +7,12 @@ const holidayController = require('../../controllers/holidays/holidaysController
 
 const router = express.Router();
 
+router.delete(
+  '/remove-single-holiday/:id/:holidayId',
+  authMiddleware.protect,
+  holidayController.removeSingleHolidayOfYear
+);
+
 router
   .route('/:id')
   .get(
