@@ -2,6 +2,7 @@ const express = require('express');
 
 const leaveController = require('../../controllers/leaves/leaveController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const fiscalYearMiddleware = require('../../middlewares/fiscalYearMiddleware');
 
 const router = express.Router({ mergeParams: true });
 
@@ -21,7 +22,11 @@ router.patch('/:id', leaveController.updateLeave);
 // Restrict all routes after this middleware
 router.use(authMiddleware.restrictTo('admin'));
 
-router.get('/users/leavedays', leaveController.calculateLeaveDaysOfUsers);
+router.get(
+  '/users/leavedays',
+  fiscalYearMiddleware.getFiscalYear,
+  leaveController.calculateLeaveDaysOfUsers
+);
 router.get('/users/today', leaveController.getUsersOnLeaveToday);
 router.patch('/:leaveId/:leaveDate', leaveController.deleteSelectedLeaveDate);
 router.patch('/:leaveId/:status', leaveController.updateLeaveStatus);
@@ -29,6 +34,7 @@ router.patch('/:leaveId/:status', leaveController.updateLeaveStatus);
 router.get(
   '/:userId/leavedays',
   authMiddleware.setUserIdForNestedRoutes,
+  fiscalYearMiddleware.getFiscalYear,
   leaveController.calculateLeaveDays
 );
 

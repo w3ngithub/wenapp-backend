@@ -13,8 +13,6 @@ exports.updateLeave = factory.updateOne(Leave);
 exports.deleteLeave = factory.deleteOne(Leave);
 
 const allocatedLeaveDays = process.env.ALLOCATED_TOTAL_LEAVE_DAYS * 1;
-const fiscalYearStarts = process.env.FISCAL_YEAR_STARTS;
-const fiscalYearEnds = process.env.FISCAL_YEAR_ENDS;
 
 // Update leave status of user for approve or cancel
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
@@ -58,6 +56,9 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
 
 // Calculate remaining and applied leave days
 exports.calculateLeaveDays = asyncError(async (req, res, next) => {
+  const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
+    req.fiscalYear;
+
   const userId = mongoose.Types.ObjectId(req.params.userId);
 
   const leaveCounts = await Leave.aggregate([
@@ -69,8 +70,8 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
         user: userId,
         leaveStatus: 'approved',
         $and: [
-          { leaveDates: { $gte: new Date(fiscalYearStarts) } },
-          { leaveDates: { $lte: new Date(fiscalYearEnds) } }
+          { leaveDates: { $gte: new Date(currentFiscalYearStartDate) } },
+          { leaveDates: { $lte: new Date(currentFiscalYearEndDate) } }
         ]
       }
     },
@@ -105,6 +106,9 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
 
 // Calculate remaining and applied leave days of all users
 exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
+  const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
+    req.fiscalYear;
+
   const leaveCounts = await Leave.aggregate([
     {
       $unwind: '$leaveDates'
@@ -113,8 +117,8 @@ exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
       $match: {
         leaveStatus: 'approved',
         $and: [
-          { leaveDates: { $gte: new Date(fiscalYearStarts) } },
-          { leaveDates: { $lte: new Date(fiscalYearEnds) } }
+          { leaveDates: { $gte: new Date(currentFiscalYearStartDate) } },
+          { leaveDates: { $lte: new Date(currentFiscalYearEndDate) } }
         ]
       }
     },
