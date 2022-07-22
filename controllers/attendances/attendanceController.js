@@ -4,6 +4,7 @@ const Attendance = require('../../models/attendances/attendanceModel');
 const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
+const APIFeatures = require('../../utils/apiFeatures');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
@@ -52,34 +53,16 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     });
   }
 
-  const attendances = await Attendance.aggregate([
-    {
-      $match: {
-        $and: matchConditions
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    {
-      $group: {
-        _id: {
-          user: '$user.name',
-          attendanceDate: '$attendanceDate',
-          punchInTime: '$punchInTime',
-          punchInNote: '$punchInNote',
-          midDayExit: '$midDayExit',
-          punchOutNote: '$punchOutNote',
-          punchOutTime: '$punchOutTime'
-        }
-      }
-    }
-  ]);
+  const features = new APIFeatures(
+    Attendance.find({ $and: matchConditions }),
+    req.query
+  )
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const attendances = await features.query;
 
   res.status(200).json({
     status: 'success',
