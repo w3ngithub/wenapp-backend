@@ -99,3 +99,14 @@ exports.checkUserIP = (req, res, next) => {
 
   next();
 };
+
+exports.checkTeamAccess = (req, res, next) => {
+  const teamAccess = req.header('x-team-access');
+  if (teamAccess !== process.env.TEAM_ACCESS_KEY) {
+    return next(
+      new AppError('You do not have permission to perform this action.', 403)
+    );
+  }
+
+  next();
+};

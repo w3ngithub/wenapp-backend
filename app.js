@@ -34,6 +34,8 @@ const policyRouter = require('./routes/resources/policyRoutes');
 
 const holidayRouter = require('./routes/resources/holidayRoutes');
 
+const { checkTeamAccess } = require('./middlewares/authMiddleware');
+
 // Initialized and start express application
 const app = express();
 
@@ -51,6 +53,9 @@ app.use(
     limit: '20kb'
   })
 );
+
+// check Team access Middleware (only for development...)
+app.use(checkTeamAccess);
 
 // Routes
 app.use('/api/v1/users/roles', userRoleRouter);
