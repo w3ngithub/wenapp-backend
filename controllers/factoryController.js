@@ -61,7 +61,7 @@ exports.createOne = (Model) =>
 
 exports.updateOne = (Model) =>
   asyncError(async (req, res, next) => {
-    const reqBody = { ...req.body };
+    const reqBody = { ...req.body, updatedBy: req.user.id };
 
     const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
