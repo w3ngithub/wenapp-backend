@@ -6,6 +6,9 @@ const leaveTypeSchema = new mongoose.Schema({
     required: [true, 'Please provide leave type.'],
     unique: true,
     trim: true
+  },
+  leaveDays: {
+    type: Number
   }
 });
 
