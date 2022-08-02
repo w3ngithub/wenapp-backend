@@ -98,7 +98,7 @@ userSchema.pre('save', async function (next) {
 // Query Middleware : Select active users only
 userSchema.pre(/^find/, function (next) {
   // this points to the current query
-  this.find({ active: { $ne: false } });
+  // this.find({ active: { $ne: false } });
 
   this.populate({
     path: 'role',

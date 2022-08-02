@@ -54,7 +54,7 @@ app.use(
   })
 );
 
-// check Team access Middleware (only for development...)
+// check Team access Middleware (only for development purpose...)
 app.use(checkTeamAccess);
 
 // Routes
