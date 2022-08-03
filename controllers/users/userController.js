@@ -78,6 +78,17 @@ exports.disableUser = asyncError(async (req, res, next) => {
   });
 });
 
+exports.importUsers = asyncError(async (req, res, next) => {
+  await User.insertMany([...req.body]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: 'Users Imported.'
+    }
+  });
+});
+
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
 exports.updateUser = factory.updateOne(User);

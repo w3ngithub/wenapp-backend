@@ -33,6 +33,8 @@ router.use(authMiddleware.restrictTo('admin'));
 
 router.get('/', userController.getAllUsers);
 
+router.post('/import', userController.importUsers);
+
 router
   .route('/:id')
   .get(userController.getUser)
