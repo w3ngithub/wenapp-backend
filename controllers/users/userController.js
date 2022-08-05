@@ -79,7 +79,7 @@ exports.disableUser = asyncError(async (req, res, next) => {
 });
 
 exports.importUsers = asyncError(async (req, res, next) => {
-  await User.insertMany([...req.body]);
+  await User.insertMany([...req.body], { lean: true });
 
   res.status(200).json({
     status: 'success',
