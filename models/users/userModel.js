@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordConfirm: {
       type: String,
+      select: false,
       required: [true, 'Please confirm your password.'],
       validate: {
         // This only works on CREATE and SAVE!!!
@@ -154,6 +155,22 @@ userSchema.methods.createPasswordResetToken = function () {
 
   return resetToken;
 };
+
+// Model Middleware
+userSchema.pre('insertMany', async (next, docs) => {
+  const hashUser = docs.map(async (doc) => {
+    // Hash the password with cost of 12
+    doc.password = await bcrypt.hash(doc.password, 12);
+
+    // Delete passwordConfirm field
+    doc.passwordConfirm = doc.password;
+    return doc;
+  });
+
+  docs = await Promise.all(hashUser);
+
+  next();
+});
 
 const User = mongoose.model('User', userSchema);
 
