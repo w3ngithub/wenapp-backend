@@ -126,6 +126,22 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+// Model Middleware
+userSchema.pre('insertMany', async (next, docs) => {
+  const hashUser = docs.map(async (doc) => {
+    // Hash the password with cost of 12
+    doc.password = await bcrypt.hash(doc.password, 12);
+
+    // Delete passwordConfirm field
+    doc.passwordConfirm = undefined;
+    return doc;
+  });
+
+  docs = await Promise.all(hashUser);
+
+  next();
+});
+
 // Check if user is trying to change password after expiration
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
