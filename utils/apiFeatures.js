@@ -2,6 +2,7 @@ class APIFeatures {
   constructor(query, queryString) {
     this.query = query;
     this.queryString = queryString;
+    this.formattedQuery = queryString;
   }
 
   filter() {
@@ -21,6 +22,8 @@ class APIFeatures {
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
 
     this.query = this.query.find(JSON.parse(queryStr));
+
+    this.formattedQuery = JSON.parse(queryStr);
 
     return this;
   }
