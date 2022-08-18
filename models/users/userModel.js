@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema(
         message: 'Passwords are not same!'
       }
     },
+    photoURL: {
+      type: String,
+      default: null
+    },
     role: {
       type: mongoose.Schema.ObjectId,
       ref: 'User_Role'
