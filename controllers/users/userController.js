@@ -39,7 +39,8 @@ exports.updateMe = asyncError(async (req, res, next) => {
     'primaryPhone',
     'secondaryPhone',
     'joinDate',
-    'maritalStatus'
+    'maritalStatus',
+    'photoURL'
   );
 
   // Update user document
