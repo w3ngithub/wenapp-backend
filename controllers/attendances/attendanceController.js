@@ -4,7 +4,6 @@ const Attendance = require('../../models/attendances/attendanceModel');
 const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
-const APIFeatures = require('../../utils/apiFeatures');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
@@ -40,7 +39,11 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
 
 // Search attendances with date range and for particular user
 exports.searchAttendances = asyncError(async (req, res, next) => {
-  const { fromDate, toDate, user } = req.query;
+  const { fromDate, toDate, user, page, limit } = req.query;
+
+  const pages = page * 1 || 1;
+  const limits = limit * 1 || 100;
+  const skip = (pages - 1) * limit;
 
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
@@ -53,25 +56,59 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     });
   }
 
-  const features = new APIFeatures(Attendance.find({ $and: matchConditions }), {
-    fromDate,
-    toDate
-  })
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  const [attendances, count] = await Promise.all([
-    features.query,
-    Attendance.countDocuments({ $and: matchConditions })
+  const attendances = await Attendance.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $set: {
+        user: {
+          $arrayElemAt: ['$user.name', 0]
+        }
+      }
+    },
+    {
+      $group: {
+        _id: '$attendanceDate',
+        data: {
+          $addToSet: {
+            punchInTime: '$punchInTime',
+            attendanceDate: '$attendanceDate',
+            createdAt: '$createdAt',
+            createdBy: '$createdBy',
+            midDayExit: '$midDayExit',
+            punchOutTime: '$punchOutTime',
+            updatedAt: '$updatedAt',
+            user: '$user',
+            _id: '$_id',
+            punchOutNote: '$punchOutNote',
+            punchInNote: '$punchInNote'
+          }
+        }
+      }
+    },
+    {
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [{ $skip: +skip }, { $limit: +limits }]
+      }
+    }
   ]);
 
   res.status(200).json({
     status: 'success',
     data: {
-      attendances,
-      count
+      attendances
     }
   });
 });
