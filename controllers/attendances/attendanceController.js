@@ -53,21 +53,25 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     });
   }
 
-  const features = new APIFeatures(
-    Attendance.find({ $and: matchConditions }),
-    req.query
-  )
+  const features = new APIFeatures(Attendance.find({ $and: matchConditions }), {
+    fromDate,
+    toDate
+  })
     .filter()
     .sort()
     .limitFields()
     .paginate();
 
-  const attendances = await features.query;
+  const [attendances, count] = await Promise.all([
+    features.query,
+    Attendance.countDocuments({ $and: matchConditions })
+  ]);
 
   res.status(200).json({
     status: 'success',
     data: {
-      attendances
+      attendances,
+      count
     }
   });
 });
