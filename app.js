@@ -8,6 +8,7 @@ const globalErrorHandler = require('./controllers/errorController');
 const userRouter = require('./routes/users/userRoutes');
 const userRoleRouter = require('./routes/users/userRoleRoutes');
 const userPositionRouter = require('./routes/users/userPositionRoutes');
+const userPositionTypeRouter = require('./routes/users/userPositionTypeRoutes');
 
 const projectTypeRouter = require('./routes/projects/projectTypeRoutes');
 const projectStatusRouter = require('./routes/projects/projectStatusRoutes');
@@ -60,6 +61,7 @@ app.use(checkTeamAccess);
 // Routes
 app.use('/api/v1/users/roles', userRoleRouter);
 app.use('/api/v1/users/positions', userPositionRouter);
+app.use('/api/v1/users/positionTypes', userPositionTypeRouter);
 app.use('/api/v1/users', userRouter);
 
 app.use('/api/v1/projects/types', projectTypeRouter);

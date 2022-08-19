@@ -46,6 +46,10 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'User_Position'
     },
+    positionType: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User_Position_Type'
+    },
     active: {
       type: Boolean,
       default: true
@@ -107,10 +111,15 @@ userSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'role',
     select: 'key value'
-  }).populate({
-    path: 'position',
-    select: 'name'
-  });
+  })
+    .populate({
+      path: 'position',
+      select: 'name'
+    })
+    .populate({
+      path: 'positionType',
+      select: 'name'
+    });
   next();
 });
 
