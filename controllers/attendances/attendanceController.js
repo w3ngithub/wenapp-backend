@@ -79,7 +79,10 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     },
     {
       $group: {
-        _id: '$attendanceDate',
+        _id: {
+          attendanceDate: '$attendanceDate',
+          user: '$user'
+        },
         data: {
           $addToSet: {
             punchInTime: '$punchInTime',
