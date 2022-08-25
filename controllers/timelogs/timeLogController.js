@@ -207,3 +207,57 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
     }
   });
 });
+
+// Get time log summary for chart
+exports.getTimelogForChart = asyncError(async (req, res, next) => {
+  const { project, logType } = req.query;
+
+  const matchConditions = [
+    { project: { $eq: mongoose.Types.ObjectId(project) } }
+  ];
+
+  if (logType) {
+    matchConditions.push({
+      logType: { $eq: mongoose.Types.ObjectId(logType) }
+    });
+  }
+
+  const chart = await TimeLog.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $lookup: {
+        from: 'timelog_types',
+        localField: 'logType',
+        foreignField: '_id',
+        as: 'logType'
+      }
+    },
+    {
+      $group: {
+        _id: '$logType',
+        timeSpent: { $sum: '$totalHours' }
+      }
+    },
+    {
+      $addFields: { logType: '$_id' }
+    },
+    {
+      $project: {
+        _id: 0,
+        'logType.name': 1,
+        timeSpent: 1
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      chart
+    }
+  });
+});
