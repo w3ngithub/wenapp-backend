@@ -217,8 +217,9 @@ exports.getTimelogForChart = asyncError(async (req, res, next) => {
   ];
 
   if (logType) {
+    const logs = logType.split(',');
     matchConditions.push({
-      logType: { $eq: mongoose.Types.ObjectId(logType) }
+      logType: { $in: logs.map((log) => mongoose.Types.ObjectId(log)) }
     });
   }
 
