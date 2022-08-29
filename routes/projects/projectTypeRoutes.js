@@ -2,6 +2,7 @@ const express = require('express');
 
 const projectTypeController = require('../../controllers/projects/projectTypeController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const Project = require('../../models/projects/projectModel');
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
+    authMiddleware.checkIfValueToDeleteIsUsed(Project, 'projectTypes'),
+
     projectTypeController.deleteProjectType
   );
 

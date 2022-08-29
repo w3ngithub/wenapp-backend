@@ -2,6 +2,7 @@ const express = require('express');
 
 const timeLogTypeController = require('../../controllers/timelogs/timeLogTypeController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const TimeLog = require('../../models/timelogs/timeLogModel');
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
+    authMiddleware.checkIfValueToDeleteIsUsed(TimeLog, 'logType'),
+
     timeLogTypeController.deleteTimeLogType
   );
 

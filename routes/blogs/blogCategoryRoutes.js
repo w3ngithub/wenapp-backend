@@ -2,6 +2,7 @@ const express = require('express');
 
 const blogCategoryController = require('../../controllers/blogs/blogCategoryController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const Blog = require('../../models/blogs/blogModel');
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead'),
+    authMiddleware.checkIfValueToDeleteIsUsed(Blog, 'blogCategories'),
+
     blogCategoryController.deleteBlogCategory
   );
 
