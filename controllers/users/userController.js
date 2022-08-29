@@ -69,7 +69,7 @@ exports.deleteMe = asyncError(async (req, res, next) => {
 
 // Disable selected user
 exports.disableUser = asyncError(async (req, res, next) => {
-  await User.findByIdAndUpdate(req.params.id, { active: false });
+  await User.findByIdAndUpdate(req.params.id, { active: { $ne: false } });
 
   res.status(200).json({
     status: 'success',
@@ -79,6 +79,7 @@ exports.disableUser = asyncError(async (req, res, next) => {
   });
 });
 
+// Import users
 exports.importUsers = asyncError(async (req, res, next) => {
   await User.insertMany([...req.body], { lean: true });
 
@@ -86,6 +87,18 @@ exports.importUsers = asyncError(async (req, res, next) => {
     status: 'success',
     data: {
       message: 'Users Imported.'
+    }
+  });
+});
+
+// Get all ative users count
+exports.getActiveUser = asyncError(async (req, res, next) => {
+  const user = await User.find({ active: { $ne: false } }).count();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user
     }
   });
 });
