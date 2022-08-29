@@ -287,6 +287,7 @@ exports.filterExportLeaves = asyncError(async (req, res, next) => {
   });
 });
 
+// Get pending leaves count
 exports.getPendingLeavesCount = asyncError(async (req, res, next) => {
   const leaves = await Leave.find({ leaveStatus: { $eq: 'pending' } }).count();
 
@@ -295,5 +296,30 @@ exports.getPendingLeavesCount = asyncError(async (req, res, next) => {
     data: {
       leaves
     }
+  });
+});
+
+// Get count of all users on leave today
+exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
+  const todayDate = common.todayDate();
+
+  const leaves = await Leave.aggregate([
+    {
+      $unwind: '$leaveDates'
+    },
+    {
+      $match: {
+        leaveStatus: 'approved',
+        leaveDates: { $eq: todayDate }
+      }
+    },
+    {
+      $count: 'count'
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    leaves
   });
 });

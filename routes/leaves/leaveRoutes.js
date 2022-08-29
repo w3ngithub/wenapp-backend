@@ -30,6 +30,7 @@ router.get(
   leaveController.calculateLeaveDaysOfUsers
 );
 router.get('/users/today', leaveController.getUsersOnLeaveToday);
+router.get('/users/today/count', leaveController.getUsersCountOnLeaveToday);
 router.patch('/:leaveId/status/:status', leaveController.updateLeaveStatus);
 router.patch('/:leaveId/:leaveDate', leaveController.deleteSelectedLeaveDate);
 
