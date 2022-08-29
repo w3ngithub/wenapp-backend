@@ -140,6 +140,32 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
   });
 });
 
+// get users for review of salary
+
+exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
+  const users = await User.aggregate([
+    {
+      $set: {
+        newSalaryReviewDate: {
+          $dateAdd: {
+            startDate: '$lastReviewDate',
+            unit: 'year',
+            amount: 1
+          }
+        }
+      }
+    }
+  ]);
+
+  console.log(users);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: users
+    }
+  });
+});
+
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
 exports.updateUser = factory.updateOne(User);
