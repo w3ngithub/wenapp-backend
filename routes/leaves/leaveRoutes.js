@@ -25,6 +25,12 @@ router.patch('/:id', leaveController.updateLeave);
 router.use(authMiddleware.restrictTo('admin'));
 
 router.get(
+  '/users/fiscalYearLeaves',
+  fiscalYearMiddleware.getFiscalYear,
+  leaveController.getFiscalYearLeaves
+);
+
+router.get(
   '/users/leavedays',
   fiscalYearMiddleware.getFiscalYear,
   leaveController.calculateLeaveDaysOfUsers

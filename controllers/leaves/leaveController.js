@@ -323,3 +323,63 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
     leaves
   });
 });
+
+// get Fiscal year leaves
+exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
+  const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
+    req.fiscalYear;
+
+  const leaveCounts = await Leave.aggregate([
+    {
+      $match: {
+        leaveStatus: 'approved'
+      }
+    },
+    {
+      $unwind: '$leaveDates'
+    },
+    {
+      $match: {
+        $and: [
+          { leaveDates: { $gte: new Date(currentFiscalYearStartDate) } },
+          { leaveDates: { $lte: new Date(currentFiscalYearEndDate) } }
+        ]
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $lookup: {
+        from: 'leave_types',
+        localField: 'leaveType',
+        foreignField: '_id',
+        as: 'leaveType'
+      }
+    },
+    {
+      $group: {
+        _id: {
+          user: '$user.name',
+          leaveDates: '$leaveDates',
+          leaveType: '$leaveType.name',
+          leaveStatus: '$leaveStatus',
+          reason: '$reason',
+          halfDay: '$halfDay'
+        }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: leaveCounts
+    }
+  });
+});
