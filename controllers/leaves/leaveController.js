@@ -286,3 +286,14 @@ exports.filterExportLeaves = asyncError(async (req, res, next) => {
     }
   });
 });
+
+exports.getPendingLeavesCount = asyncError(async (req, res, next) => {
+  const leaves = await Leave.find({ leaveStatus: { $eq: 'pending' } }).count();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      leaves
+    }
+  });
+});
