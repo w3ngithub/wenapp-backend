@@ -4,6 +4,7 @@ const Attendance = require('../../models/attendances/attendanceModel');
 const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
+const common = require('../../utils/common');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
@@ -113,5 +114,27 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     data: {
       attendances
     }
+  });
+});
+
+// Get users count for today's punch in
+exports.getPunchInCountToday = asyncError(async (req, res, next) => {
+  const todayDate = common.todayDate();
+
+  const attendance = await Attendance.aggregate([
+    {
+      $match: {
+        attendanceDate: { $eq: todayDate }
+      }
+    },
+    { $group: { _id: '$user' } },
+    {
+      $count: 'count'
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    attendance
   });
 });

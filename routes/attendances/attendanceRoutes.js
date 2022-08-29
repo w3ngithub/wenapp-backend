@@ -17,6 +17,12 @@ router.get(
   attendanceController.searchAttendances
 );
 
+router.get(
+  '/today/count',
+  authMiddleware.protect,
+  attendanceController.getPunchInCountToday
+);
+
 router
   .route('/')
   .get(attendanceController.getAllAttendances)
