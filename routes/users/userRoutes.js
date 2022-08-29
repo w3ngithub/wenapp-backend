@@ -19,6 +19,8 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 // Protect all routes after this middleware
 router.use(authMiddleware.protect);
 
+router.get('/count', userController.getActiveUser);
+
 // Assigning nested routes to create user leaves and attendance by admin using a single POST request
 router.use('/:userId/leaves', leaveRouter);
 router.use('/:userId/attendances', attendanceRouter);
