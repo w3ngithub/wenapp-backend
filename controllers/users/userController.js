@@ -103,6 +103,43 @@ exports.getActiveUser = asyncError(async (req, res, next) => {
   });
 });
 
+// get users between 15 of this month to 14 of next month
+exports.getBirthMonthUser = asyncError(async (req, res, next) => {
+  const currentDate = new Date();
+
+  const activeUsers = await User.find({ active: { $ne: false } });
+
+  let birthMonthUsers = [];
+
+  if (currentDate.getMonth() === 10) {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+      return (
+        new Date(x.dob) >=
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+        new Date(x.dob) <= new Date(`${dobYear + 1}/${1}/14`)
+      );
+    });
+  } else {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+      return (
+        new Date(x.dob) >=
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+        new Date(x.dob) <=
+          new Date(`${dobYear}/${currentDate.getMonth() + 2}/14`)
+      );
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: birthMonthUsers
+    }
+  });
+});
+
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
 exports.updateUser = factory.updateOne(User);
