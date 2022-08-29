@@ -175,7 +175,8 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
         _id: 1,
         name: 1,
         newSalaryReviewDate: 1,
-        lastReviewDate: 1
+        lastReviewDate: 1,
+        photoURL: 1
       }
     }
   ]);
