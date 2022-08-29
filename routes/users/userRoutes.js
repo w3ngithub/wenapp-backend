@@ -8,7 +8,10 @@ const attendanceRouter = require('../attendances/attendanceRoutes');
 
 const router = express.Router();
 
-router.post('/invite', authController.inviteUser);
+router
+  .route('/invite')
+  .get(authController.getAllInvitedUsers)
+  .post(authController.inviteUser);
 router.post('/signup/:token', authController.signup);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
