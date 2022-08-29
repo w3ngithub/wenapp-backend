@@ -144,6 +144,8 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 
 exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   const presentDate = new Date();
+
+  // get Users with salary review time before 3 months
   const users = await User.aggregate([
     {
       $set: {
