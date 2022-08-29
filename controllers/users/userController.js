@@ -143,6 +143,7 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 // get users for review of salary
 
 exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
+  const presentDate = new Date();
   const users = await User.aggregate([
     {
       $set: {
@@ -154,10 +155,29 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
           }
         }
       }
+    },
+    {
+      $match: {
+        $and: [
+          { newSalaryReviewDate: { $gte: presentDate } },
+          {
+            newSalaryReviewDate: {
+              $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
+            }
+          }
+        ]
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        newSalaryReviewDate: 1,
+        lastReviewDate: 1
+      }
     }
   ]);
 
-  console.log(users);
   res.status(200).json({
     status: 'success',
     data: {
