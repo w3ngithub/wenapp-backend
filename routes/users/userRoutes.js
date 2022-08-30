@@ -29,6 +29,8 @@ router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);
 router.patch('/updateMe', userController.updateMe);
 router.delete('/deleteMe', userController.deleteMe);
+router.get('/birthday', userController.getBirthMonthUser);
+router.get('/salaryReview', userController.getSalarayReviewUsers);
 
 // Restrict routes to admin only after this middleware
 router.use(authMiddleware.restrictTo('admin'));

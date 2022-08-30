@@ -103,6 +103,92 @@ exports.getActiveUser = asyncError(async (req, res, next) => {
   });
 });
 
+// get users between 15 of this month to 14 of next month
+exports.getBirthMonthUser = asyncError(async (req, res, next) => {
+  const currentDate = new Date();
+
+  const activeUsers = await User.find({ active: { $ne: false } });
+
+  let birthMonthUsers = [];
+
+  if (currentDate.getMonth() === 10) {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+      return (
+        new Date(x.dob) >=
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+        new Date(x.dob) <= new Date(`${dobYear + 1}/${1}/14`)
+      );
+    });
+  } else {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+      return (
+        new Date(x.dob) >=
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+        new Date(x.dob) <=
+          new Date(`${dobYear}/${currentDate.getMonth() + 2}/14`)
+      );
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: birthMonthUsers
+    }
+  });
+});
+
+// get users for review of salary
+
+exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
+  const presentDate = new Date();
+
+  // get Users with salary review time before 3 months
+  const users = await User.aggregate([
+    {
+      $set: {
+        newSalaryReviewDate: {
+          $dateAdd: {
+            startDate: '$lastReviewDate',
+            unit: 'year',
+            amount: 1
+          }
+        }
+      }
+    },
+    {
+      $match: {
+        $and: [
+          { newSalaryReviewDate: { $gte: presentDate } },
+          {
+            newSalaryReviewDate: {
+              $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
+            }
+          }
+        ]
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        newSalaryReviewDate: 1,
+        lastReviewDate: 1,
+        photoURL: 1
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: users
+    }
+  });
+});
+
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
 exports.updateUser = factory.updateOne(User);
