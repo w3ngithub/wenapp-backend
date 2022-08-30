@@ -2,6 +2,7 @@ const express = require('express');
 
 const noticeTypeController = require('../../controllers/notices/noticeTypeController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const Notice = require('../../models/notices/noticeModel');
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
+    authMiddleware.checkIfValueToDeleteIsUsed(Notice, 'noticeType'),
+
     noticeTypeController.deleteNoticeType
   );
 

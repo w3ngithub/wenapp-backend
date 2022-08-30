@@ -6,6 +6,7 @@ const AppError = require('../../utils/appError');
 const User = require('../../models/users/userModel');
 const Invite = require('../../models/users/inviteModel');
 const sendEmail = require('../../utils/email');
+const factory = require('../factoryController');
 
 // Create sign-in token
 const signToken = (id) =>
@@ -254,3 +255,5 @@ exports.logout = (req, res) => {
   });
   res.status(200).json({ status: 'success' });
 };
+
+exports.getAllInvitedUsers = factory.getAll(Invite);

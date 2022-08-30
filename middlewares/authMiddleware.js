@@ -110,3 +110,13 @@ exports.checkTeamAccess = (req, res, next) => {
 
   next();
 };
+
+exports.checkIfValueToDeleteIsUsed = (Model, key) => async (req, res, next) => {
+  const datasUsingValue = await Model.find({ [key]: req.params.id });
+  if (datasUsingValue.length > 0)
+    return next(
+      new AppError(`Cannot delete ${key} while it is being used`, 403)
+    );
+
+  next();
+};

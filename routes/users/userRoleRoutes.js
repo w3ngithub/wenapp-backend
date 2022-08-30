@@ -2,6 +2,7 @@ const express = require('express');
 
 const userRoleController = require('../../controllers/users/userRoleController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const User = require('../../models/users/userModel');
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.checkIfValueToDeleteIsUsed(User, 'role'),
+
     userRoleController.deleteUserRole
   );
 
