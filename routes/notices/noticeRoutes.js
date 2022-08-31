@@ -2,6 +2,7 @@ const express = require('express');
 
 const noticeController = require('../../controllers/notices/noticeController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const getWeekDateMiddleware = require('../../middlewares/getweekDateMiddleware');
 
 const router = express.Router();
 
@@ -13,6 +14,12 @@ router
     authMiddleware.restrictTo('admin', 'hr'),
     noticeController.createNotice
   );
+
+router.get(
+  '/weekNotices',
+  getWeekDateMiddleware.getWeekDate,
+  noticeController.getWeekNotices
+);
 
 router
   .route('/:id')
