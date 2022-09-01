@@ -111,23 +111,40 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 
   let birthMonthUsers = [];
 
-  if (currentDate.getMonth() === 10) {
+  if (currentDate.getMonth() === 11) {
     birthMonthUsers = activeUsers.filter((x) => {
       const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() < 15) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth()}/15`) &&
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
+        );
+      }
       return (
         new Date(x.dob) >=
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
-        new Date(x.dob) <= new Date(`${dobYear + 1}/${1}/14`)
+        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`)
       );
     });
   } else {
     birthMonthUsers = activeUsers.filter((x) => {
       const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() > 14) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+          new Date(x.dob) <
+            new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
+        );
+      }
       return (
         new Date(x.dob) >=
-          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
-        new Date(x.dob) <=
-          new Date(`${dobYear}/${currentDate.getMonth() + 2}/14`)
+          new Date(`${dobYear}/${currentDate.getMonth()}/15`) &&
+        new Date(x.dob) <
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
       );
     });
   }
