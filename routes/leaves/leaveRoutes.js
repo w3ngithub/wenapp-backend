@@ -3,6 +3,7 @@ const express = require('express');
 const leaveController = require('../../controllers/leaves/leaveController');
 const authMiddleware = require('../../middlewares/authMiddleware');
 const fiscalYearMiddleware = require('../../middlewares/fiscalYearMiddleware');
+const getWeekDateMiddleware = require('../../middlewares/getweekDateMiddleware');
 
 const router = express.Router({ mergeParams: true });
 
@@ -28,6 +29,12 @@ router.get(
   '/users/fiscalYearLeaves',
   fiscalYearMiddleware.getFiscalYear,
   leaveController.getFiscalYearLeaves
+);
+
+router.get(
+  '/users/weekLeaves',
+  getWeekDateMiddleware.getWeekDate,
+  leaveController.getWeekLeaves
 );
 
 router.get(
