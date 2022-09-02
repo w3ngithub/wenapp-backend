@@ -208,6 +208,59 @@ exports.getUsersOnLeaveToday = asyncError(async (req, res, next) => {
   });
 });
 
+// Get week range approved leaves
+exports.getWeekLeaves = asyncError(async (req, res, next) => {
+  const { todayDate, afterOneWeekDate } = req;
+
+  const leave = await Leave.aggregate([
+    {
+      $unwind: '$leaveDates'
+    },
+    {
+      $match: {
+        leaveStatus: 'approved',
+        $and: [
+          { leaveDates: { $gte: todayDate } },
+          { leaveDates: { $lte: afterOneWeekDate } }
+        ]
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $lookup: {
+        from: 'leave_types',
+        localField: 'leaveType',
+        foreignField: '_id',
+        as: 'leaveType'
+      }
+    },
+    {
+      $group: {
+        _id: {
+          user: '$user.name',
+          leaveDates: '$leaveDates',
+          halfDay: '$halfDay',
+          leaveType: '$leaveType.name'
+        }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: leave
+    }
+  });
+});
+
 // Delete selected leave dates of user
 exports.deleteSelectedLeaveDate = asyncError(async (req, res, next) => {
   const leaveId = mongoose.Types.ObjectId(req.params.leaveId);
