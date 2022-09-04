@@ -214,7 +214,11 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
 });
 
 exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
-  console.log(req.body);
+  await Attendance.updateMany(
+    { _id: { $in: req.body } },
+    { lateArrivalLeaveCut: true }
+  );
+
   res.status(200).json({
     status: 'success',
     data: 'Successfull !'
