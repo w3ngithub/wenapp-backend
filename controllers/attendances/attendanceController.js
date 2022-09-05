@@ -138,3 +138,89 @@ exports.getPunchInCountToday = asyncError(async (req, res, next) => {
     attendance
   });
 });
+
+// Search attendaces with late arrival time
+exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
+  const { fromDate, toDate, user } = req.query;
+
+  const matchConditions = [
+    { attendanceDate: { $gte: new Date(fromDate) } },
+    { attendanceDate: { $lte: new Date(toDate) } }
+  ];
+
+  if (user) {
+    matchConditions.push({
+      user: mongoose.Types.ObjectId(user)
+    });
+  }
+
+  const attendances = await Attendance.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $set: {
+        user: {
+          $arrayElemAt: ['$user.name', 0]
+        },
+        userId: { $arrayElemAt: ['$user._id', 0] }
+      }
+    },
+    {
+      $addFields: {
+        punchHour: {
+          $hour: '$punchInTime'
+        },
+        PunchMinutes: {
+          $minute: '$punchInTime'
+        }
+      }
+    },
+    {
+      $match: {
+        $or: [
+          { $and: [{ punchHour: { $eq: 3 } }, { PunchMinutes: { $gt: 25 } }] },
+          { $and: [{ punchHour: { $gt: 3 } }] }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: {
+          userId: '$userId',
+          user: '$user'
+        },
+        data: { $push: '$$ROOT' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      attendances: attendances
+    }
+  });
+});
+
+exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
+  await Attendance.updateMany(
+    { _id: { $in: req.body } },
+    { lateArrivalLeaveCut: true }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: 'Successfull !'
+  });
+});

@@ -23,6 +23,18 @@ router.get(
   attendanceController.getPunchInCountToday
 );
 
+router.get(
+  '/lateArrival',
+  authMiddleware.protect,
+  attendanceController.getLateArrivalAttendances
+);
+
+router.post(
+  '/updateLateAttendace',
+  authMiddleware.protect,
+  attendanceController.leaveCutForLateAttendace
+);
+
 router
   .route('/')
   .get(attendanceController.getAllAttendances)
