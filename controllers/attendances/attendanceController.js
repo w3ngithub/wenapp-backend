@@ -177,6 +177,37 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
       }
     },
     {
+      $group: {
+        _id: { attendaceDate: '$attendanceDate', user: '$userId' },
+        data: { $push: '$$ROOT' }
+      }
+    },
+    {
+      $unwind: '$data'
+    },
+    { $sort: { 'data.punchInTime': 1 } },
+    {
+      $group: {
+        _id: '$_id',
+        data: { $first: '$$ROOT' }
+      }
+    },
+    {
+      $unwind: '$data'
+    },
+    {
+      $project: {
+        _id: '$data.data._id',
+        attendanceDate: '$data.data.attendanceDate',
+        user: '$data.data.user',
+        lateArrivalLeaveCut: '$data.data.lateArrivalLeaveCut',
+        midDayExit: '$data.data.midDayExit',
+        punchInTime: '$data.data.punchInTime',
+        punchOutTime: '$data.data.punchOutTime',
+        userId: '$data.data.userId'
+      }
+    },
+    {
       $addFields: {
         punchHour: {
           $hour: '$punchInTime'
