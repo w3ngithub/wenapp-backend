@@ -18,7 +18,8 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
     midDayExit: req.body.midDayExit,
     punchOutTime: Date.now(),
     punchOutNote: req.body.punchOutNote,
-    updatedBy: req.user.id
+    updatedBy: req.user.id,
+    punchOutLocation: req.body.punchOutLocation
   };
 
   const doc = await Attendance.findByIdAndUpdate(req.params.id, reqBody, {
@@ -96,7 +97,9 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             user: '$user',
             _id: '$_id',
             punchOutNote: '$punchOutNote',
-            punchInNote: '$punchInNote'
+            punchInNote: '$punchInNote',
+            punchInLocation: '$punchInLocation',
+            punchOutLocation: '$punchOutLocation'
           }
         }
       }
@@ -204,7 +207,9 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         midDayExit: '$data.data.midDayExit',
         punchInTime: '$data.data.punchInTime',
         punchOutTime: '$data.data.punchOutTime',
-        userId: '$data.data.userId'
+        userId: '$data.data.userId',
+        punchInLocation: '$punchInLocation',
+        punchOutLocation: '$punchOutLocation'
       }
     },
     {

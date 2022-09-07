@@ -16,6 +16,12 @@ const attendanceSchema = new mongoose.Schema(
       default: Date.now(),
       required: [true, 'Please provide punch in time.']
     },
+    punchInLocation: {
+      type: [Number, Number]
+    },
+    punchOutLocation: {
+      type: [Number, Number]
+    },
     punchOutTime: Date,
     punchInNote: String,
     punchOutNote: String,
