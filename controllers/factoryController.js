@@ -32,7 +32,8 @@ exports.getAll = (Model) =>
       .filter()
       .sort()
       .limitFields()
-      .paginate();
+      .paginate()
+      .search();
 
     const [doc, count] = await Promise.all([
       features.query,

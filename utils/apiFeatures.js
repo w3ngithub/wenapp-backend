@@ -59,5 +59,18 @@ class APIFeatures {
 
     return this;
   }
+
+  search() {
+    const searchTerm = this.queryString.search;
+    const query = searchTerm
+      ? {
+          name: { $regex: searchTerm, $options: 'i' }
+        }
+      : {};
+    this.query = this.query.find(query);
+
+    this.formattedQuery = { ...this.formattedQuery, ...query };
+    return this;
+  }
 }
 module.exports = APIFeatures;
