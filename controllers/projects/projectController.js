@@ -4,6 +4,7 @@ const Project = require('../../models/projects/projectModel');
 const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
+const APIFeatures = require('../../utils/apiFeatures');
 
 exports.getProject = factory.getOne(Project, { path: 'timeLogs' });
 exports.getAllProjects = factory.getAll(Project);
@@ -13,20 +14,35 @@ exports.deleteProject = factory.deleteOne(Project);
 
 // Partial search for the project name
 exports.searchProject = asyncError(async (req, res, next) => {
-  const searchTerm = `${req.params.term}`;
+  const searchTerm = req.query.search;
 
-  const project = await Project.find({
-    name: { $regex: searchTerm, $options: 'i' }
-  });
+  // const project = await Project.find({
+  //   name: { $regex: searchTerm, $options: 'i' }
+  // });
+  const nameQuery = searchTerm
+    ? {
+        name: { $regex: searchTerm, $options: 'i' }
+      }
+    : {};
+  const features = new APIFeatures(Project.find(nameQuery), req.query)
+    .filter()
+    .limitFields()
+    .paginate();
 
-  if (!project) {
+  const [doc, count] = await Promise.all([
+    features.query,
+    Project.countDocuments({ ...features.formattedQuery, ...nameQuery })
+  ]);
+
+  if (!doc) {
     return next(new AppError('No project found.', 400));
   }
 
   res.status(200).json({
     status: 'success',
     data: {
-      data: project
+      data: doc,
+      count
     }
   });
 });

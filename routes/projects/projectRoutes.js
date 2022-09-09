@@ -8,13 +8,13 @@ const router = express.Router();
 
 router.use('/:projectId/timelogs', timeLogRouter);
 
-router.get('/search/:term', projectController.searchProject);
+// router.get('/search/:term', projectController.searchProject);
 router.get('/:projectId/totaltime', projectController.getTotalTimeSpent);
 router.get('/:projectId/weeklytime', projectController.getWeeklyTimeSpent);
 
 router
   .route('/')
-  .get(projectController.getAllProjects)
+  .get(projectController.searchProject)
   .post(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),

@@ -9,6 +9,12 @@ const router = express.Router({ mergeParams: true });
 
 router.get('/', leaveController.getAllLeaves);
 router.get('/:id', leaveController.getLeave);
+router.get(
+  '/users/weekLeaves',
+  getWeekDateMiddleware.getWeekDate,
+  leaveController.getWeekLeaves
+);
+router.get('/users/today/count', leaveController.getUsersCountOnLeaveToday);
 
 // Protect all routes after this middleware
 router.use(authMiddleware.protect);
@@ -32,18 +38,11 @@ router.get(
 );
 
 router.get(
-  '/users/weekLeaves',
-  getWeekDateMiddleware.getWeekDate,
-  leaveController.getWeekLeaves
-);
-
-router.get(
   '/users/leavedays',
   fiscalYearMiddleware.getFiscalYear,
   leaveController.calculateLeaveDaysOfUsers
 );
 router.get('/users/today', leaveController.getUsersOnLeaveToday);
-router.get('/users/today/count', leaveController.getUsersCountOnLeaveToday);
 router.patch('/:leaveId/status/:status', leaveController.updateLeaveStatus);
 router.patch('/:leaveId/:leaveDate', leaveController.deleteSelectedLeaveDate);
 

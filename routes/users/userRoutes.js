@@ -18,6 +18,7 @@ router.get('/logout', authController.logout);
 
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
+router.get('/', userController.getAllUsers);
 
 // Protect all routes after this middleware
 router.use(authMiddleware.protect);
@@ -37,8 +38,6 @@ router.get('/salaryReview', userController.getSalarayReviewUsers);
 
 // Restrict routes to admin only after this middleware
 router.use(authMiddleware.restrictTo('admin'));
-
-router.get('/', userController.getAllUsers);
 
 router.post('/import', userController.importUsers);
 
