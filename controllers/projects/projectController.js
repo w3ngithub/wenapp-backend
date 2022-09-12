@@ -40,6 +40,11 @@ exports.setProjectUserIds = (req, res, next) => {
 
 // Check if project belongs to the user
 exports.checkProjectOfUser = asyncError(async (req, res, next) => {
+  // pass to next middleware if project matches following id
+  if (req.body.project === process.env.OTHER_PROJECT_ID) {
+    next();
+    return;
+  }
   const projectId = mongoose.Types.ObjectId(req.body.project);
   const userId = mongoose.Types.ObjectId(req.body.user);
 
