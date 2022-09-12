@@ -5,12 +5,49 @@ const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
+const APIFeatures = require('../../utils/apiFeatures');
 
 exports.getTimeLog = factory.getOne(TimeLog);
 exports.getAllTimeLogs = factory.getAll(TimeLog);
 exports.createTimeLog = factory.createOne(TimeLog);
 exports.updateTimeLog = factory.updateOne(TimeLog);
 exports.deleteTimeLog = factory.deleteOne(TimeLog);
+
+// Get weekly logs of user
+exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
+  const { firstDayOfWeek, lastDayOfWeek } = common.dateInThisWeek();
+
+  const features = new APIFeatures(
+    TimeLog.find({
+      $and: [
+        { createdAt: { $gte: firstDayOfWeek } },
+        { createdAt: { $lte: lastDayOfWeek } }
+      ]
+    }),
+    req.query
+  )
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const [doc, count] = await Promise.all([
+    features.query,
+    TimeLog.countDocuments({
+      ...features.formattedQuery,
+      createdAt: { $gte: firstDayOfWeek }
+    })
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    results: doc.length,
+    data: {
+      data: doc,
+      count
+    }
+  });
+});
 
 // Check for allowed time log days before add/edit
 exports.checkTimeLogDays = (req, res, next) => {
