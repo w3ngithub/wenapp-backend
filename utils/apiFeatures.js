@@ -7,7 +7,7 @@ class APIFeatures {
 
   filter() {
     const queryObj = { ...this.queryString };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    const excludedFields = ['page', 'sort', 'limit', 'fields', 'search'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
     // Delete key/value from object is value is empty in query string
@@ -57,6 +57,19 @@ class APIFeatures {
 
     this.query = this.query.skip(skip).limit(limit);
 
+    return this;
+  }
+
+  search() {
+    const searchTerm = this.queryString.search;
+    const query = searchTerm
+      ? {
+          name: { $regex: searchTerm, $options: 'i' }
+        }
+      : {};
+    this.query = this.query.find(query);
+
+    this.formattedQuery = { ...this.formattedQuery, ...query };
     return this;
   }
 }
