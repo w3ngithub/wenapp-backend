@@ -10,6 +10,7 @@ router.use(authMiddleware.protect);
 
 router.get('/users/weeklytime', timeLogController.getUserWeeklyTimeSpent);
 router.get('/users/todaytime', timeLogController.getUserTodayTimeSpent);
+router.get('/users/weeklyLogs', timeLogController.getWeeklyLogsOfUser);
 router.post('/weeklyreport', timeLogController.getWeeklyReport);
 router.post('/chart', timeLogController.getTimelogForChart);
 
