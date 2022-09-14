@@ -13,6 +13,7 @@ router.get('/users/todaytime', timeLogController.getUserTodayTimeSpent);
 router.get('/users/weeklyLogs', timeLogController.getWeeklyLogsOfUser);
 router.post('/weeklyreport', timeLogController.getWeeklyReport);
 router.post('/chart', timeLogController.getTimelogForChart);
+router.post('/worklogs', timeLogController.getWorklogReport);
 
 router
   .route('/')

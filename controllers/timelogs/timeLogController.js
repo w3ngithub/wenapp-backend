@@ -299,3 +299,91 @@ exports.getTimelogForChart = asyncError(async (req, res, next) => {
     }
   });
 });
+
+// Get worklog reports
+exports.getWorklogReport = asyncError(async (req, res, next) => {
+  const { fromDate, toDate, logType, user, project } = req.query;
+
+  const matchConditions = [
+    { logDate: { $gte: new Date(fromDate) } },
+    { logDate: { $lte: new Date(toDate) } }
+  ];
+
+  if (logType) {
+    matchConditions.push({
+      logType: { $eq: mongoose.Types.ObjectId(logType) }
+    });
+  }
+
+  if (user) {
+    matchConditions.push({
+      user: { $eq: mongoose.Types.ObjectId(user) }
+    });
+  }
+
+  if (project) {
+    matchConditions.push({
+      project: { $eq: mongoose.Types.ObjectId(project) }
+    });
+  }
+
+  const report = await TimeLog.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $lookup: {
+        from: 'projects',
+        localField: 'project',
+        foreignField: '_id',
+        pipeline: [
+          {
+            $project: {
+              name: 1
+            }
+          }
+        ],
+        as: 'project'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        pipeline: [
+          {
+            $project: {
+              name: 1
+            }
+          }
+        ],
+        as: 'user'
+      }
+    },
+    {
+      $group: {
+        _id: '$user',
+        timeLogs: {
+          $push: {
+            project: '$project',
+            logType: '$logType',
+            logDate: '$logDate',
+            totalHours: '$totalHours',
+            remarks: '$remarks'
+          }
+        },
+        totalTimeSpent: { $sum: '$totalHours' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      report
+    }
+  });
+});
