@@ -242,13 +242,12 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
       }
     },
     {
-      $group: {
-        _id: {
-          user: '$user.name',
-          leaveDates: '$leaveDates',
-          halfDay: '$halfDay',
-          leaveType: '$leaveType.name'
-        }
+      $project: {
+        _id: '$user._id',
+        user: '$user.name',
+        leaveDates: '$leaveDates',
+        halfDay: '$halfDay',
+        leaveType: '$leaveType.name'
       }
     }
   ]);
