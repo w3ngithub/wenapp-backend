@@ -16,7 +16,7 @@ router
 
 router
   .route('/:id')
-  .get(leaveQuarterController.getLeaveType)
+  .get(leaveQuarterController.getLeaveQuarter)
   .patch(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
