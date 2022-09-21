@@ -20,6 +20,8 @@ const timeLogTypeRouter = require('./routes/timelogs/timeLogTypeRoutes');
 const timeLogRouter = require('./routes/timelogs/timeLogRoutes');
 
 const leaveTypeRouter = require('./routes/leaves/leaveTypeRoutes');
+const leaveQuarterRouter = require('./routes/leaves/leaveQuarterRoutes');
+
 const leaveRouter = require('./routes/leaves/leaveRoutes');
 
 const blogCategoryRouter = require('./routes/blogs/blogCategoryRoutes');
@@ -74,6 +76,8 @@ app.use('/api/v1/timelogs/types', timeLogTypeRouter);
 app.use('/api/v1/timelogs', timeLogRouter);
 
 app.use('/api/v1/leaves/types', leaveTypeRouter);
+app.use('/api/v1/leaves/quarters', leaveQuarterRouter);
+
 app.use('/api/v1/leaves', leaveRouter);
 
 app.use('/api/v1/blogs/categories', blogCategoryRouter);
