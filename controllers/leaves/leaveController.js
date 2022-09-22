@@ -56,7 +56,8 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
 
 // Calculate remaining and applied leave days
 exports.calculateLeaveDays = asyncError(async (req, res, next) => {
-  const { fromDate, toDate } = req.query;
+  const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
+    req.fiscalYear;
 
   const userId = mongoose.Types.ObjectId(req.params.userId);
 
@@ -69,8 +70,8 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
         user: userId,
         leaveStatus: 'approved',
         $and: [
-          { leaveDates: { $gte: new Date(fromDate) } },
-          { leaveDates: { $lte: new Date(toDate) } }
+          { leaveDates: { $gte: new Date(currentFiscalYearStartDate) } },
+          { leaveDates: { $lte: new Date(currentFiscalYearEndDate) } }
         ]
       }
     },
