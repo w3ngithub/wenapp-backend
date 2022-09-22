@@ -6,6 +6,7 @@ const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
 const APIFeatures = require('../../utils/apiFeatures');
+const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 
 exports.getLeave = factory.getOne(Leave);
 // exports.getAllLeaves = factory.getAll(Leave);
@@ -97,7 +98,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   });
 });
 
-// Calculate  applied leave days of a user
+// Calculate  applied leave days of a user of a year
 exports.calculateLeaveDays = asyncError(async (req, res, next) => {
   const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
     req.fiscalYear;
@@ -141,6 +142,75 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
     status: 'success',
     data: {
       data: leaveCounts
+    }
+  });
+});
+
+// Calculate  applied leave days of a user of a quarter
+exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
+  const latestYearQuarter = await LeaveQuarter.findOne().sort({
+    createdAt: -1
+  });
+
+  const userId = mongoose.Types.ObjectId(req.params.userId);
+
+  const { firstQuarter, secondQuarter, thirdQuarter, fourthQuarter } =
+    latestYearQuarter;
+
+  const quarterLeaves = await Promise.all(
+    [firstQuarter, secondQuarter, thirdQuarter, fourthQuarter].map((q) => {
+      const { fromDate, toDate } = q;
+      return Leave.aggregate([
+        {
+          $match: {
+            user: userId,
+            leaveStatus: 'approved',
+            $or: [
+              {
+                leaveType: mongoose.Types.ObjectId('62c3f671b6ed15a7c9b1f14c')
+              },
+              { leaveType: mongoose.Types.ObjectId('62c3f68fb6ed15a7c9b1f152') }
+            ]
+          }
+        },
+        {
+          $unwind: '$leaveDates'
+        },
+        {
+          $match: {
+            $and: [
+              { leaveDates: { $gte: new Date(fromDate) } },
+              { leaveDates: { $lte: new Date(toDate) } }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'leave_types',
+            localField: 'leaveType',
+            foreignField: '_id',
+            as: 'leaveType'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            leavesTaken: {
+              $sum: {
+                $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
+              }
+            }
+          }
+        }
+      ]);
+    })
+  );
+
+  console.log(req.user);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: quarterLeaves
     }
   });
 });

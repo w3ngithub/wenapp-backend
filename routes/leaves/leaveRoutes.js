@@ -51,6 +51,13 @@ router.get(
   leaveController.calculateLeaveDays
 );
 
+router.get(
+  '/:userId/quarterleavedays',
+  authMiddleware.setUserIdForNestedRoutes,
+  fiscalYearMiddleware.getFiscalYear,
+  leaveController.calculateLeaveDaysofQuarter
+);
+
 router.post(
   '/filter',
   authMiddleware.restrictTo('admin'),
