@@ -5,14 +5,57 @@ const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
+const APIFeatures = require('../../utils/apiFeatures');
 
 exports.getLeave = factory.getOne(Leave);
-exports.getAllLeaves = factory.getAll(Leave);
+// exports.getAllLeaves = factory.getAll(Leave);
 exports.createLeave = factory.createOne(Leave);
 exports.updateLeave = factory.updateOne(Leave);
 exports.deleteLeave = factory.deleteOne(Leave);
 
 const allocatedLeaveDays = process.env.ALLOCATED_TOTAL_LEAVE_DAYS * 1;
+
+exports.getAllLeaves = asyncError(async (req, res, next) => {
+  const { fromDate, toDate } = req.query;
+
+  const features = new APIFeatures(Leave.find({}), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate()
+    .search();
+  if (fromDate && toDate) {
+    const doc = await features.query.find({
+      leaveDates: { $gt: fromDate, $lt: toDate }
+    });
+    const count = await Leave.countDocuments({
+      ...features.formattedQuery,
+      leaveDates: { $gt: fromDate, $lt: toDate }
+    });
+
+    res.status(200).json({
+      status: 'success',
+      results: doc.length,
+      data: {
+        data: doc,
+        count
+      }
+    });
+  } else {
+    const [doc, count] = await Promise.all([
+      features.query,
+      Leave.countDocuments(features.formattedQuery)
+    ]);
+    res.status(200).json({
+      status: 'success',
+      results: doc.length,
+      data: {
+        data: doc,
+        count
+      }
+    });
+  }
+});
 
 // Update leave status of user for approve or cancel
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
