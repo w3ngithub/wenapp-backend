@@ -54,11 +54,10 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   });
 });
 
-// Calculate remaining and applied leave days
+// Calculate  applied leave days of a user
 exports.calculateLeaveDays = asyncError(async (req, res, next) => {
   const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
     req.fiscalYear;
-
   const userId = mongoose.Types.ObjectId(req.params.userId);
 
   const leaveCounts = await Leave.aggregate([
@@ -76,21 +75,20 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
       }
     },
     {
+      $lookup: {
+        from: 'leave_types',
+        localField: 'leaveType',
+        foreignField: '_id',
+        as: 'leaveType'
+      }
+    },
+    {
       $group: {
-        _id: 'null',
+        _id: '$leaveType',
         leavesTaken: {
           $sum: {
             $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
           }
-        }
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        leavesTaken: 1,
-        leavesRemaining: {
-          $subtract: [allocatedLeaveDays, '$leavesTaken']
         }
       }
     }
