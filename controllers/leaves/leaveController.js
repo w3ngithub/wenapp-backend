@@ -80,7 +80,7 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
         _id: 'null',
         leavesTaken: {
           $sum: {
-            $cond: [{ $eq: ['$halfDay', false] }, 1, 0.5]
+            $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
           }
         }
       }
@@ -106,8 +106,7 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
 
 // Calculate remaining and applied leave days of all users
 exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
-  const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
-    req.fiscalYear;
+  const { fromDate, toDate } = req.query;
 
   const leaveCounts = await Leave.aggregate([
     {
@@ -117,8 +116,8 @@ exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
       $match: {
         leaveStatus: 'approved',
         $and: [
-          { leaveDates: { $gte: new Date(currentFiscalYearStartDate) } },
-          { leaveDates: { $lte: new Date(currentFiscalYearEndDate) } }
+          { leaveDates: { $gte: new Date(fromDate) } },
+          { leaveDates: { $lte: new Date(toDate) } }
         ]
       }
     },
@@ -135,7 +134,7 @@ exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
         _id: '$user.name',
         leavesTaken: {
           $sum: {
-            $cond: [{ $eq: ['$halfDay', false] }, 1, 0.5]
+            $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
           }
         }
       }
