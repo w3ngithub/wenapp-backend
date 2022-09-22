@@ -8,8 +8,8 @@ const leaveSchema = new mongoose.Schema(
       required: [true, 'Please provide user for leave.']
     },
     halfDay: {
-      type: Boolean,
-      default: false
+      type: String,
+      default: ''
     },
     leaveType: {
       type: mongoose.Schema.ObjectId,
