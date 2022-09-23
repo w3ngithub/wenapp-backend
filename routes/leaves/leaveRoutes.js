@@ -28,9 +28,6 @@ router.post(
 );
 router.patch('/:id', leaveController.updateLeave);
 
-// Restrict all routes after this middleware
-router.use(authMiddleware.restrictTo('admin'));
-
 router.get(
   '/users/fiscalYearLeaves',
   fiscalYearMiddleware.getFiscalYear,
@@ -39,6 +36,7 @@ router.get(
 
 router.get(
   '/users/leavedays',
+  authMiddleware.restrictTo('admin'),
   fiscalYearMiddleware.getFiscalYear,
   leaveController.calculateLeaveDaysOfUsers
 );
@@ -53,7 +51,22 @@ router.get(
   leaveController.calculateLeaveDays
 );
 
-router.post('/filter', leaveController.filterExportLeaves);
-router.delete('/:id', leaveController.deleteLeave);
+router.get(
+  '/:userId/quarterleavedays',
+  authMiddleware.setUserIdForNestedRoutes,
+  fiscalYearMiddleware.getFiscalYear,
+  leaveController.calculateLeaveDaysofQuarter
+);
+
+router.post(
+  '/filter',
+  authMiddleware.restrictTo('admin'),
+  leaveController.filterExportLeaves
+);
+router.delete(
+  '/:id',
+  authMiddleware.restrictTo('admin'),
+  leaveController.deleteLeave
+);
 
 module.exports = router;

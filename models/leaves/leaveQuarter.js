@@ -10,6 +10,10 @@ const leaveSchema = new mongoose.Schema(
       toDate: {
         type: Date,
         required: true
+      },
+      leaves: {
+        required: true,
+        type: Number
       }
     },
     secondQuarter: {
@@ -20,6 +24,10 @@ const leaveSchema = new mongoose.Schema(
       toDate: {
         type: Date,
         required: true
+      },
+      leaves: {
+        required: true,
+        type: Number
       }
     },
     thirdQuarter: {
@@ -30,6 +38,24 @@ const leaveSchema = new mongoose.Schema(
       toDate: {
         type: Date,
         required: true
+      },
+      leaves: {
+        required: true,
+        type: Number
+      }
+    },
+    fourthQuarter: {
+      fromDate: {
+        type: Date,
+        required: true
+      },
+      toDate: {
+        type: Date,
+        required: true
+      },
+      leaves: {
+        required: true,
+        type: Number
       }
     }
   },
