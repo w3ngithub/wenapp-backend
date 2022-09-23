@@ -9,7 +9,6 @@ const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 
 exports.getLeave = factory.getOne(Leave);
-// exports.getAllLeaves = factory.getAll(Leave);
 exports.createLeave = factory.createOne(Leave);
 exports.updateLeave = factory.updateOne(Leave);
 exports.deleteLeave = factory.deleteOne(Leave);

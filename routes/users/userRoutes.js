@@ -40,6 +40,7 @@ router.get('/salaryReview', userController.getSalarayReviewUsers);
 router.use(authMiddleware.restrictTo('admin'));
 
 router.post('/import', userController.importUsers);
+router.patch('/resetAllocatedLeaves', userController.resetAllocatedLeaves);
 
 router
   .route('/:id')
