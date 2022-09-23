@@ -206,11 +206,27 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
     })
   );
 
-  console.log(req.user);
+  const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
+  const allocatedLeavesOfUser = JSON.parse(allocatedLeaves || '{}');
+
+  const totalQuarter = Object.values(allocatedLeavesOfUser);
+  quarterLeaves.length = totalQuarter.length;
+
+  let remainingLeaves = 0;
+
+  totalQuarter.forEach((q, i) => {
+    if (q - quarterLeaves[i][0].leavesTaken > 0) {
+      remainingLeaves += q - quarterLeaves[0].leavesTaken;
+    }
+  });
+
+  const { leavesTaken } = quarterLeaves.at(-1)[0];
+
   res.status(200).json({
     status: 'success',
     data: {
-      data: quarterLeaves
+      remainingLeaves,
+      leavesTaken
     }
   });
 });
