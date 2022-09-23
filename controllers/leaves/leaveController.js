@@ -207,7 +207,7 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
   );
 
   const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
-  const allocatedLeavesOfUser = JSON.parse(allocatedLeaves || '{}');
+  const allocatedLeavesOfUser = allocatedLeaves || {};
 
   const totalQuarter = Object.values(allocatedLeavesOfUser);
   quarterLeaves.length = totalQuarter.length;
@@ -251,6 +251,12 @@ exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
         $and: [
           { leaveDates: { $gte: new Date(fromDate) } },
           { leaveDates: { $lte: new Date(toDate) } }
+        ],
+        $or: [
+          {
+            leaveType: mongoose.Types.ObjectId('62c3f671b6ed15a7c9b1f14c')
+          },
+          { leaveType: mongoose.Types.ObjectId('62c3f68fb6ed15a7c9b1f152') }
         ]
       }
     },
