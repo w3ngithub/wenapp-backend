@@ -50,6 +50,14 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'User_Position_Type'
     },
+    status: {
+      type: String,
+      enum: ['Permanent', 'Probation'],
+      default: 'Permanent'
+    },
+    allocatedLeaves: {
+      type: String
+    },
     active: {
       type: Boolean,
       default: true
