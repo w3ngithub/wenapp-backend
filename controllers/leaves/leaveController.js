@@ -145,6 +145,7 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
 
 // Calculate  applied leave days of a user of a quarter
 exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
+  const { leaveTypes } = req;
   const latestYearQuarter = await LeaveQuarter.findOne().sort({
     createdAt: -1
   });
@@ -194,9 +195,9 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
             leaveStatus: 'approved',
             $or: [
               {
-                leaveType: mongoose.Types.ObjectId('62c3f671b6ed15a7c9b1f14c')
+                leaveType: leaveTypes[0]._id
               },
-              { leaveType: mongoose.Types.ObjectId('62c3f68fb6ed15a7c9b1f152') }
+              { leaveType: leaveTypes[1]._id }
             ]
           }
         },
@@ -266,6 +267,7 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
 // Calculate remaining and applied leave days of all users
 exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
   const { quarter } = req.query;
+  const { leaveTypes } = req;
 
   const latestYearQuarter = await LeaveQuarter.findOne().sort({
     createdAt: -1
@@ -299,9 +301,9 @@ exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
             ],
             $or: [
               {
-                leaveType: mongoose.Types.ObjectId('62c3f671b6ed15a7c9b1f14c')
+                leaveType: leaveTypes[0]._id
               },
-              { leaveType: mongoose.Types.ObjectId('62c3f68fb6ed15a7c9b1f152') }
+              { leaveType: leaveTypes[1]._id }
             ]
           }
         },
