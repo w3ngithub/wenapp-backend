@@ -206,20 +206,26 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
   );
 
   const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
-  const allocatedLeavesOfUser = JSON.parse(allocatedLeaves || '{}');
+  const allocatedLeavesOfUser = allocatedLeaves || {};
 
   const totalQuarter = Object.values(allocatedLeavesOfUser);
   quarterLeaves.length = totalQuarter.length;
 
   let remainingLeaves = 0;
 
-  totalQuarter.forEach((q, i) => {
-    if (q - quarterLeaves[i][0].leavesTaken > 0) {
-      remainingLeaves += q - quarterLeaves[0].leavesTaken;
-    }
-  });
+  if (req.user.position.name !== 'Intern') {
+    totalQuarter.forEach((q, i) => {
+      if (q - quarterLeaves[i][0].leavesTaken > 0) {
+        remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
+      }
+    });
+  }
 
-  const { leavesTaken } = quarterLeaves.at(-1)[0];
+  const { leavesTaken } = quarterLeaves[quarterLeaves.length - 1][0];
+
+  if (remainingLeaves === 0) {
+    remainingLeaves = totalQuarter[totalQuarter.length - 1] - leavesTaken;
+  }
 
   res.status(200).json({
     status: 'success',
@@ -244,6 +250,12 @@ exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
         $and: [
           { leaveDates: { $gte: new Date(fromDate) } },
           { leaveDates: { $lte: new Date(toDate) } }
+        ],
+        $or: [
+          {
+            leaveType: mongoose.Types.ObjectId('62c3f671b6ed15a7c9b1f14c')
+          },
+          { leaveType: mongoose.Types.ObjectId('62c3f68fb6ed15a7c9b1f152') }
         ]
       }
     },
