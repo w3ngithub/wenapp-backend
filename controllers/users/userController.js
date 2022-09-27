@@ -217,9 +217,9 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
       {
         allocatedLeaves: {
           firstQuarter: 4,
-          secondQuarter: 0,
-          thirdQuarter: 0,
-          fourthQuarter: 0
+          secondQuarter: 4,
+          thirdQuarter: 4,
+          fourthQuarter: 3
         }
       }
     );
