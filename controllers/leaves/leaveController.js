@@ -13,8 +13,6 @@ exports.createLeave = factory.createOne(Leave);
 exports.updateLeave = factory.updateOne(Leave);
 exports.deleteLeave = factory.deleteOne(Leave);
 
-const allocatedLeaveDays = process.env.ALLOCATED_TOTAL_LEAVE_DAYS * 1;
-
 exports.getAllLeaves = asyncError(async (req, res, next) => {
   const { fromDate, toDate } = req.query;
 
@@ -156,8 +154,38 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
   const { firstQuarter, secondQuarter, thirdQuarter, fourthQuarter } =
     latestYearQuarter;
 
+  const currentDate = new Date();
+  let currentQuarterIndex = 0;
+  if (
+    currentDate >= new Date(firstQuarter.fromDate) &&
+    currentDate <= new Date(firstQuarter.toDate)
+  ) {
+    currentQuarterIndex = 1;
+  } else if (
+    currentDate >= new Date(secondQuarter.fromDate) &&
+    currentDate <= new Date(secondQuarter.toDate)
+  ) {
+    currentQuarterIndex = 2;
+  } else if (
+    currentDate >= new Date(thirdQuarter.fromDate) &&
+    currentDate <= new Date(thirdQuarter.toDate)
+  ) {
+    currentQuarterIndex = 3;
+  } else {
+    currentQuarterIndex = 4;
+  }
+
+  const tillNowQuarter = [
+    firstQuarter,
+    secondQuarter,
+    thirdQuarter,
+    fourthQuarter
+  ];
+
+  tillNowQuarter.length = currentQuarterIndex;
+
   const quarterLeaves = await Promise.all(
-    [firstQuarter, secondQuarter, thirdQuarter, fourthQuarter].map((q) => {
+    tillNowQuarter.map((q) => {
       const { fromDate, toDate } = q;
       return Leave.aggregate([
         {
@@ -207,9 +235,8 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
 
   const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
   const allocatedLeavesOfUser = allocatedLeaves || {};
-
   const totalQuarter = Object.values(allocatedLeavesOfUser);
-  quarterLeaves.length = totalQuarter.length;
+  totalQuarter.length = currentQuarterIndex;
 
   let remainingLeaves = 0;
 
@@ -238,55 +265,72 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
 
 // Calculate remaining and applied leave days of all users
 exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
-  const { fromDate, toDate } = req.query;
+  const { quarter } = req.query;
 
-  const leaveCounts = await Leave.aggregate([
-    {
-      $unwind: '$leaveDates'
-    },
-    {
-      $match: {
-        leaveStatus: 'approved',
-        $and: [
-          { leaveDates: { $gte: new Date(fromDate) } },
-          { leaveDates: { $lte: new Date(toDate) } }
-        ],
-        $or: [
-          {
-            leaveType: mongoose.Types.ObjectId('62c3f671b6ed15a7c9b1f14c')
-          },
-          { leaveType: mongoose.Types.ObjectId('62c3f68fb6ed15a7c9b1f152') }
-        ]
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'user'
-      }
-    },
-    {
-      $group: {
-        _id: '$user.name',
-        leavesTaken: {
-          $sum: {
-            $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
+  const latestYearQuarter = await LeaveQuarter.findOne().sort({
+    createdAt: -1
+  });
+
+  const { firstQuarter, secondQuarter, thirdQuarter, fourthQuarter } =
+    latestYearQuarter;
+
+  const tillNowQuarter = [
+    firstQuarter,
+    secondQuarter,
+    thirdQuarter,
+    fourthQuarter
+  ];
+
+  tillNowQuarter.length = quarter;
+
+  const leaveCounts = await Promise.all(
+    tillNowQuarter.map((q) => {
+      const { fromDate, toDate } = q;
+      return Leave.aggregate([
+        {
+          $unwind: '$leaveDates'
+        },
+        {
+          $match: {
+            leaveStatus: 'approved',
+            $and: [
+              { leaveDates: { $gte: new Date(fromDate) } },
+              { leaveDates: { $lte: new Date(toDate) } }
+            ],
+            $or: [
+              {
+                leaveType: mongoose.Types.ObjectId('62c3f671b6ed15a7c9b1f14c')
+              },
+              { leaveType: mongoose.Types.ObjectId('62c3f68fb6ed15a7c9b1f152') }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $group: {
+            _id: {
+              name: '$user.name',
+              _id: '$user._id',
+              position: '$user.position',
+              allocatedLeaves: '$user.allocatedLeaves'
+            },
+            leavesTaken: {
+              $sum: {
+                $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
+              }
+            }
           }
         }
-      }
-    },
-    {
-      $project: {
-        _id: 1,
-        leavesTaken: 1,
-        leavesRemaining: {
-          $subtract: [allocatedLeaveDays, '$leavesTaken']
-        }
-      }
-    }
-  ]);
+      ]);
+    })
+  );
 
   res.status(200).json({
     status: 'success',
