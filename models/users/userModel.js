@@ -56,7 +56,10 @@ const userSchema = new mongoose.Schema(
       default: 'Permanent'
     },
     allocatedLeaves: {
-      type: String
+      firstQuarter: Number,
+      secondQuarter: Number,
+      thirdQuarter: Number,
+      fourthQuarter: Number
     },
     active: {
       type: Boolean,

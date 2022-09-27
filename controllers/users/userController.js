@@ -206,6 +206,72 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   });
 });
 
+// Reset Allocated Leaves of all co-workers
+exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
+  const { currentQuarter } = req.body;
+
+  let user = null;
+  if (currentQuarter === 'firstQuarter')
+    user = await User.updateMany(
+      {},
+      {
+        allocatedLeaves: {
+          firstQuarter: 4,
+          secondQuarter: 4,
+          thirdQuarter: 4,
+          fourthQuarter: 3
+        }
+      }
+    );
+  else
+    user = await User.updateMany({}, [
+      {
+        $set: {
+          'allocatedLeaves.secondQuarter': {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ['secondQuarter', currentQuarter] },
+                  then: 4
+                }
+              ],
+              default: '$allocatedLeaves.secondQuarter'
+            }
+          },
+          'allocatedLeaves.thirdQuarter': {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ['thirdQuarter', currentQuarter] },
+                  then: 4
+                }
+              ],
+              default: '$allocatedLeaves.thirdQuarter'
+            }
+          },
+          'allocatedLeaves.fourthQuarter': {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ['fourthQuarter', currentQuarter] },
+                  then: 3
+                }
+              ],
+              default: '$allocatedLeaves.fourthQuarter'
+            }
+          }
+        }
+      }
+    ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: user
+    }
+  });
+});
+
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
 exports.updateUser = factory.updateOne(User);
