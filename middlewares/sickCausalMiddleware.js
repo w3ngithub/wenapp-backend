@@ -6,15 +6,24 @@ const { LEAVETYPES } = require('../utils/constants');
  * Get Sick and Causal Leave Type Id
  */
 exports.getSickCasualLeave = asyncError(async (req, res, next) => {
-  const LeaveType = await LeaveTypes.find();
+  const LeaveType = await LeaveTypes.find({
+    $or: [
+      {
+        name: {
+          $regex: LEAVETYPES.sickLeave,
+          $options: 'i'
+        }
+      },
+      {
+        name: {
+          $regex: LEAVETYPES.casualLeave,
+          $options: 'i'
+        }
+      }
+    ]
+  });
 
-  const leaves = LeaveType.filter(
-    (type) =>
-      type.name.toLowerCase() === LEAVETYPES.sickLeave.toLowerCase() ||
-      type.name.toLowerCase() === LEAVETYPES.casualLeave.toLowerCase()
-  );
-
-  req.leaveTypes = leaves;
+  req.leaveTypes = LeaveType;
 
   next();
 });
