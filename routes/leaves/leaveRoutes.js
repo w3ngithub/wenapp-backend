@@ -4,6 +4,7 @@ const leaveController = require('../../controllers/leaves/leaveController');
 const authMiddleware = require('../../middlewares/authMiddleware');
 const fiscalYearMiddleware = require('../../middlewares/fiscalYearMiddleware');
 const getWeekDateMiddleware = require('../../middlewares/getweekDateMiddleware');
+const sickCasualLeaveTypeMiddleware = require('../../middlewares/sickCausalMiddleware');
 
 const router = express.Router({ mergeParams: true });
 
@@ -37,7 +38,7 @@ router.get(
 router.get(
   '/users/leavedays',
   authMiddleware.restrictTo('admin'),
-  fiscalYearMiddleware.getFiscalYear,
+  sickCasualLeaveTypeMiddleware.getSickCasualLeave,
   leaveController.calculateLeaveDaysOfUsers
 );
 router.get('/users/today', leaveController.getUsersOnLeaveToday);
@@ -54,7 +55,7 @@ router.get(
 router.get(
   '/:userId/quarterleavedays',
   authMiddleware.setUserIdForNestedRoutes,
-  fiscalYearMiddleware.getFiscalYear,
+  sickCasualLeaveTypeMiddleware.getSickCasualLeave,
   leaveController.calculateLeaveDaysofQuarter
 );
 
