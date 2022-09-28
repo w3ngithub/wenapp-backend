@@ -60,7 +60,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
     'host'
   )}/api/v1/users/signup/${token}`;
 
-  const message = `Please signup and complete your profile by clicking the provided link : ${inviteURL}`;
+  const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
   // Send it to user's email
   try {
     await sendEmail({
@@ -101,7 +101,6 @@ exports.signup = asyncError(async (req, res, next) => {
     inviteTokenExpires: { $gt: Date.now() },
     inviteTokenUsed: false
   });
-
   if (!invitedUser || invitedUser.inviteToken !== hashedToken) {
     return next(new AppError('Your sign up token has expired.', 400));
   }
@@ -172,7 +171,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
       'host'
     )}/api/v1/users/resetPassword/${resetToken}`;
 
-    const message = `Please use provided link for password reset : ${resetURL}`;
+    const message = `<b>Please use provided link for password reset : <a href={${resetURL}} >${resetURL}</a></b>`;
 
     await sendEmail({
       email: user.email,
