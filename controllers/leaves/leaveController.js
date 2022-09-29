@@ -570,7 +570,6 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
 exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
   const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
     req.fiscalYear;
-
   const leaveCounts = await Leave.aggregate([
     {
       $match: {
