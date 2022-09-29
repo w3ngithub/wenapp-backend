@@ -600,12 +600,16 @@ exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
     {
       $group: {
         _id: {
+          id: '$_id',
           user: '$user.name',
-          leaveDates: '$leaveDates',
           leaveType: '$leaveType.name',
           leaveStatus: '$leaveStatus',
           reason: '$reason',
           halfDay: '$halfDay'
+        },
+
+        leaveDates: {
+          $push: '$leaveDates'
         }
       }
     }
