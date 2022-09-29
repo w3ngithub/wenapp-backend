@@ -5,6 +5,7 @@ const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
+const { POSITIONS } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 
@@ -241,15 +242,21 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
 
   let remainingLeaves = 0;
 
-  if (req.user.position.name !== 'Intern') {
+  if (req.user.position.name !== POSITIONS.intern) {
     totalQuarter.forEach((q, i) => {
-      if (q - quarterLeaves[i][0].leavesTaken > 0) {
+      if (
+        quarterLeaves[i][0] &&
+        quarterLeaves[i][0].leavesTaken &&
+        q - quarterLeaves[i][0].leavesTaken > 0
+      ) {
         remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
       }
     });
   }
 
-  const { leavesTaken } = quarterLeaves[quarterLeaves.length - 1][0];
+  const { leavesTaken } = quarterLeaves[quarterLeaves.length - 1][0] || {
+    leavesTaken: 0
+  };
 
   if (remainingLeaves === 0) {
     remainingLeaves = totalQuarter[totalQuarter.length - 1] - leavesTaken;
