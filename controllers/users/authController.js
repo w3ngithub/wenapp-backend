@@ -171,7 +171,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
       'host'
     )}/api/v1/users/resetPassword/${resetToken}`;
 
-    const message = `<b>Please use provided link for password reset : <a href={${resetURL}} >${resetURL}</a></b>`;
+    const message = `<b>Please use provided link for password reset : </b><p>${resetURL}</p>`;
 
     await sendEmail({
       email: user.email,
@@ -204,7 +204,6 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
 exports.resetPassword = asyncError(async (req, res, next) => {
   // Get user based on the token
   const hashedToken = hashToken(req.params.token);
-
   const user = await User.findOne({
     passwordResetToken: hashedToken,
     passwordResetExpires: { $gt: Date.now() }
