@@ -2,7 +2,7 @@ const User = require('../../models/users/userModel');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const factory = require('../factoryController');
-const sendEmail = require('../../utils/email');
+const EmailNotification = require('../../utils/email');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 // Compare two object and keep allowed fields to be updated
@@ -75,7 +75,7 @@ exports.disableUser = asyncError(async (req, res, next) => {
 
   const message = `<b><em>${user.name}</em> is disabled from on.</b>`;
 
-  sendEmail({
+  new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL],
     subject: 'User was disabled',
     message

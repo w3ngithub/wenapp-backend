@@ -5,7 +5,7 @@ const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const User = require('../../models/users/userModel');
 const Invite = require('../../models/users/inviteModel');
-const sendEmail = require('../../utils/email');
+const EmailNotification = require('../../utils/email');
 const factory = require('../factoryController');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
@@ -64,7 +64,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
   const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
   // Send it to user's email
   try {
-    await sendEmail({
+    await new EmailNotification().sendEmail({
       email,
       subject: 'Your sign up link (valid for 60 mins) ',
       message
@@ -126,7 +126,7 @@ exports.signup = asyncError(async (req, res, next) => {
     await Invite.findByIdAndUpdate(invitedUser._id, { inviteTokenUsed: true });
 
     const message = `<b><em>${newUser.name}</em> joined WENAPP</b>`;
-    sendEmail({
+    new EmailNotification().sendEmail({
       email: [INFOWENEMAIL, HRWENEMAIL],
       subject: 'User was Created',
       message
@@ -181,7 +181,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
 
     const message = `<b>Please use provided link for password reset : </b><p>${resetURL}</p>`;
 
-    await sendEmail({
+    await new EmailNotification().sendEmail({
       email: user.email,
       subject: 'Your password reset token (valid for only 30 minutes) ',
       message
