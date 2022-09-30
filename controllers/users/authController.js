@@ -7,6 +7,7 @@ const User = require('../../models/users/userModel');
 const Invite = require('../../models/users/inviteModel');
 const sendEmail = require('../../utils/email');
 const factory = require('../factoryController');
+const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 // Create sign-in token
 const signToken = (id) =>
@@ -123,6 +124,13 @@ exports.signup = asyncError(async (req, res, next) => {
 
   if (newUser) {
     await Invite.findByIdAndUpdate(invitedUser._id, { inviteTokenUsed: true });
+
+    const message = `<b><em>${newUser.name}</em> joined WENAPP</b>`;
+    sendEmail({
+      email: [INFOWENEMAIL, HRWENEMAIL],
+      subject: 'User was Created',
+      message
+    });
   }
   createSendToken(newUser, 201, req, res);
 });
