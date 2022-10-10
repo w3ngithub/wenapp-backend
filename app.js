@@ -38,6 +38,9 @@ const policyRouter = require('./routes/resources/policyRoutes');
 const holidayRouter = require('./routes/resources/holidayRoutes');
 
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
+const {
+  projectMaintentceRemainder
+} = require('./controllers/projects/projectController');
 
 // Initialized and start express application
 const app = express();
@@ -59,6 +62,7 @@ app.use(
 
 // check Team access Middleware (only for development purpose...)
 app.use(checkTeamAccess);
+projectMaintentceRemainder();
 
 // Routes
 app.use('/api/v1/users/roles', userRoleRouter);
