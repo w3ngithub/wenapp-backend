@@ -5,9 +5,17 @@ const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
-const { POSITIONS } = require('../../utils/constants');
+const {
+  POSITIONS,
+  INFOWENEMAIL,
+  HRWENEMAIL,
+  LEAVE_CANCELLED,
+  LEAVE_PENDING
+} = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
+const User = require('../../models/users/userModel');
+const EmailNotification = require('../../utils/email');
 
 exports.getLeave = factory.getOne(Leave);
 exports.createLeave = factory.createOne(Leave);
@@ -680,3 +688,30 @@ exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
     }
   });
 });
+
+exports.sendLeaveApplyEmailNotifications = asyncError(
+  async (req, res, next) => {
+    if (req.body.leaveStatus === LEAVE_PENDING) {
+      const user = await User.findById(req.body.user);
+
+      const message = `<b><em>${user.name}</em> applied for leave on dates ${req.body.leaveDates}</b>`;
+
+      new EmailNotification().sendEmail({
+        email: [INFOWENEMAIL, HRWENEMAIL],
+        subject: `${user.name} applied for leave`,
+        message
+      });
+    } else if (req.body.leaveStatus === LEAVE_CANCELLED) {
+      const message = `<b><em>${req.body.user.name}</em> leave cancelled for ${req.body.leaveDates}</b>`;
+
+      new EmailNotification().sendEmail({
+        email: [INFOWENEMAIL, HRWENEMAIL],
+        subject: `${req.body.user.name}  leaves cancelled`,
+        message
+      });
+    }
+    res.status(200).json({
+      status: 'success'
+    });
+  }
+);

@@ -5,6 +5,10 @@ const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
+const User = require('../../models/users/userModel');
+
+const EmailNotification = require('../../utils/email');
+const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
@@ -251,9 +255,19 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
 
 exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
   await Attendance.updateMany(
-    { _id: { $in: req.body } },
+    { _id: { $in: req.body.attendance } },
     { lateArrivalLeaveCut: true }
   );
+
+  const leaveCutUser = await User.findById(req.body.userId);
+
+  const message = `<b><em>${leaveCutUser.name}</em> late arival leave cut at ${req.body.leaveCutdate}</b>`;
+
+  new EmailNotification().sendEmail({
+    email: [INFOWENEMAIL, HRWENEMAIL, leaveCutUser.email],
+    subject: `${leaveCutUser.name} late arrival leave cut`,
+    message
+  });
 
   res.status(200).json({
     status: 'success',

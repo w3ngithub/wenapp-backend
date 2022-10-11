@@ -23,6 +23,11 @@ router.use(authMiddleware.protect);
 router.get('/pending/count', leaveController.getPendingLeavesCount);
 
 router.post(
+  '/users/sendEmail',
+  leaveController.sendLeaveApplyEmailNotifications
+);
+
+router.post(
   '/',
   authMiddleware.setUserIdForNestedRoutes,
   leaveController.createLeave
