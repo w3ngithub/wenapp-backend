@@ -571,12 +571,17 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
 
   const leaves = await Leave.aggregate([
     {
-      $unwind: '$leaveDates'
-    },
-    {
       $match: {
         leaveStatus: 'approved',
-        leaveDates: { $eq: todayDate }
+        $or: [
+          {
+            'leaveDates.0': { $eq: todayDate }
+          },
+          {
+            'leaveDates.0': { $lte: todayDate },
+            'leaveDates.1': { $gte: todayDate }
+          }
+        ]
       }
     },
     {
