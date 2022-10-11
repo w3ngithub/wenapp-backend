@@ -1,20 +1,21 @@
 const mongoose = require('mongoose');
-const slugify = require('slugify');
 
-const faqSchema = new mongoose.Schema(
+const emailSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: [true, 'Please provide FAQ title.'],
-      unique: true,
+      required: [true, 'Please provide Email title.'],
       trim: true
     },
-    slug: String,
-    content: {
+    body: {
       type: String,
       trim: true,
-      required: [true, 'Please provide FAQ content.'],
-      minlength: [10, 'Content must have more or equal than 50 characters']
+      required: [true, 'Please provide Email body.']
+    },
+    module: {
+      type: String,
+      required: [true, 'Please provide Email Module'],
+      trim: true
     }
   },
   {
@@ -22,11 +23,5 @@ const faqSchema = new mongoose.Schema(
   }
 );
 
-// Generate slug from faq title before save and create document
-faqSchema.pre('save', function (next) {
-  this.slug = slugify(this.title, { lower: true });
-  next();
-});
-
-const FAQ = mongoose.model('FAQ', faqSchema);
-module.exports = FAQ;
+const Email = mongoose.model('Email', emailSchema);
+module.exports = Email;
