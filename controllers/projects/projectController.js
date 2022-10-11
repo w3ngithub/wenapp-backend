@@ -4,6 +4,9 @@ const Project = require('../../models/projects/projectModel');
 const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
+const { INFOWENEMAIL, MONTHS } = require('../../utils/constants');
+const EmailNotification = require('../../utils/email');
+const { todayDate } = require('../../utils/common');
 
 exports.getProject = factory.getOne(Project, { path: 'timeLogs' });
 exports.getAllProjects = factory.getAll(Project);
@@ -107,6 +110,40 @@ exports.getWeeklyTimeSpent = asyncError(async (req, res, next) => {
     status: 'success',
     data: {
       weeklyTimeSpent
+    }
+  });
+});
+
+exports.projectMaintentceRemainder = asyncError(async (req, res, next) => {
+  const projects = await Project.find({});
+
+  const projectwithMaintance = Array.from(projects).filter(
+    (project) => project.maintenance.length !== 0
+  );
+
+  const message = `<b><em>user</em> Maintaince</b>`;
+  projectwithMaintance.forEach((project) => {
+    const maintenance = project.maintenance[0];
+    if (maintenance.monthly === true) {
+      if (todayDate().getDate() === maintenance.emailDay) {
+        new EmailNotification().sendEmail({
+          email: [INFOWENEMAIL, maintenance.sendEmailTo],
+          subject: 'Maintaince of project',
+          message
+        });
+      }
+    } else if (maintenance.selectMonths.length !== 0) {
+      maintenance.selectedMonths.forEach((month) => {
+        if (todayDate().getMonth() === MONTHS[month]) {
+          if (todayDate().getDate() === maintenance.emailDay) {
+            new EmailNotification().sendEmail({
+              email: [INFOWENEMAIL, maintenance.sendEmailTo],
+              subject: 'Maintaince of project',
+              message
+            });
+          }
+        }
+      });
     }
   });
 });
