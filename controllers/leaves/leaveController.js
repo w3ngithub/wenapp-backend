@@ -402,16 +402,36 @@ exports.getUsersOnLeaveToday = asyncError(async (req, res, next) => {
 exports.getWeekLeaves = asyncError(async (req, res, next) => {
   const { todayDate, afterOneWeekDate } = req;
 
-  const leave = await Leave.aggregate([
+  const newLeaves = await Leave.aggregate([
     {
-      $unwind: '$leaveDates'
+      $match: {
+        leaveStatus: 'approved'
+      }
+    },
+    {
+      $lookup: {
+        from: 'leave_types',
+        localField: 'leaveType',
+        foreignField: '_id',
+        as: 'leaveType'
+      }
     },
     {
       $match: {
-        leaveStatus: 'approved',
-        $and: [
-          { leaveDates: { $gte: todayDate } },
-          { leaveDates: { $lte: afterOneWeekDate } }
+        $or: [
+          { leaveType: { $elemMatch: { name: 'Maternity' } } },
+          { leaveType: { $elemMatch: { name: 'Paternity' } } },
+          { leaveType: { $elemMatch: { name: 'Paid Time Off' } } }
+        ]
+      }
+    },
+    {
+      $match: {
+        $or: [
+          { 'leaveDates.0': { $gte: todayDate, $lte: afterOneWeekDate } },
+          {
+            'leaveDates.1': { $gte: todayDate, $lte: afterOneWeekDate }
+          }
         ]
       }
     },
@@ -421,14 +441,6 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
         localField: 'user',
         foreignField: '_id',
         as: 'user'
-      }
-    },
-    {
-      $lookup: {
-        from: 'leave_types',
-        localField: 'leaveType',
-        foreignField: '_id',
-        as: 'leaveType'
       }
     },
     {
@@ -442,10 +454,50 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
     }
   ]);
 
+  // const leave = await Leave.aggregate([
+  //   {
+  //     $unwind: '$leaveDates'
+  //   },
+  //   {
+  //     $match: {
+  //       leaveStatus: 'approved',
+  //       $and: [
+  //         { leaveDates: { $gte: todayDate } },
+  //         { leaveDates: { $lte: afterOneWeekDate } }
+  //       ]
+  //     }
+  //   },
+  //   {
+  //     $lookup: {
+  //       from: 'users',
+  //       localField: 'user',
+  //       foreignField: '_id',
+  //       as: 'user'
+  //     }
+  //   },
+  //   {
+  //     $lookup: {
+  //       from: 'leave_types',
+  //       localField: 'leaveType',
+  //       foreignField: '_id',
+  //       as: 'leaveType'
+  //     }
+  //   },
+  //   {
+  //     $project: {
+  //       _id: '$user._id',
+  //       user: '$user.name',
+  //       leaveDates: '$leaveDates',
+  //       halfDay: '$halfDay',
+  //       leaveType: '$leaveType.name'
+  //     }
+  //   }
+  // ]);
+
   res.status(200).json({
     status: 'success',
     data: {
-      users: leave
+      users: newLeaves
     }
   });
 });
