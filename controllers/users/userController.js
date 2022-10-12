@@ -3,6 +3,7 @@ const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const factory = require('../factoryController');
 const EmailNotification = require('../../utils/email');
+const Email = require('../../models/email/emailSettingModel');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 // Compare two object and keep allowed fields to be updated
@@ -73,12 +74,14 @@ exports.deleteMe = asyncError(async (req, res, next) => {
 exports.disableUser = asyncError(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(req.params.id, { active: false });
 
+  const emailContent = await Email.findOne({ module: 'user-inactive' });
+
   const message = `<b><em>${user.name}</em> is disabled from on.</b>`;
 
   new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL],
-    subject: 'User was disabled',
-    message
+    subject: emailContent.title || 'User was disabled',
+    message: emailContent.body.replace(/@username/i, user.name) || message
   });
 
   res.status(200).json({

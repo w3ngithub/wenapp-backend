@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const User = require('../../models/users/userModel');
+const Email = require('../../models/email/emailSettingModel');
 const Invite = require('../../models/users/inviteModel');
 const EmailNotification = require('../../utils/email');
 const factory = require('../factoryController');
@@ -64,10 +65,16 @@ exports.inviteUser = asyncError(async (req, res, next) => {
   const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
   // Send it to user's email
   try {
+    const emailContent = await Email.findOne({ module: 'user-invite' });
+
     await new EmailNotification().sendEmail({
       email,
-      subject: 'Your sign up link (valid for 60 mins) ',
-      message
+      subject: emailContent.title || 'Your sign up link (valid for 60 mins) ',
+      message:
+        emailContent.body.replace(
+          /@url/i,
+          `<a href={${inviteURL}}>${inviteURL}</a>`
+        ) || message
     });
 
     res.status(200).json({
@@ -125,11 +132,16 @@ exports.signup = asyncError(async (req, res, next) => {
   if (newUser) {
     await Invite.findByIdAndUpdate(invitedUser._id, { inviteTokenUsed: true });
 
+    const emailContent = await Email.findOne({ module: 'user-signup' });
+
     const message = `<b><em>${newUser.name}</em> joined WENAPP</b>`;
     new EmailNotification().sendEmail({
       email: [INFOWENEMAIL, HRWENEMAIL],
-      subject: 'User was Created',
-      message
+      subject: emailContent.title || 'User was Created',
+      message: emailContent.body.replace(
+        /@username/i,
+        `<em>${newUser.name}</em>` || message
+      )
     });
   }
   createSendToken(newUser, 201, req, res);
@@ -181,10 +193,15 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
 
     const message = `<b>Please use provided link for password reset : </b><p>${resetURL}</p>`;
 
+    const emailContent = await Email.findOne({ module: 'user-reset-password' });
+
     await new EmailNotification().sendEmail({
       email: user.email,
-      subject: 'Your password reset token (valid for only 30 minutes) ',
-      message
+      subject:
+        emailContent.title ||
+        'Your password reset token (valid for only 30 minutes) ',
+      message:
+        emailContent.body.replace(/@url/i, `<p>${resetURL}</p>`) || message
     });
 
     res.status(200).json({
