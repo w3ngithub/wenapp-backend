@@ -5,6 +5,7 @@ const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
+const Email = require('../../models/email/emailSettingModel');
 const {
   POSITIONS,
   INFOWENEMAIL,
@@ -663,20 +664,28 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
     if (req.body.leaveStatus === LEAVE_PENDING) {
       const user = await User.findById(req.body.user);
 
+      const emailContent = await Email.findOne({ module: 'leave-pending' });
+
       const message = `<b><em>${user.name}</em> applied for leave on dates ${req.body.leaveDates}</b>`;
 
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL],
-        subject: `${user.name} applied for leave`,
-        message
+        subject: emailContent.title || `${user.name} applied for leave`,
+        message:
+          emailContent.body
+            .replace(/@username/i, user.name)
+            .replace(/@date/i, req.body.leaveDates) || message
       });
     } else if (req.body.leaveStatus === LEAVE_CANCELLED) {
-      const message = `<b><em>${req.body.user.name}</em> leave cancelled for ${req.body.leaveDates}</b>`;
+      const emailContent = await Email.findOne({ module: 'leave-cancel' });
 
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL],
-        subject: `${req.body.user.name}  leaves cancelled`,
-        message
+        subject:
+          emailContent.title || `${req.body.user.name}  leaves cancelled`,
+        message:
+          req.body.leaveCancelReason ||
+          `${req.body.user.name}  leaves cancelled`
       });
     }
     res.status(200).json({

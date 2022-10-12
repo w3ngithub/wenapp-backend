@@ -5,6 +5,7 @@ const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
+const Email = require('../../models/email/emailSettingModel');
 const User = require('../../models/users/userModel');
 
 const EmailNotification = require('../../utils/email');
@@ -261,12 +262,19 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
 
   const leaveCutUser = await User.findById(req.body.userId);
 
-  const message = `<b><em>${leaveCutUser.name}</em> late arival leave cut at ${req.body.leaveCutdate}</b>`;
+  const emailContent = await Email.findOne({ module: 'late-attendance' });
+
+  const message = `<b><em>${leaveCutUser.name}</em> late arival leave cut at ${
+    req.body.leaveCutdate.split('T')[0]
+  }</b>`;
 
   new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL, leaveCutUser.email],
-    subject: `${leaveCutUser.name} late arrival leave cut`,
-    message
+    subject: emailContent.title || `late arrival leave cut`,
+    message:
+      emailContent.body
+        .replace(/@username/i, leaveCutUser.name)
+        .replace(/@date/i, req.body.leaveCutdate) || message
   });
 
   res.status(200).json({
