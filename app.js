@@ -37,6 +37,8 @@ const policyRouter = require('./routes/resources/policyRoutes');
 
 const holidayRouter = require('./routes/resources/holidayRoutes');
 
+const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
+
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
 
 // Initialized and start express application
@@ -91,6 +93,8 @@ app.use('/api/v1/attendances', attendanceRouter);
 app.use('/api/v1/resources/faqs', faqRouter);
 app.use('/api/v1/resources/policies', policyRouter);
 app.use('/api/v1/resources/holidays', holidayRouter);
+
+app.use('/api/v1/emails', emailSettingsRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
