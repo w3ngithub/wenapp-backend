@@ -410,25 +410,32 @@ exports.getUsersOnLeaveToday = asyncError(async (req, res, next) => {
 exports.getWeekLeaves = asyncError(async (req, res, next) => {
   const { todayDate, afterOneWeekDate } = req;
 
-  const leave = await Leave.aggregate([
-    {
-      $unwind: '$leaveDates'
-    },
+  const newLeaves = await Leave.aggregate([
     {
       $match: {
         leaveStatus: 'approved',
-        $and: [
-          { leaveDates: { $gte: todayDate } },
-          { leaveDates: { $lte: afterOneWeekDate } }
+        $or: [
+          {
+            $and: [
+              {
+                'leaveDates.0': { $lt: todayDate }
+              },
+              { 'leaveDates.1': { $gt: afterOneWeekDate } }
+            ]
+          },
+
+          {
+            $or: [
+              { 'leaveDates.0': { $gte: todayDate, $lte: afterOneWeekDate } },
+              {
+                'leaveDates.1': { $gte: todayDate, $lte: afterOneWeekDate }
+              }
+            ]
+          },
+          {
+            'leaveDates.0': { $gte: todayDate, $lte: afterOneWeekDate }
+          }
         ]
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'user'
       }
     },
     {
@@ -437,6 +444,15 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
         localField: 'leaveType',
         foreignField: '_id',
         as: 'leaveType'
+      }
+    },
+
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
       }
     },
     {
@@ -453,7 +469,7 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      users: leave
+      users: newLeaves
     }
   });
 });
@@ -555,12 +571,17 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
 
   const leaves = await Leave.aggregate([
     {
-      $unwind: '$leaveDates'
-    },
-    {
       $match: {
         leaveStatus: 'approved',
-        leaveDates: { $eq: todayDate }
+        $or: [
+          {
+            'leaveDates.0': { $eq: todayDate }
+          },
+          {
+            'leaveDates.0': { $lte: todayDate },
+            'leaveDates.1': { $gte: todayDate }
+          }
+        ]
       }
     },
     {
