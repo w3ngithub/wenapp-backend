@@ -40,6 +40,9 @@ const holidayRouter = require('./routes/resources/holidayRoutes');
 const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
 
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
+const {
+  projectMaintentceRemainder
+} = require('./controllers/projects/projectController');
 
 // Initialized and start express application
 const app = express();
