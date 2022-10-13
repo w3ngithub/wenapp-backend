@@ -474,6 +474,62 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
     }
   });
 });
+exports.getTodayLeaves = asyncError(async (req, res, next) => {
+  const todayDate = common.todayDate();
+  const newLeaves = await Leave.aggregate([
+    {
+      $match: {
+        leaveStatus: 'approved',
+        $or: [
+          {
+            leaveDates: todayDate
+          },
+          {
+            'leaveDates.0': {
+              $eq: todayDate
+            }
+          },
+          {
+            'leaveDates.1': {
+              $eq: todayDate
+            }
+          },
+          {
+            'leaveDates.0': {
+              $lt: todayDate
+            },
+            'leaveDates.1': {
+              $gt: todayDate
+            }
+          }
+        ]
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $lookup: {
+        from: 'leave_types',
+        localField: 'leaveType',
+        foreignField: '_id',
+        as: 'leaveType'
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: newLeaves
+    }
+  });
+});
 
 // Delete selected leave dates of user
 exports.deleteSelectedLeaveDate = asyncError(async (req, res, next) => {

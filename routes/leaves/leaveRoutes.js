@@ -9,6 +9,7 @@ const sickCasualLeaveTypeMiddleware = require('../../middlewares/sickCausalMiddl
 const router = express.Router({ mergeParams: true });
 
 router.get('/', leaveController.getAllLeaves);
+router.get('/today', leaveController.getTodayLeaves);
 router.get('/:id', leaveController.getLeave);
 router.get(
   '/users/weekLeaves',
