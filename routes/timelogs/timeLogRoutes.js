@@ -15,21 +15,18 @@ router.post('/weeklyreport', timeLogController.getWeeklyReport);
 router.post('/chart', timeLogController.getTimelogForChart);
 router.post('/worklogs', timeLogController.getWorklogReport);
 
-router
-  .route('/')
-  .get(timeLogController.getAllTimeLogs)
-  .post(
-    projectController.setProjectUserIds,
-    projectController.checkProjectOfUser,
-    timeLogController.checkTimeLogDays,
-    timeLogController.createTimeLog
-  );
+router.route('/').get(timeLogController.getAllTimeLogs).post(
+  projectController.setProjectUserIds,
+  // projectController.checkProjectOfUser,
+  timeLogController.checkTimeLogDays,
+  timeLogController.createTimeLog
+);
 
 router
   .route('/:id')
   .get(timeLogController.getTimeLog)
   .patch(
-    projectController.checkProjectOfUser,
+    // projectController.checkProjectOfUser,
     timeLogController.checkTimeLogDays,
     timeLogController.updateTimeLog
   )
