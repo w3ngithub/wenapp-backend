@@ -2,11 +2,12 @@ class APIFeatures {
   constructor(query, queryString) {
     this.query = query;
     this.queryString = queryString;
+    this.formattedQuery = queryString;
   }
 
   filter() {
     const queryObj = { ...this.queryString };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    const excludedFields = ['page', 'sort', 'limit', 'fields', 'search'];
     excludedFields.forEach((el) => delete queryObj[el]);
 
     // Delete key/value from object is value is empty in query string
@@ -19,8 +20,9 @@ class APIFeatures {
     // Advanced filtering
     let queryStr = JSON.stringify(queryObj);
     queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-
     this.query = this.query.find(JSON.parse(queryStr));
+
+    this.formattedQuery = JSON.parse(queryStr);
 
     return this;
   }
@@ -54,6 +56,19 @@ class APIFeatures {
 
     this.query = this.query.skip(skip).limit(limit);
 
+    return this;
+  }
+
+  search() {
+    const searchTerm = this.queryString.search;
+    const query = searchTerm
+      ? {
+          name: { $regex: searchTerm, $options: 'i' }
+        }
+      : {};
+    this.query = this.query.find(query);
+
+    this.formattedQuery = { ...this.formattedQuery, ...query };
     return this;
   }
 }

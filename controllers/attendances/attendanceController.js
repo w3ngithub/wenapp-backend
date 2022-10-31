@@ -4,7 +4,12 @@ const Attendance = require('../../models/attendances/attendanceModel');
 const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
 const asyncError = require('../../utils/asyncError');
-const APIFeatures = require('../../utils/apiFeatures');
+const common = require('../../utils/common');
+const Email = require('../../models/email/emailSettingModel');
+const User = require('../../models/users/userModel');
+
+const EmailNotification = require('../../utils/email');
+const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
@@ -18,7 +23,8 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
     midDayExit: req.body.midDayExit,
     punchOutTime: Date.now(),
     punchOutNote: req.body.punchOutNote,
-    updatedBy: req.user.id
+    updatedBy: req.user.id,
+    punchOutLocation: req.body.punchOutLocation
   };
 
   const doc = await Attendance.findByIdAndUpdate(req.params.id, reqBody, {
@@ -40,6 +46,109 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
 
 // Search attendances with date range and for particular user
 exports.searchAttendances = asyncError(async (req, res, next) => {
+  const { fromDate, toDate, user, page, limit } = req.query;
+
+  const pages = page * 1 || 1;
+  const limits = limit * 1 || 100;
+  const skip = (pages - 1) * limit;
+
+  const matchConditions = [
+    { attendanceDate: { $gte: new Date(fromDate) } },
+    { attendanceDate: { $lte: new Date(toDate) } }
+  ];
+
+  if (user) {
+    matchConditions.push({
+      user: mongoose.Types.ObjectId(user)
+    });
+  }
+
+  const attendances = await Attendance.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $set: {
+        user: {
+          $arrayElemAt: ['$user.name', 0]
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          attendanceDate: '$attendanceDate',
+          user: '$user'
+        },
+        data: {
+          $addToSet: {
+            punchInTime: '$punchInTime',
+            attendanceDate: '$attendanceDate',
+            createdAt: '$createdAt',
+            createdBy: '$createdBy',
+            midDayExit: '$midDayExit',
+            punchOutTime: '$punchOutTime',
+            updatedAt: '$updatedAt',
+            user: '$user',
+            _id: '$_id',
+            punchOutNote: '$punchOutNote',
+            punchInNote: '$punchInNote',
+            punchInLocation: '$punchInLocation',
+            punchOutLocation: '$punchOutLocation'
+          }
+        }
+      }
+    },
+    {
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [{ $skip: +skip }, { $limit: +limits }]
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      attendances
+    }
+  });
+});
+
+// Get users count for today's punch in
+exports.getPunchInCountToday = asyncError(async (req, res, next) => {
+  const todayDate = common.todayDate();
+
+  const attendance = await Attendance.aggregate([
+    {
+      $match: {
+        attendanceDate: { $eq: todayDate }
+      }
+    },
+    { $group: { _id: '$user' } },
+    {
+      $count: 'count'
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    attendance
+  });
+});
+
+// Search attendaces with late arrival time
+exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user } = req.query;
 
   const matchConditions = [
@@ -53,21 +162,123 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     });
   }
 
-  const features = new APIFeatures(
-    Attendance.find({ $and: matchConditions }),
-    req.query
-  )
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  const attendances = await features.query;
+  const attendances = await Attendance.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $set: {
+        user: {
+          $arrayElemAt: ['$user.name', 0]
+        },
+        userId: { $arrayElemAt: ['$user._id', 0] }
+      }
+    },
+    {
+      $group: {
+        _id: { attendaceDate: '$attendanceDate', user: '$userId' },
+        data: { $push: '$$ROOT' }
+      }
+    },
+    {
+      $unwind: '$data'
+    },
+    { $sort: { 'data.punchInTime': 1 } },
+    {
+      $group: {
+        _id: '$_id',
+        data: { $first: '$$ROOT' }
+      }
+    },
+    {
+      $unwind: '$data'
+    },
+    {
+      $project: {
+        _id: '$data.data._id',
+        attendanceDate: '$data.data.attendanceDate',
+        user: '$data.data.user',
+        lateArrivalLeaveCut: '$data.data.lateArrivalLeaveCut',
+        midDayExit: '$data.data.midDayExit',
+        punchInTime: '$data.data.punchInTime',
+        punchOutTime: '$data.data.punchOutTime',
+        userId: '$data.data.userId',
+        punchInLocation: '$punchInLocation',
+        punchOutLocation: '$punchOutLocation'
+      }
+    },
+    {
+      $addFields: {
+        punchHour: {
+          $hour: '$punchInTime'
+        },
+        PunchMinutes: {
+          $minute: '$punchInTime'
+        }
+      }
+    },
+    {
+      $match: {
+        $or: [
+          { $and: [{ punchHour: { $eq: 3 } }, { PunchMinutes: { $gt: 25 } }] },
+          { $and: [{ punchHour: { $gt: 3 } }] }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: {
+          userId: '$userId',
+          user: '$user'
+        },
+        data: { $push: '$$ROOT' }
+      }
+    }
+  ]);
 
   res.status(200).json({
     status: 'success',
     data: {
-      attendances
+      attendances: attendances
     }
+  });
+});
+
+exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
+  await Attendance.updateMany(
+    { _id: { $in: req.body.attendance } },
+    { lateArrivalLeaveCut: true }
+  );
+
+  const leaveCutUser = await User.findById(req.body.userId);
+
+  const emailContent = await Email.findOne({ module: 'late-attendance' });
+
+  const message = `<b><em>${leaveCutUser.name}</em> late arival leave cut at ${
+    req.body.leaveCutdate.split('T')[0]
+  }</b>`;
+
+  new EmailNotification().sendEmail({
+    email: [INFOWENEMAIL, HRWENEMAIL, leaveCutUser.email],
+    subject: emailContent.title || `late arrival leave cut`,
+    message:
+      emailContent.body
+        .replace(/@username/i, leaveCutUser.name)
+        .replace(/@date/i, req.body.leaveCutdate) || message
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: 'Successfull !'
   });
 });

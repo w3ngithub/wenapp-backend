@@ -32,15 +32,20 @@ exports.getAll = (Model) =>
       .filter()
       .sort()
       .limitFields()
-      .paginate();
+      .paginate()
+      .search();
 
-    const doc = await features.query;
+    const [doc, count] = await Promise.all([
+      features.query,
+      Model.countDocuments(features.formattedQuery)
+    ]);
 
     res.status(200).json({
       status: 'success',
       results: doc.length,
       data: {
-        data: doc
+        data: doc,
+        count
       }
     });
   });

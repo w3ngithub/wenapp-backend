@@ -2,6 +2,9 @@ const User = require('../../models/users/userModel');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const factory = require('../factoryController');
+const EmailNotification = require('../../utils/email');
+const Email = require('../../models/email/emailSettingModel');
+const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -39,7 +42,8 @@ exports.updateMe = asyncError(async (req, res, next) => {
     'primaryPhone',
     'secondaryPhone',
     'joinDate',
-    'maritalStatus'
+    'maritalStatus',
+    'photoURL'
   );
 
   // Update user document
@@ -68,12 +72,215 @@ exports.deleteMe = asyncError(async (req, res, next) => {
 
 // Disable selected user
 exports.disableUser = asyncError(async (req, res, next) => {
-  await User.findByIdAndUpdate(req.params.id, { active: false });
+  const user = await User.findByIdAndUpdate(req.params.id, { active: false });
+
+  const emailContent = await Email.findOne({ module: 'user-inactive' });
+
+  const message = `<b><em>${user.name}</em> is disabled from on.</b>`;
+
+  new EmailNotification().sendEmail({
+    email: [INFOWENEMAIL, HRWENEMAIL],
+    subject: emailContent.title || 'User was disabled',
+    message: emailContent.body.replace(/@username/i, user.name) || message
+  });
 
   res.status(200).json({
     status: 'success',
     data: {
       message: 'User disabled.'
+    }
+  });
+});
+
+// Import users
+exports.importUsers = asyncError(async (req, res, next) => {
+  await User.insertMany([...req.body], { lean: true });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      message: 'Users Imported.'
+    }
+  });
+});
+
+// Get all ative users count
+exports.getActiveUser = asyncError(async (req, res, next) => {
+  const user = await User.find({ active: { $ne: false } }).count();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user
+    }
+  });
+});
+
+// get users between 15 of this month to 14 of next month
+exports.getBirthMonthUser = asyncError(async (req, res, next) => {
+  const currentDate = new Date();
+
+  const activeUsers = await User.find({ active: { $ne: false } });
+
+  let birthMonthUsers = [];
+
+  if (currentDate.getMonth() === 11) {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() < 15) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth()}/15`) &&
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
+        );
+      }
+      return (
+        new Date(x.dob) >=
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`)
+      );
+    });
+  } else {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() > 14) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+          new Date(x.dob) <
+            new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
+        );
+      }
+      return (
+        new Date(x.dob) >=
+          new Date(`${dobYear}/${currentDate.getMonth()}/15`) &&
+        new Date(x.dob) <
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
+      );
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: birthMonthUsers
+    }
+  });
+});
+
+// get users for review of salary
+
+exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
+  const presentDate = new Date();
+
+  // get Users with salary review time before 3 months
+  const users = await User.aggregate([
+    {
+      $set: {
+        newSalaryReviewDate: {
+          $dateAdd: {
+            startDate: '$lastReviewDate',
+            unit: 'year',
+            amount: 1
+          }
+        }
+      }
+    },
+    {
+      $match: {
+        $and: [
+          { newSalaryReviewDate: { $gte: presentDate } },
+          {
+            newSalaryReviewDate: {
+              $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
+            }
+          }
+        ]
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        newSalaryReviewDate: 1,
+        lastReviewDate: 1,
+        photoURL: 1
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users: users
+    }
+  });
+});
+
+// Reset Allocated Leaves of all co-workers
+exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
+  const { currentQuarter } = req.body;
+
+  let user = null;
+  if (currentQuarter === 'firstQuarter')
+    user = await User.updateMany(
+      {},
+      {
+        allocatedLeaves: {
+          firstQuarter: 4,
+          secondQuarter: 4,
+          thirdQuarter: 4,
+          fourthQuarter: 3
+        }
+      }
+    );
+  else
+    user = await User.updateMany({}, [
+      {
+        $set: {
+          'allocatedLeaves.secondQuarter': {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ['secondQuarter', currentQuarter] },
+                  then: 4
+                }
+              ],
+              default: '$allocatedLeaves.secondQuarter'
+            }
+          },
+          'allocatedLeaves.thirdQuarter': {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ['thirdQuarter', currentQuarter] },
+                  then: 4
+                }
+              ],
+              default: '$allocatedLeaves.thirdQuarter'
+            }
+          },
+          'allocatedLeaves.fourthQuarter': {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ['fourthQuarter', currentQuarter] },
+                  then: 3
+                }
+              ],
+              default: '$allocatedLeaves.fourthQuarter'
+            }
+          }
+        }
+      }
+    ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: user
     }
   });
 });

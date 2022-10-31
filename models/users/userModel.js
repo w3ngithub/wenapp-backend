@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema(
         message: 'Passwords are not same!'
       }
     },
+    photoURL: {
+      type: String,
+      default: null
+    },
     role: {
       type: mongoose.Schema.ObjectId,
       ref: 'User_Role'
@@ -41,6 +45,21 @@ const userSchema = new mongoose.Schema(
     position: {
       type: mongoose.Schema.ObjectId,
       ref: 'User_Position'
+    },
+    positionType: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User_Position_Type'
+    },
+    status: {
+      type: String,
+      enum: ['Permanent', 'Probation'],
+      default: 'Permanent'
+    },
+    allocatedLeaves: {
+      firstQuarter: Number,
+      secondQuarter: Number,
+      thirdQuarter: Number,
+      fourthQuarter: Number
     },
     active: {
       type: Boolean,
@@ -98,15 +117,20 @@ userSchema.pre('save', async function (next) {
 // Query Middleware : Select active users only
 userSchema.pre(/^find/, function (next) {
   // this points to the current query
-  this.find({ active: { $ne: false } });
+  // this.find({ active: { $ne: false } });
 
   this.populate({
     path: 'role',
     select: 'key value'
-  }).populate({
-    path: 'position',
-    select: 'name'
-  });
+  })
+    .populate({
+      path: 'position',
+      select: 'name'
+    })
+    .populate({
+      path: 'positionType',
+      select: 'name'
+    });
   next();
 });
 
@@ -123,6 +147,22 @@ userSchema.pre('save', function (next) {
   if (!this.isModified('password') || this.isNew) return next();
 
   this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+// Model Middleware
+userSchema.pre('insertMany', async (next, docs) => {
+  const hashUser = docs.map(async (doc) => {
+    // Hash the password with cost of 12
+    doc.password = await bcrypt.hash(doc.password, 12);
+
+    // Delete passwordConfirm field
+    doc.passwordConfirm = undefined;
+    return doc;
+  });
+
+  docs = await Promise.all(hashUser);
+
   next();
 });
 

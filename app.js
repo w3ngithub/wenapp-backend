@@ -8,6 +8,7 @@ const globalErrorHandler = require('./controllers/errorController');
 const userRouter = require('./routes/users/userRoutes');
 const userRoleRouter = require('./routes/users/userRoleRoutes');
 const userPositionRouter = require('./routes/users/userPositionRoutes');
+const userPositionTypeRouter = require('./routes/users/userPositionTypeRoutes');
 
 const projectTypeRouter = require('./routes/projects/projectTypeRoutes');
 const projectStatusRouter = require('./routes/projects/projectStatusRoutes');
@@ -19,6 +20,8 @@ const timeLogTypeRouter = require('./routes/timelogs/timeLogTypeRoutes');
 const timeLogRouter = require('./routes/timelogs/timeLogRoutes');
 
 const leaveTypeRouter = require('./routes/leaves/leaveTypeRoutes');
+const leaveQuarterRouter = require('./routes/leaves/leaveQuarterRoutes');
+
 const leaveRouter = require('./routes/leaves/leaveRoutes');
 
 const blogCategoryRouter = require('./routes/blogs/blogCategoryRoutes');
@@ -34,7 +37,12 @@ const policyRouter = require('./routes/resources/policyRoutes');
 
 const holidayRouter = require('./routes/resources/holidayRoutes');
 
+const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
+
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
+const {
+  projectMaintentceRemainder
+} = require('./controllers/projects/projectController');
 
 // Initialized and start express application
 const app = express();
@@ -54,12 +62,13 @@ app.use(
   })
 );
 
-// check Team access Middleware (only for development...)
+// check Team access Middleware (only for development purpose...)
 app.use(checkTeamAccess);
 
 // Routes
 app.use('/api/v1/users/roles', userRoleRouter);
 app.use('/api/v1/users/positions', userPositionRouter);
+app.use('/api/v1/users/positionTypes', userPositionTypeRouter);
 app.use('/api/v1/users', userRouter);
 
 app.use('/api/v1/projects/types', projectTypeRouter);
@@ -72,6 +81,8 @@ app.use('/api/v1/timelogs/types', timeLogTypeRouter);
 app.use('/api/v1/timelogs', timeLogRouter);
 
 app.use('/api/v1/leaves/types', leaveTypeRouter);
+app.use('/api/v1/leaves/quarters', leaveQuarterRouter);
+
 app.use('/api/v1/leaves', leaveRouter);
 
 app.use('/api/v1/blogs/categories', blogCategoryRouter);
@@ -85,6 +96,8 @@ app.use('/api/v1/attendances', attendanceRouter);
 app.use('/api/v1/resources/faqs', faqRouter);
 app.use('/api/v1/resources/policies', policyRouter);
 app.use('/api/v1/resources/holidays', holidayRouter);
+
+app.use('/api/v1/emails', emailSettingsRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

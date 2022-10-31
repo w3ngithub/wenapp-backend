@@ -2,6 +2,7 @@ const express = require('express');
 
 const leaveTypeController = require('../../controllers/leaves/leaveTypeController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const Leave = require('../../models/leaves/leaveModel');
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
+    authMiddleware.checkIfValueToDeleteIsUsed(Leave, 'leaveType'),
+
     leaveTypeController.deleteLeaveType
   );
 

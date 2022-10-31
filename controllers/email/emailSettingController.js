@@ -1,0 +1,8 @@
+const Email = require('../../models/email/emailSettingModel');
+const factory = require('../factoryController');
+
+exports.getEmail = factory.getOne(Email);
+exports.getAllEmails = factory.getAll(Email);
+exports.createEmail = factory.createOne(Email);
+exports.updateEmail = factory.updateOne(Email);
+exports.deleteEmail = factory.deleteOne(Email);

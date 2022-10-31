@@ -17,6 +17,24 @@ router.get(
   attendanceController.searchAttendances
 );
 
+router.get(
+  '/today/count',
+  authMiddleware.protect,
+  attendanceController.getPunchInCountToday
+);
+
+router.get(
+  '/lateArrival',
+  authMiddleware.protect,
+  attendanceController.getLateArrivalAttendances
+);
+
+router.post(
+  '/updateLateAttendace',
+  authMiddleware.protect,
+  attendanceController.leaveCutForLateAttendace
+);
+
 router
   .route('/')
   .get(attendanceController.getAllAttendances)

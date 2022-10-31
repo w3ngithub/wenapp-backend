@@ -18,6 +18,10 @@ const noticeSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Notice_Type'
     },
+    startDate: Date,
+    endDate: Date,
+    startTime: String,
+    endTime: String,
     createdBy: String,
     updatedBy: String
   },

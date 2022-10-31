@@ -1,38 +1,31 @@
 const express = require('express');
 
-const noticeController = require('../../controllers/notices/noticeController');
+const leaveQuarterController = require('../../controllers/leaves/leaveQuarterController');
 const authMiddleware = require('../../middlewares/authMiddleware');
-const getWeekDateMiddleware = require('../../middlewares/getweekDateMiddleware');
 
 const router = express.Router();
 
 router
   .route('/')
-  .get(noticeController.getAllNotices)
+  .get(leaveQuarterController.getAllLeaveQuarters)
   .post(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
-    noticeController.createNotice
+    leaveQuarterController.createLeaveQuarters
   );
-
-router.get(
-  '/weekNotices',
-  getWeekDateMiddleware.getWeekDate,
-  noticeController.getWeekNotices
-);
 
 router
   .route('/:id')
-  .get(noticeController.getNotice)
+  .get(leaveQuarterController.getLeaveQuarter)
   .patch(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
-    noticeController.updateNotice
+    leaveQuarterController.updateLeaveQuarters
   )
   .delete(
     authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
-    noticeController.deleteNotice
+    leaveQuarterController.deleteLeaveQuarters
   );
 
 module.exports = router;
