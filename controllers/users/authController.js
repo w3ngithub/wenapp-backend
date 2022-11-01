@@ -58,9 +58,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
   const token = user.createInviteToken();
   await user.save({ validateBeforeSave: false });
 
-  const inviteURL = `${req.protocol}://${req.get(
-    'host'
-  )}/api/v1/users/signup/${token}`;
+  const inviteURL = `${req.get('origin')}/api/v1/users/signup/${token}`;
 
   const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
   // Send it to user's email
@@ -70,11 +68,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
     await new EmailNotification().sendEmail({
       email,
       subject: emailContent.title || 'Your sign up link (valid for 60 mins) ',
-      message:
-        emailContent.body.replace(
-          /@url/i,
-          `<a href={${inviteURL}}>${inviteURL}</a>`
-        ) || message
+      message: emailContent.body.replace(/@url/gi, `${inviteURL}`) || message
     });
 
     res.status(200).json({
@@ -187,8 +181,8 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
 
   // Send it to user's email
   try {
-    const resetURL = `${req.protocol}://${req.get(
-      'host'
+    const resetURL = `${req.get(
+      'origin'
     )}/api/v1/users/resetPassword/${resetToken}`;
 
     const message = `<b>Please use provided link for password reset : </b><p>${resetURL}</p>`;
@@ -200,8 +194,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
       subject:
         emailContent.title ||
         'Your password reset token (valid for only 30 minutes) ',
-      message:
-        emailContent.body.replace(/@url/i, `<p>${resetURL}</p>`) || message
+      message: emailContent.body.replace(/@url/gi, `${resetURL}`) || message
     });
 
     res.status(200).json({
