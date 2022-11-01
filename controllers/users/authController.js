@@ -113,6 +113,7 @@ exports.signup = asyncError(async (req, res, next) => {
 
   const newUser = await User.create({
     name: req.body.name,
+    username: req.body.username,
     email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
@@ -158,7 +159,9 @@ exports.login = asyncError(async (req, res, next) => {
     return next(new AppError('Please provide email and password', 400));
   }
   // Check if user exists && password is correct
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({
+    or: [{ email }, { username: email }]
+  }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
