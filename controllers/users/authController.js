@@ -68,11 +68,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
     await new EmailNotification().sendEmail({
       email,
       subject: emailContent.title || 'Your sign up link (valid for 60 mins) ',
-      message:
-        emailContent.body.replace(
-          /@url/gi,
-          `<a href={${inviteURL}}>${inviteURL}</a>`
-        ) || message
+      message: emailContent.body.replace(/@url/gi, `${inviteURL}`) || message
     });
 
     res.status(200).json({
