@@ -98,6 +98,11 @@ exports.signup = asyncError(async (req, res, next) => {
 
   const { email } = req.body;
 
+  const isEmailAlreadyPresent = await User.findOne({ email });
+
+  if (isEmailAlreadyPresent)
+    return next(new AppError('Email already exists.', 400));
+
   const invitedUser = await Invite.findOne({
     email,
     inviteTokenExpires: { $gt: Date.now() },
