@@ -159,7 +159,7 @@ exports.login = asyncError(async (req, res, next) => {
     email
   }).select('+password');
 
-  if (user.active === false) {
+  if (user && user.active === false) {
     return next(new AppError('Account is Deactivated', 401));
   }
 
