@@ -95,13 +95,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
  */
 exports.signup = asyncError(async (req, res, next) => {
   const hashedToken = hashToken(req.params.token);
-
   const { email } = req.body;
-
-  const isEmailAlreadyPresent = await User.findOne({ email });
-
-  if (isEmailAlreadyPresent)
-    return next(new AppError('Email already exists.', 400));
 
   const invitedUser = await Invite.findOne({
     email,
@@ -111,6 +105,11 @@ exports.signup = asyncError(async (req, res, next) => {
   if (!invitedUser || invitedUser.inviteToken !== hashedToken) {
     return next(new AppError('Your sign up token has expired.', 400));
   }
+
+  const isEmailAlreadyPresent = await User.findOne({ email });
+
+  if (isEmailAlreadyPresent)
+    return next(new AppError('Email already exists.', 400));
 
   const newUser = await User.create({
     name: req.body.name,
