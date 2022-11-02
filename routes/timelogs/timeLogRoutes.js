@@ -31,7 +31,7 @@ router
     timeLogController.updateTimeLog
   )
   .delete(
-    authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.restrictTo('admin', 'manager', 'lead'),
     timeLogController.deleteTimeLog
   );
 
