@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const User = require('../../models/users/userModel');
+const Role = require('../../models/users/userRoleModel')
 const Email = require('../../models/email/emailSettingModel');
 const Invite = require('../../models/users/inviteModel');
 const EmailNotification = require('../../utils/email');
@@ -111,13 +112,15 @@ exports.signup = asyncError(async (req, res, next) => {
   if (isEmailAlreadyPresent)
     return next(new AppError('Email already exists.', 400));
 
+  const roles = await Role.findOne({key:'subscriber'})
+
   const newUser = await User.create({
     name: req.body.name,
     username: req.body.username,
     email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
-    role: req.body.role,
+    role: roles._id,
     position: req.body.position,
     photo: req.body.photo,
     dob: req.body.dob,
