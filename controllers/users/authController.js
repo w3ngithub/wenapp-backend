@@ -108,6 +108,7 @@ exports.signup = asyncError(async (req, res, next) => {
       new AppError('Please enter email you were invited with. ', 400)
     );
   }
+
   if (invitedUser && invitedUser.inviteToken !== hashedToken) {
     return next(new AppError('Your sign up token has expired.', 400));
   }
