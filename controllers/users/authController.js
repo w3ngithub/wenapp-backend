@@ -95,7 +95,6 @@ exports.inviteUser = asyncError(async (req, res, next) => {
  */
 exports.signup = asyncError(async (req, res, next) => {
   const hashedToken = hashToken(req.params.token);
-
   const { email } = req.body;
 
   const invitedUser = await Invite.findOne({
@@ -106,6 +105,11 @@ exports.signup = asyncError(async (req, res, next) => {
   if (!invitedUser || invitedUser.inviteToken !== hashedToken) {
     return next(new AppError('Your sign up token has expired.', 400));
   }
+
+  const isEmailAlreadyPresent = await User.findOne({ email });
+
+  if (isEmailAlreadyPresent)
+    return next(new AppError('Email already exists.', 400));
 
   const newUser = await User.create({
     name: req.body.name,
@@ -158,6 +162,10 @@ exports.login = asyncError(async (req, res, next) => {
   const user = await User.findOne({
     $or: [{ email }, { username: email }]
   }).select('+password');
+
+  if (user && user.active === false) {
+    return next(new AppError('Account is Deactivated', 401));
+  }
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
