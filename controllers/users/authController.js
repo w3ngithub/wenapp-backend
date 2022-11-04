@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const User = require('../../models/users/userModel');
-const Role = require('../../models/users/userRoleModel')
+const Role = require('../../models/users/userRoleModel');
 const Email = require('../../models/email/emailSettingModel');
 const Invite = require('../../models/users/inviteModel');
 const EmailNotification = require('../../utils/email');
@@ -61,13 +61,22 @@ exports.inviteUser = asyncError(async (req, res, next) => {
   } else {
     emails = [email];
   }
-  console.log(email, emails);
+  // eslint-disable-next-line no-plusplus
   for (let i = 0; i < emails.length; i++) {
     try {
-      // eslint-disable-next-line no-await-in-loop
-      user = await Invite.create({
-        email: emails[i].trim()
+      const invitedEmailDetail = await Invite.findOne({
+        email: emails[i],
+        inviteTokenUsed: false
       });
+
+      if (!invitedEmailDetail) {
+        // eslint-disable-next-line no-await-in-loop
+        user = await Invite.create({
+          email: emails[i].trim()
+        });
+      } else {
+        user = invitedEmailDetail;
+      }
 
       // Generate the random invite token
       const token = user.createInviteToken();
@@ -86,10 +95,13 @@ exports.inviteUser = asyncError(async (req, res, next) => {
         message: emailContent.body.replace(/@url/gi, `${inviteURL}`) || message
       });
     } catch (err) {
-      user.inviteToken = undefined;
-      user.inviteTokenExpires = undefined;
-      user.inviteTokenUsed = false;
-      await user.save({ validateBeforeSave: false });
+      if (user) {
+        user.inviteToken = undefined;
+        user.inviteTokenExpires = undefined;
+        user.inviteTokenUsed = false;
+        await user.save({ validateBeforeSave: false });
+      }
+
       invalidEmails.push(emails[i]);
     }
   }
@@ -97,9 +109,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
   if (invalidEmails.length > 0) {
     return next(
       new AppError(
-        `There was an error sending the email ${invalidEmails.join(
-          ','
-        )}. Try again later!`
+        `Error sending the email ${invalidEmails.join(',')}. Try again later!`
       ),
       500
     );
@@ -141,7 +151,7 @@ exports.signup = asyncError(async (req, res, next) => {
   if (isEmailAlreadyPresent)
     return next(new AppError('Email already exists.', 400));
 
-  const roles = await Role.findOne({key:'subscriber'})
+  const roles = await Role.findOne({ key: 'subscriber' });
 
   const newUser = await User.create({
     name: req.body.name,
