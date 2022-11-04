@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
@@ -49,43 +50,64 @@ const createSendToken = (user, statusCode, req, res) => {
  */
 exports.inviteUser = asyncError(async (req, res, next) => {
   const { email } = req.body;
+  const invalidEmails = [];
+  let emails = [];
+  let user = null;
+  const isMultipleEmails = email.split(',').length > 0;
 
-  const user = await Invite.create({
-    email: req.body.email
-  });
+  if (isMultipleEmails) {
+    emails = [...email.split(',')];
+  } else {
+    emails = [email];
+  }
+  console.log(email, emails);
+  for (let i = 0; i < emails.length; i++) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      user = await Invite.create({
+        email: emails[i].trim()
+      });
 
-  // Generate the random invite token
-  const token = user.createInviteToken();
-  await user.save({ validateBeforeSave: false });
+      // Generate the random invite token
+      const token = user.createInviteToken();
+      // eslint-disable-next-line no-await-in-loop
+      await user.save({ validateBeforeSave: false });
 
-  const inviteURL = `${req.get('origin')}/api/v1/users/signup/${token}`;
+      const inviteURL = `${req.get('origin')}/api/v1/users/signup/${token}`;
 
-  const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
-  // Send it to user's email
-  try {
-    const emailContent = await Email.findOne({ module: 'user-invite' });
+      const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
+      // Send it to user's email
+      const emailContent = await Email.findOne({ module: 'user-invite' });
 
-    await new EmailNotification().sendEmail({
-      email,
-      subject: emailContent.title || 'Your sign up link (valid for 60 mins) ',
-      message: emailContent.body.replace(/@url/gi, `${inviteURL}`) || message
-    });
+      await new EmailNotification().sendEmail({
+        email: emails[i],
+        subject: emailContent.title || 'Your sign up link (valid for 60 mins) ',
+        message: emailContent.body.replace(/@url/gi, `${inviteURL}`) || message
+      });
+    } catch (err) {
+      user.inviteToken = undefined;
+      user.inviteTokenExpires = undefined;
+      user.inviteTokenUsed = false;
+      await user.save({ validateBeforeSave: false });
+      invalidEmails.push(emails[i]);
+    }
+  }
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Invitation for sign up sent to email!'
-    });
-  } catch (err) {
-    user.inviteToken = undefined;
-    user.inviteTokenExpires = undefined;
-    user.inviteTokenUsed = false;
-    await user.save({ validateBeforeSave: false });
-
+  if (invalidEmails.length > 0) {
     return next(
-      new AppError('There was an error sending the email. Try again later!'),
+      new AppError(
+        `There was an error sending the email ${invalidEmails.join(
+          ','
+        )}. Try again later!`
+      ),
       500
     );
   }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Invitation for sign up sent to email!'
+  });
 });
 
 /**
