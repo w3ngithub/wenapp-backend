@@ -34,6 +34,11 @@ const leaveSchema = new mongoose.Schema(
       required: [true, 'Please provide leave reason.'],
       minlength: [10, 'Leave Reason must have more or equal then 50 characters']
     },
+    cancelReason:{
+      type:String,
+      trim:true,
+      required:false,
+    },
     remarks: {
       type: String,
       trim: true
