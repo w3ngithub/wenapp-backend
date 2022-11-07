@@ -1,10 +1,11 @@
+/* eslint-disable no-await-in-loop */
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
 const User = require('../../models/users/userModel');
-const Role = require('../../models/users/userRoleModel')
+const Role = require('../../models/users/userRoleModel');
 const Email = require('../../models/email/emailSettingModel');
 const Invite = require('../../models/users/inviteModel');
 const EmailNotification = require('../../utils/email');
@@ -50,43 +51,74 @@ const createSendToken = (user, statusCode, req, res) => {
  */
 exports.inviteUser = asyncError(async (req, res, next) => {
   const { email } = req.body;
+  const invalidEmails = [];
+  let emails = [];
+  let user = null;
+  const isMultipleEmails = email.split(',').length > 0;
 
-  const user = await Invite.create({
-    email: req.body.email
-  });
+  if (isMultipleEmails) {
+    emails = [...email.split(',')];
+  } else {
+    emails = [email];
+  }
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0; i < emails.length; i++) {
+    try {
+      const invitedEmailDetail = await Invite.findOne({
+        email: emails[i],
+        inviteTokenUsed: false
+      });
 
-  // Generate the random invite token
-  const token = user.createInviteToken();
-  await user.save({ validateBeforeSave: false });
+      if (!invitedEmailDetail) {
+        // eslint-disable-next-line no-await-in-loop
+        user = await Invite.create({
+          email: emails[i].trim()
+        });
+      } else {
+        user = invitedEmailDetail;
+      }
 
-  const inviteURL = `${req.get('origin')}/api/v1/users/signup/${token}`;
+      // Generate the random invite token
+      const token = user.createInviteToken();
+      // eslint-disable-next-line no-await-in-loop
+      await user.save({ validateBeforeSave: false });
 
-  const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
-  // Send it to user's email
-  try {
-    const emailContent = await Email.findOne({ module: 'user-invite' });
+      const inviteURL = `${req.get('origin')}/api/v1/users/signup/${token}`;
 
-    await new EmailNotification().sendEmail({
-      email,
-      subject: emailContent.title || 'Your sign up link (valid for 60 mins) ',
-      message: emailContent.body.replace(/@url/gi, `${inviteURL}`) || message
-    });
+      const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
+      // Send it to user's email
+      const emailContent = await Email.findOne({ module: 'user-invite' });
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Invitation for sign up sent to email!'
-    });
-  } catch (err) {
-    user.inviteToken = undefined;
-    user.inviteTokenExpires = undefined;
-    user.inviteTokenUsed = false;
-    await user.save({ validateBeforeSave: false });
+      await new EmailNotification().sendEmail({
+        email: emails[i],
+        subject: emailContent.title || 'Your sign up link (valid for 60 mins) ',
+        message: emailContent.body.replace(/@url/gi, `${inviteURL}`) || message
+      });
+    } catch (err) {
+      if (user) {
+        user.inviteToken = undefined;
+        user.inviteTokenExpires = undefined;
+        user.inviteTokenUsed = false;
+        await user.save({ validateBeforeSave: false });
+      }
 
+      invalidEmails.push(emails[i]);
+    }
+  }
+
+  if (invalidEmails.length > 0) {
     return next(
-      new AppError('There was an error sending the email. Try again later!'),
+      new AppError(
+        `Error sending the email ${invalidEmails.join(',')}. Try again later!`
+      ),
       500
     );
   }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Invitation for sign up sent to email!'
+  });
 });
 
 /**
@@ -119,7 +151,7 @@ exports.signup = asyncError(async (req, res, next) => {
   if (isEmailAlreadyPresent)
     return next(new AppError('Email already exists.', 400));
 
-  const roles = await Role.findOne({key:'subscriber'})
+  const roles = await Role.findOne({ key: 'subscriber' });
 
   const newUser = await User.create({
     name: req.body.name,
