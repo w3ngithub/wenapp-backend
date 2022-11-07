@@ -42,8 +42,8 @@ router
   .get(attendanceController.getAllAttendances)
   .post(
     authMiddleware.protect,
-    authMiddleware.setUserIdForNestedRoutes,
     checkAttendaceTimeMiddleware.checkAttendaceTime,
+    authMiddleware.setUserIdForNestedRoutes,
     attendanceController.createAttendance
   );
 
