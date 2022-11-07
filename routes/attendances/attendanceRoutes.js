@@ -2,12 +2,14 @@ const express = require('express');
 
 const attendanceController = require('../../controllers/attendances/attendanceController');
 const authMiddleware = require('../../middlewares/authMiddleware');
+const checkAttendaceTimeMiddleware = require('../../middlewares/checkAttendanceTimeMiddleware');
 
 const router = express.Router({ mergeParams: true });
 
 router.patch(
   '/:id/punchout',
   authMiddleware.protect,
+  checkAttendaceTimeMiddleware.checkAttendaceTime,
   attendanceController.updatePunchOutTime
 );
 
@@ -41,6 +43,7 @@ router
   .post(
     authMiddleware.protect,
     authMiddleware.setUserIdForNestedRoutes,
+    checkAttendaceTimeMiddleware.checkAttendaceTime,
     attendanceController.createAttendance
   );
 
