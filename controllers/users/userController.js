@@ -126,7 +126,7 @@ exports.importUsers = asyncError(async (req, res, next) => {
     maritalStatus: user.maritalStatus,
     role:
       userRoles.find((role) => role.key === user.role)._id ||
-      userRoles.find((role) => role.key === 'subscriber')
+      userRoles.find((role) => role.key === 'subscriber')._id
   }));
   await User.insertMany([...users], { lean: true });
 
