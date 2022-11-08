@@ -8,7 +8,7 @@ const handleCastErrorDB = (err) => {
 const handleDuplicateFieldsDB = (err) => {
   const value = err.message.match(/(["'])(\\?.)*?\1/)[0];
 
-  const message = `${value} Already exists: Please use another value!`;
+  const message = `${value} already exists: Please use another value!`;
   return new AppError(message, 400);
 };
 
