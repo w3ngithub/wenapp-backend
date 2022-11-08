@@ -265,17 +265,26 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
 
   const emailContent = await Email.findOne({ module: 'late-attendance' });
 
-  const message = `<b><em>${leaveCutUser.name}</em> late arival leave cut at ${
-    req.body.leaveCutdate.split('T')[0]
-  }</b>`;
+  const message = `<b><em>${
+    leaveCutUser.name
+  }</em> late arival leave cut at ${req.body.leaveCutdate
+    .toString()
+    .split(',')
+    .map((x) => `<p>${x.split('T')[0]}</p>`)
+    .join('')}</b>`;
 
   new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL, leaveCutUser.email],
     subject: emailContent.title || `late arrival leave cut`,
     message:
-      emailContent.body
-        .replace(/@username/i, leaveCutUser.name)
-        .replace(/@date/i, req.body.leaveCutdate) || message
+      emailContent.body.replace(/@username/i, leaveCutUser.name).replace(
+        /@date/i,
+        req.body.leaveCutdate
+          .toString()
+          .split(',')
+          .map((x) => `<p>${x.split('T')[0]}</p>`)
+          .join('')
+      ) || message
   });
 
   res.status(200).json({
