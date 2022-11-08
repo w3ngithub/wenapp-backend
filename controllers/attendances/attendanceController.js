@@ -153,7 +153,8 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
 
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
-    { attendanceDate: { $lte: new Date(toDate) } }
+    { attendanceDate: { $lte: new Date(toDate) } },
+    { lateArrivalLeaveCut: { $ne: true } }
   ];
 
   if (user) {
