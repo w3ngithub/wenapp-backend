@@ -68,7 +68,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
 // Update leave status of user for approve or cancel
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   const { leaveId, status } = req.params;
-  const { remarks,reason } = req.body;
+  const { remarks, reason } = req.body;
 
   if (!leaveId || !status) {
     return next(new AppError('Missing leave ID or status in the route.', 400));
@@ -95,8 +95,8 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   leave.remarks = remarks;
   leave.leaveStatus = leaveStatus;
 
-  if(reason){
-    leave.cancelReason = reason
+  if (reason) {
+    leave.cancelReason = reason;
   }
 
   await leave.save();
@@ -732,14 +732,17 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
         email: [INFOWENEMAIL, HRWENEMAIL],
         subject: emailContent.title || `${user.name} applied for leave`,
         message:
-          emailContent.body.replace(/@username/i, user.name).replace(
-            /@date/i,
-            req.body.leaveDates
-              .toString()
-              .split(',')
-              .map((x) => `<p>${x.split('T')[0]}</p>`)
-              .join('')
-          ) || message
+          emailContent.body
+            .replace(/@username/i, user.name)
+            .replace(/@resaon/i, req.body.leaveReason)
+            .replace(
+              /@date/i,
+              req.body.leaveDates
+                .toString()
+                .split(',')
+                .map((x) => `<p>${x.split('T')[0]}</p>`)
+                .join('')
+            ) || message
       });
     } else if (req.body.leaveStatus === LEAVE_CANCELLED) {
       const emailContent = await Email.findOne({ module: 'leave-cancel' });
