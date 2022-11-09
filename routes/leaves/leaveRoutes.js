@@ -43,7 +43,7 @@ router.get(
 
 router.get(
   '/users/leavedays',
-  authMiddleware.restrictTo('admin'),
+  authMiddleware.restrictTo('admin', 'hr', 'manager', 'finance', 'lead'),
   sickCasualLeaveTypeMiddleware.getSickCasualLeave,
   leaveController.calculateLeaveDaysOfUsers
 );

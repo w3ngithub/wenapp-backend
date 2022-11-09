@@ -37,7 +37,7 @@ router.get('/birthday', userController.getBirthMonthUser);
 router.get('/salaryReview', userController.getSalarayReviewUsers);
 
 // Restrict routes to admin only after this middleware
-router.use(authMiddleware.restrictTo('admin'));
+router.use(authMiddleware.restrictTo('admin', 'hr'));
 
 router.post('/import', userController.importUsers);
 router.patch('/resetAllocatedLeaves', userController.resetAllocatedLeaves);
