@@ -151,12 +151,6 @@ exports.getPunchInCountToday = asyncError(async (req, res, next) => {
 exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, lateArrivalLeaveCut } = req.query;
 
-  console.log(
-    'lateArrivalLeaveCut',
-    lateArrivalLeaveCut,
-    lateArrivalLeaveCut.toString()
-  );
-
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
     { attendanceDate: { $lte: new Date(toDate) } },
