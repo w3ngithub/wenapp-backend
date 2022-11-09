@@ -4,6 +4,8 @@ const AppError = require('../../utils/appError');
 const factory = require('../factoryController');
 const EmailNotification = require('../../utils/email');
 const Email = require('../../models/email/emailSettingModel');
+const UserRole = require('../../models/users/userRoleModel');
+
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 // Compare two object and keep allowed fields to be updated
@@ -94,7 +96,39 @@ exports.disableUser = asyncError(async (req, res, next) => {
 
 // Import users
 exports.importUsers = asyncError(async (req, res, next) => {
-  await User.insertMany([...req.body], { lean: true });
+  const userRoles = await UserRole.find({});
+
+  const tranformDate = (date) => {
+    date = date.toString();
+    return `${date[0]}${date[1]}${date[2]}${date[3]}-${date[4]}${date[5]}-${date[6]}${date[7]}`;
+  };
+
+  const users = req.body.map((user) => ({
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    password: user.password,
+    photoUrl: null,
+    status: 'Permanent',
+    allocatedLeaves: {
+      firstQuarter: 4,
+      secondQuarter: 4,
+      thirdQuarter: 4,
+      fourthQuarter: 3
+    },
+    active: user.active === 'TRUE',
+    dob: user.dob ? new Date(tranformDate(user.dob)) : new Date(),
+    gender: user.gender,
+    primaryPhone: user.primaryPhone || 123456,
+    joinDate: user.joinDate
+      ? new Date(tranformDate(user.joinDate))
+      : new Date(),
+    maritalStatus: user.maritalStatus,
+    role:
+      userRoles.find((role) => role.key === user.role)._id ||
+      userRoles.find((role) => role.key === 'subscriber')._id
+  }));
+  await User.insertMany([...users], { lean: true });
 
   res.status(200).json({
     status: 'success',
