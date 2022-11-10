@@ -68,7 +68,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
 // Update leave status of user for approve or cancel
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   const { leaveId, status } = req.params;
-  const { remarks,reason } = req.body;
+  const { remarks, reason } = req.body;
 
   if (!leaveId || !status) {
     return next(new AppError('Missing leave ID or status in the route.', 400));
@@ -95,8 +95,8 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   leave.remarks = remarks;
   leave.leaveStatus = leaveStatus;
 
-  if(reason){
-    leave.cancelReason = reason
+  if (reason) {
+    leave.cancelReason = reason;
   }
 
   await leave.save();
@@ -745,7 +745,7 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
       const emailContent = await Email.findOne({ module: 'leave-cancel' });
 
       new EmailNotification().sendEmail({
-        email: [INFOWENEMAIL, HRWENEMAIL],
+        email: [INFOWENEMAIL, HRWENEMAIL, req.body.user.email],
         subject:
           emailContent.title || `${req.body.user.name}  leaves cancelled`,
         message:
