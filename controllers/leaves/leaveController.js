@@ -748,7 +748,7 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
       const emailContent = await Email.findOne({ module: 'leave-cancel' });
 
       new EmailNotification().sendEmail({
-        email: [INFOWENEMAIL, HRWENEMAIL],
+        email: [INFOWENEMAIL, HRWENEMAIL, req.body.user.email],
         subject:
           emailContent.title || `${req.body.user.name}  leaves cancelled`,
         message:
