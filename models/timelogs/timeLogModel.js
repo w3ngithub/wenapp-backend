@@ -52,7 +52,14 @@ const timeLogSchema = new mongoose.Schema(
 // Calculate total time for each time log
 timeLogSchema.pre('save', function (next) {
   this.totalHours = this.hours + this.minutes / 60;
+
   next();
+});
+// Calculate total time for each time log
+timeLogSchema.post('findOneAndUpdate', async function (next) {
+  const docToUpdate = await this.model.findOne(this.getQuery());
+  docToUpdate.project = docToUpdate.project._id;
+  docToUpdate.save();
 });
 
 // Populate required data
