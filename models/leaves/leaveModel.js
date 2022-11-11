@@ -34,10 +34,10 @@ const leaveSchema = new mongoose.Schema(
       required: [true, 'Please provide leave reason.'],
       minlength: [10, 'Leave Reason must have more or equal then 50 characters']
     },
-    cancelReason:{
-      type:String,
-      trim:true,
-      required:false,
+    cancelReason: {
+      type: String,
+      trim: true,
+      required: false
     },
     remarks: {
       type: String,
@@ -53,7 +53,7 @@ const leaveSchema = new mongoose.Schema(
 leaveSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'user assignTo',
-    select: '-role -position name'
+    select: '-role -position name email'
   }).populate({
     path: 'leaveType',
     select: 'name'

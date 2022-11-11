@@ -5,7 +5,6 @@ const noticeSchema = new mongoose.Schema(
     title: {
       type: String,
       required: [true, 'Please provide notice title.'],
-      unique: true,
       trim: true
     },
     details: {
