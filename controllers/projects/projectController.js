@@ -125,15 +125,8 @@ exports.projectMaintentceRemainder = asyncError(async (req, res, next) => {
 
   projectwithMaintance.forEach((project) => {
     const maintenance = project.maintenance[0];
-    if (maintenance.monthly === true) {
-      if (todayDate().getDate() === maintenance.emailDay) {
-        new EmailNotification().sendEmail({
-          email: [INFOWENEMAIL, maintenance.sendEmailTo],
-          subject: emailContent.title || 'maintenance of project',
-          message: emailContent.body.replace(/@project/i, project.name)
-        });
-      }
-    } else if (
+    if (
+      maintenance.monthly === true &&
       maintenance.selectMonths &&
       maintenance.selectMonths.length !== 0
     ) {
@@ -148,6 +141,12 @@ exports.projectMaintentceRemainder = asyncError(async (req, res, next) => {
           }
         }
       });
+    }
+  });
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: 'successful'
     }
   });
 });
