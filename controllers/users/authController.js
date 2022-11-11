@@ -161,7 +161,7 @@ exports.signup = asyncError(async (req, res, next) => {
     passwordConfirm: req.body.passwordConfirm,
     role: roles._id,
     position: req.body.position,
-    photo: req.body.photo,
+    photoURL: req.body.photoURL,
     dob: req.body.dob,
     gender: req.body.gender,
     primaryPhone: req.body.primaryPhone,
