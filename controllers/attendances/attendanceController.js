@@ -229,8 +229,8 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         PunchMinutes: {
           $minute: '$punchInTime'
         },
-        startHour: '$officeTime.utcDate.hour',
-        startMinute: '$officeTime.utcDate.minute'
+        startHour: { $convert: { input: '$officeTime.hour', to: 'int' } },
+        startMinute: { $convert: { input: '$officeTime.minute', to: 'int' } }
       }
     },
     {
