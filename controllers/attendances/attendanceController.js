@@ -150,7 +150,6 @@ exports.getPunchInCountToday = asyncError(async (req, res, next) => {
 // Search attendaces with late arrival time
 exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, lateArrivalLeaveCut } = req.query;
-
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
     { attendanceDate: { $lte: new Date(toDate) } },
@@ -182,7 +181,8 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         user: {
           $arrayElemAt: ['$user.name', 0]
         },
-        userId: { $arrayElemAt: ['$user._id', 0] }
+        userId: { $arrayElemAt: ['$user._id', 0] },
+        officeTime: '$user.officeTime'
       }
     },
     {
@@ -215,7 +215,10 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         punchOutTime: '$data.data.punchOutTime',
         userId: '$data.data.userId',
         punchInLocation: '$punchInLocation',
-        punchOutLocation: '$punchOutLocation'
+        punchOutLocation: '$punchOutLocation',
+        officeTime: {
+          $arrayElemAt: ['$data.data.officeTime', 0]
+        }
       }
     },
     {
@@ -225,15 +228,31 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         },
         PunchMinutes: {
           $minute: '$punchInTime'
-        }
+        },
+        startHour: '$officeTime.utcDate',
+        startMinute: '$officeTime.utcDate'
       }
     },
     {
       $match: {
-        $or: [
-          { $and: [{ punchHour: { $eq: 3 } }, { PunchMinutes: { $gt: 25 } }] },
-          { $and: [{ punchHour: { $gt: 3 } }] }
-        ]
+        $expr: {
+          $or: [
+            {
+              $and: [
+                { $gt: ['$punchHour', '$startHour'] },
+                { $gt: ['$punchMinutes', '$startMinute'] }
+              ]
+            },
+            {
+              $and: [{ $gt: ['$punchHour', '$startHour'] }]
+            }
+
+            // {
+            //   $and: [{ punchHour: { $eq: 4 } }, { PunchMinutes: { $gt: 45 } }]
+            // },
+            // { $and: [{ punchHour: { $gt: 4 } }] }
+          ]
+        }
       }
     },
     {
