@@ -229,8 +229,8 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         PunchMinutes: {
           $minute: '$punchInTime'
         },
-        startHour: '$officeTime.utcDate',
-        startMinute: '$officeTime.utcDate'
+        startHour: { $convert: { input: '$officeTime.hour', to: 'int' } },
+        startMinute: { $convert: { input: '$officeTime.minute', to: 'int' } }
       }
     },
     {
@@ -239,7 +239,7 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
           $or: [
             {
               $and: [
-                { $gt: ['$punchHour', '$startHour'] },
+                { $eq: ['$punchHour', '$startHour'] },
                 { $gt: ['$punchMinutes', '$startMinute'] }
               ]
             },
