@@ -11,7 +11,8 @@ const {
   INFOWENEMAIL,
   HRWENEMAIL,
   LEAVE_CANCELLED,
-  LEAVE_PENDING
+  LEAVE_PENDING,
+  LEAVE_APPROVED
 } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
@@ -754,6 +755,16 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
         message:
           req.body.leaveCancelReason ||
           `${req.body.user.name}  leaves cancelled`
+      });
+    } else if (req.body.leaveStatus === LEAVE_APPROVED) {
+      const emailContent = await Email.findOne({ module: 'leave-approve' });
+
+      new EmailNotification().sendEmail({
+        email: [req.body.user.email],
+        subject: emailContent.title || `${req.body.user.name}  leaves approved`,
+        message: emailContent.body
+          .replace(/@username/i, req.body.user.name)
+          .replace(/@reason/i, req.body.leaveApproveReason)
       });
     }
     res.status(200).json({
