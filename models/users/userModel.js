@@ -15,9 +15,9 @@ const userSchema = new mongoose.Schema(
       trim: true
     },
     officeTime: {
-      utcDate: String,
-      hour: String,
-      minute: String
+      utcDate: { type: String, default: '2022-11-13T03:15:00.000Z' },
+      hour: { type: String, default: '3' },
+      minute: { type: String, default: '25' }
     },
     email: {
       type: String,
