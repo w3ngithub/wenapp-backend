@@ -35,7 +35,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
     .search();
   if (fromDate && toDate) {
     const doc = await features.query.find({
-      leaveDates: { $gt: fromDate, $lt: toDate }
+      leaveDates: { $gte: fromDate, $lte: toDate }
     });
     const count = await Leave.countDocuments({
       ...features.formattedQuery,
