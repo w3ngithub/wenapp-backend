@@ -50,7 +50,7 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
 });
 
 // Check for allowed time log days before add/edit
-exports.checkTimeLogDays = async (req, res, next) => {
+exports.checkTimeLogDays = (req, res, next) => {
   const { logDate } = req.body;
 
   const today = new Date().getDate();
