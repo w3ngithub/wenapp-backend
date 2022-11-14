@@ -50,7 +50,7 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
 });
 
 // Check for allowed time log days before add/edit
-exports.checkTimeLogDays = (req, res, next) => {
+exports.checkTimeLogDays = async (req, res, next) => {
   const { logDate } = req.body;
 
   const today = new Date().getDate();
@@ -58,13 +58,15 @@ exports.checkTimeLogDays = (req, res, next) => {
 
   const allowedTimeLogDays = process.env.ALLOWED_TIMELOG_DAYS;
 
-  if (!(today - logDay <= allowedTimeLogDays)) {
-    return next(
-      new AppError(
-        `You are not allowed to add/edit time log after ${allowedTimeLogDays} Days`,
-        400
-      )
-    );
+  if (!['admin', 'manager'].includes(req.user.roleKey)) {
+    if (!(today - logDay <= allowedTimeLogDays)) {
+      return next(
+        new AppError(
+          `You are not allowed to add/edit time log after ${allowedTimeLogDays} Days`,
+          400
+        )
+      );
+    }
   }
   next();
 };
