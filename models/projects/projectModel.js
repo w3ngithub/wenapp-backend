@@ -71,7 +71,7 @@ const projectSchema = new mongoose.Schema(
     notes: String,
     maintenance: [
       {
-        monthly: {
+        enabled: {
           type: Boolean,
           default: false
         },

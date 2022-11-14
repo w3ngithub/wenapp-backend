@@ -126,7 +126,7 @@ exports.projectMaintentceRemainder = asyncError(async (req, res, next) => {
   projectwithMaintance.forEach((project) => {
     const maintenance = project.maintenance[0];
     if (
-      maintenance.monthly === true &&
+      maintenance.enabled === true &&
       maintenance.selectMonths &&
       maintenance.selectMonths.length !== 0
     ) {
