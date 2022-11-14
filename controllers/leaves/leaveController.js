@@ -736,6 +736,7 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
           emailContent.body
             .replace(/@username/i, user.name)
             .replace(/@reason/i, req.body.leaveReason)
+            .replace(/@leavetype/i, req.body.leaveType)
             .replace(
               /@date/i,
               req.body.leaveDates
