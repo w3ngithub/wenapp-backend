@@ -237,7 +237,6 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
         'project.name': 1,
         'project.projectStatus': 1,
         'project.client': 1,
-        'project.createdAt':1,
         timeSpent: 1
       }
     }
