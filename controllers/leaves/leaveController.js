@@ -736,6 +736,7 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
           emailContent.body
             .replace(/@username/i, user.name)
             .replace(/@reason/i, req.body.leaveReason)
+            .replace(/@leavetype/i, req.body.leaveType)
             .replace(
               /@date/i,
               req.body.leaveDates
@@ -764,7 +765,7 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
         subject: emailContent.title || `${req.body.user.name}  leaves approved`,
         message: emailContent.body
           .replace(/@username/i, req.body.user.name)
-          .replace(/@reason/i, req.body.leaveApproveReason)
+          .replace(/@reason/i, req.body.leaveApproveReason || '')
       });
     }
     res.status(200).json({

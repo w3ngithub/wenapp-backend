@@ -7,11 +7,8 @@ exports.POSITIONS = {
   intern: 'Intern'
 };
 
-// exports.INFOWENEMAIL = 'info@webexpertsnepal.com';
-// exports.HRWENEMAIL = 'hr@webexpertsnepal.com';
-
-exports.INFOWENEMAIL = 'ganika.ashok@webexpertsnepal.com';
-exports.HRWENEMAIL = 'ganika.ashok@webexpertsnepal.com';
+exports.INFOWENEMAIL = 'info@webexpertsnepal.com';
+exports.HRWENEMAIL = 'hr@webexpertsnepal.com';
 
 exports.STATUS_TYPES = [
   { id: 'approved', value: 'Approved' },
