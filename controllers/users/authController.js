@@ -83,7 +83,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
       // eslint-disable-next-line no-await-in-loop
       await user.save({ validateBeforeSave: false });
 
-      const inviteURL = `${req.get('origin')}/api/v1/users/signup/${token}`;
+      const inviteURL = `${req.get('origin')}/users/signup/${token}`;
 
       const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
       // Send it to user's email
@@ -234,9 +234,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
 
   // Send it to user's email
   try {
-    const resetURL = `${req.get(
-      'origin'
-    )}/api/v1/users/resetPassword/${resetToken}`;
+    const resetURL = `${req.get('origin')}/users/resetPassword/${resetToken}`;
 
     const message = `<b>Please use provided link for password reset : </b><p>${resetURL}</p>`;
 
