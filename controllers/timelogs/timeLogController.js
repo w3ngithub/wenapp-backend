@@ -227,6 +227,9 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
     {
       $addFields: { project: '$_id' }
     },
+    {$sort:{
+      'project.createdAt':-1
+    }},
     {
       $project: {
         _id: 0,
@@ -234,6 +237,7 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
         'project.name': 1,
         'project.projectStatus': 1,
         'project.client': 1,
+        'project.createdAt':1,
         timeSpent: 1
       }
     }
