@@ -50,18 +50,18 @@ const { checkTeamAccess } = require('./middlewares/authMiddleware');
 // Initialized and start express application
 const app = express();
 
-app.enable('trust proxy');
+// app.enable('trust proxy');
 
 // Implement CORS
 app.use(cors());
-app.options('*', cors());
+// app.options('*', cors());
 
 // Set security HTTP headers
-app.use(helmet());
+// app.use(helmet());
 
 // Limit requests from same API
 const limiter = rateLimit({
-  max: 1000,
+  max: 1000000,
   windowMs: 15 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!'
 });
@@ -82,10 +82,10 @@ app.use(express.urlencoded({ extended: true, limit: '20kb' }));
 app.use(cookieParser());
 
 // Data sanitization against NoSQL query injection
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 
 // Data sanitization against XSS
-app.use(xss());
+// app.use(xss());
 
 // Compression
 app.use(compression());
