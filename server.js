@@ -19,6 +19,11 @@ const DB = process.env.DATABASE.replace(
 );
 
 // Connect mongo db using mongoose client
+// mongoose
+//   .connect('mongodb://wenappu:w3nN3pal@192.168.2.112:27017/wen-app-v2', {
+//     useNewUrlParser: true
+//   })
+//   .then(() => console.log('DB connection successful!'));
 mongoose
   .connect(DB, {
     useNewUrlParser: true
