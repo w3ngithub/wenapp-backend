@@ -20,8 +20,8 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
   const features = new APIFeatures(
     TimeLog.find({
       $and: [
-        { createdAt: { $gte: firstDayOfWeek } },
-        { createdAt: { $lte: lastDayOfWeek } }
+        { logDate: { $gte: firstDayOfWeek } },
+        { logDate: { $lte: lastDayOfWeek } }
       ]
     }),
     req.query
@@ -35,7 +35,7 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     features.query,
     TimeLog.countDocuments({
       ...features.formattedQuery,
-      createdAt: { $gte: firstDayOfWeek }
+      logDate: { $gte: firstDayOfWeek }
     })
   ]);
 
@@ -226,6 +226,11 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
     },
     {
       $addFields: { project: '$_id' }
+    },
+    {
+      $sort: {
+        'project.createdAt': -1
+      }
     },
     {
       $project: {
