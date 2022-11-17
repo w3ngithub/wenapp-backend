@@ -58,7 +58,9 @@ timeLogSchema.pre('save', function (next) {
 // Calculate total time for each time log
 timeLogSchema.post('findOneAndUpdate', async function (next) {
   const docToUpdate = await this.model.findOne(this.getQuery());
-  docToUpdate.project = docToUpdate.project._id;
+  docToUpdate.project = docToUpdate.project
+    ? docToUpdate.project._id
+    : process.env.OTHER_PROJECT_ID;
   docToUpdate.save();
 });
 
