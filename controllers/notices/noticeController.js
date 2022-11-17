@@ -12,12 +12,22 @@ exports.getWeekNotices = asyncError(async (req, res, next) => {
   const { todayDate, afterOneWeekDate } = req;
 
   const notices = await Notice.find({
-    $and: [
+    $or: [
       {
-        startDate: { $gte: todayDate }
+        $and: [
+          {
+            startDate: { $gte: todayDate }
+          },
+          {
+            startDate: { $lte: afterOneWeekDate }
+          }
+        ]
       },
       {
-        startDate: { $lte: afterOneWeekDate }
+        $and: [
+          { endDate: { $gte: todayDate } },
+          { startDate: { $lte: todayDate } }
+        ]
       }
     ]
   });
