@@ -7,19 +7,18 @@ const router = express.Router();
 
 router.delete(
   '/remove/:id/:holidayId',
-  authMiddleware.protect,
   holidayController.removeSingleHolidayOfYear
 );
 
 router
   .route('/:id')
-  .get(authMiddleware.protect, holidayController.getHoliday)
-  .patch(authMiddleware.protect, holidayController.updateHoliday)
-  .delete(authMiddleware.protect, holidayController.deleteHoliday);
+  .get(holidayController.getHoliday)
+  .patch(holidayController.updateHoliday)
+  .delete(holidayController.deleteHoliday);
 
 router
   .route('/')
-  .get(authMiddleware.protect, holidayController.getAllHolidays)
-  .post(authMiddleware.protect, holidayController.createHoliday);
+  .get(holidayController.getAllHolidays)
+  .post(holidayController.createHoliday);
 
 module.exports = router;

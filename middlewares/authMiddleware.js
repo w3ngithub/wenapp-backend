@@ -28,34 +28,41 @@ exports.protect = asyncError(async (req, res, next) => {
   }
 
   // Verification token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+    if (err) {
+      return next(new AppError('Session Expired !', 401));
+    }
 
-  // Check if user still exists
-  const currentUser = await User.findById(decoded.id);
-  if (!currentUser) {
-    return next(
-      new AppError(
-        'The user belonging to this token does no longer exist.',
-        401
-      )
-    );
-  }
+    // Check if user still exists
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return next(
+        new AppError(
+          'The user belonging to this token does no longer exist.',
+          401
+        )
+      );
+    }
 
-  // Check if user changed password after the token was issued
-  if (currentUser.changedPasswordAfter(decoded.iat)) {
-    return next(
-      new AppError('User recently changed password! Please log in again.', 401)
-    );
-  }
+    // Check if user changed password after the token was issued
+    if (currentUser.changedPasswordAfter(decoded.iat)) {
+      return next(
+        new AppError(
+          'User recently changed password! Please log in again.',
+          401
+        )
+      );
+    }
 
-  // Grant access to protected routes
-  req.user = currentUser;
+    // Grant access to protected routes
+    req.user = currentUser;
 
-  // Check user role and assign role key to current user object to check for permission
-  if (req.user.role) {
-    const userRole = await UserRole.findById(req.user.role);
-    req.user.roleKey = userRole.key;
-  }
+    // Check user role and assign role key to current user object to check for permission
+    if (req.user.role) {
+      const userRole = await UserRole.findById(req.user.role);
+      req.user.roleKey = userRole.key;
+    }
+  });
 
   next();
 });

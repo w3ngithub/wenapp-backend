@@ -10,7 +10,6 @@ router
   .route('/')
   .get(projectStatusController.getAllProjectStatus)
   .post(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     projectStatusController.createProjectStatus
   );
@@ -19,12 +18,10 @@ router
   .route('/:id')
   .get(projectStatusController.getProjectStatus)
   .patch(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     projectStatusController.updateProjectStatus
   )
   .delete(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     authMiddleware.checkIfValueToDeleteIsUsed(Project, 'projectStatus'),
 

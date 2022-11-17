@@ -18,9 +18,6 @@ router.get(
 );
 router.get('/users/today/count', leaveController.getUsersCountOnLeaveToday);
 
-// Protect all routes after this middleware
-router.use(authMiddleware.protect);
-
 router.get('/pending/count', leaveController.getPendingLeavesCount);
 
 router.post(

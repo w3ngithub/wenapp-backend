@@ -10,7 +10,6 @@ router
   .route('/')
   .get(clientController.getAllClients)
   .post(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     clientController.createClient
   );
@@ -19,12 +18,10 @@ router
   .route('/:id')
   .get(clientController.getClient)
   .patch(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     clientController.updateClient
   )
   .delete(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     authMiddleware.checkIfValueToDeleteIsUsed(Project, 'client'),
 

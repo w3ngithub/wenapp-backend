@@ -10,7 +10,6 @@ router
   .route('/')
   .get(noticeController.getAllNotices)
   .post(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr', 'manager'),
     noticeController.createNotice
   );
@@ -25,12 +24,10 @@ router
   .route('/:id')
   .get(noticeController.getNotice)
   .patch(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr', 'manager'),
     noticeController.updateNotice
   )
   .delete(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr', 'manager'),
     noticeController.deleteNotice
   );

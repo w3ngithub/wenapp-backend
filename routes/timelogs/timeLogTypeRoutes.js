@@ -10,7 +10,6 @@ router
   .route('/')
   .get(timeLogTypeController.getAllTimeLogTypes)
   .post(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     timeLogTypeController.createTimeLogType
   );
@@ -19,12 +18,10 @@ router
   .route('/:id')
   .get(timeLogTypeController.getTimeLogType)
   .patch(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     timeLogTypeController.updateTimeLogType
   )
   .delete(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'lead', 'manager', 'editor'),
     authMiddleware.checkIfValueToDeleteIsUsed(TimeLog, 'logType'),
 

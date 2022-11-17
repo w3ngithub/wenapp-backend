@@ -45,6 +45,8 @@ const holidayRouter = require('./routes/resources/holidayRoutes');
 
 const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
 
+const authMiddleware = require('./middlewares/authMiddleware');
+
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
 
 // Initialized and start express application
@@ -98,6 +100,9 @@ app.use('/api/v1/users/roles', userRoleRouter);
 app.use('/api/v1/users/positions', userPositionRouter);
 app.use('/api/v1/users/positionTypes', userPositionTypeRouter);
 app.use('/api/v1/users', userRouter);
+
+// Protect all routes after this middleware
+app.use(authMiddleware.protect);
 
 app.use('/api/v1/projects/types', projectTypeRouter);
 app.use('/api/v1/projects/status', projectStatusRouter);

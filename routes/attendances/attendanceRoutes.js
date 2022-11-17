@@ -8,32 +8,18 @@ const router = express.Router({ mergeParams: true });
 
 router.patch(
   '/:id/punchout',
-  authMiddleware.protect,
   checkAttendaceTimeMiddleware.checkAttendaceTime,
   attendanceController.updatePunchOutTime
 );
 
-router.get(
-  '/search',
-  authMiddleware.protect,
-  attendanceController.searchAttendances
-);
+router.get('/search', attendanceController.searchAttendances);
 
-router.get(
-  '/today/count',
-  authMiddleware.protect,
-  attendanceController.getPunchInCountToday
-);
+router.get('/today/count', attendanceController.getPunchInCountToday);
 
-router.get(
-  '/lateArrival',
-  authMiddleware.protect,
-  attendanceController.getLateArrivalAttendances
-);
+router.get('/lateArrival', attendanceController.getLateArrivalAttendances);
 
 router.post(
   '/updateLateAttendace',
-  authMiddleware.protect,
   attendanceController.leaveCutForLateAttendace
 );
 
@@ -41,7 +27,6 @@ router
   .route('/')
   .get(attendanceController.getAllAttendances)
   .post(
-    authMiddleware.protect,
     checkAttendaceTimeMiddleware.checkAttendaceTime,
     authMiddleware.setUserIdForNestedRoutes,
     attendanceController.createAttendance
@@ -52,7 +37,6 @@ router
   .get(attendanceController.getAttendance)
   .patch(authMiddleware.protect, attendanceController.updateAttendance)
   .delete(
-    authMiddleware.protect,
     authMiddleware.restrictTo('admin', 'hr'),
     attendanceController.deleteAttendance
   );
