@@ -20,8 +20,8 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
   const features = new APIFeatures(
     TimeLog.find({
       $and: [
-        { createdAt: { $gte: firstDayOfWeek } },
-        { createdAt: { $lte: lastDayOfWeek } }
+        { logDate: { $gte: firstDayOfWeek } },
+        { logDate: { $lte: lastDayOfWeek } }
       ]
     }),
     req.query
@@ -35,7 +35,7 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     features.query,
     TimeLog.countDocuments({
       ...features.formattedQuery,
-      createdAt: { $gte: firstDayOfWeek }
+      logDate: { $gte: firstDayOfWeek }
     })
   ]);
 
@@ -58,13 +58,15 @@ exports.checkTimeLogDays = (req, res, next) => {
 
   const allowedTimeLogDays = process.env.ALLOWED_TIMELOG_DAYS;
 
-  if (!(today - logDay <= allowedTimeLogDays)) {
-    return next(
-      new AppError(
-        `You are not allowed to add/edit time log after ${allowedTimeLogDays} Days`,
-        400
-      )
-    );
+  if (!['admin', 'manager'].includes(req.user.roleKey)) {
+    if (!(today - logDay <= allowedTimeLogDays)) {
+      return next(
+        new AppError(
+          `You are not allowed to add/edit time log after ${allowedTimeLogDays} Days`,
+          400
+        )
+      );
+    }
   }
   next();
 };
@@ -224,6 +226,16 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
     },
     {
       $addFields: { project: '$_id' }
+    },
+    {
+      $sort: {
+        'project.createdAt': -1
+      }
+    },
+    {
+      $sort: {
+        'project.createdAt': -1
+      }
     },
     {
       $project: {

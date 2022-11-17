@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 // Handle uncaught exception of application and exit application
-// process.on('uncaughtException', (err) => {
-//   console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-//   console.log(err.name, err.message);
-//   process.exit(1);
-// });
+process.on('uncaughtException', (err) => {
+  console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
 
 // Load config variables
 dotenv.config({ path: './config.env' });
@@ -19,6 +19,11 @@ const DB = process.env.DATABASE.replace(
 );
 
 // Connect mongo db using mongoose client
+// mongoose
+//   .connect('mongodb://wenappu:w3nN3pal@192.168.2.112:27017/wen-app-v2', {
+//     useNewUrlParser: true
+//   })
+//   .then(() => console.log('DB connection successful!'));
 mongoose
   .connect(DB, {
     useNewUrlParser: true

@@ -11,7 +11,8 @@ const {
   INFOWENEMAIL,
   HRWENEMAIL,
   LEAVE_CANCELLED,
-  LEAVE_PENDING
+  LEAVE_PENDING,
+  LEAVE_APPROVED
 } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
@@ -34,7 +35,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
     .search();
   if (fromDate && toDate) {
     const doc = await features.query.find({
-      leaveDates: { $gt: fromDate, $lt: toDate }
+      leaveDates: { $gte: fromDate, $lte: toDate }
     });
     const count = await Leave.countDocuments({
       ...features.formattedQuery,
@@ -68,7 +69,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
 // Update leave status of user for approve or cancel
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   const { leaveId, status } = req.params;
-  const { remarks,reason } = req.body;
+  const { remarks, reason } = req.body;
 
   if (!leaveId || !status) {
     return next(new AppError('Missing leave ID or status in the route.', 400));
@@ -95,8 +96,8 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   leave.remarks = remarks;
   leave.leaveStatus = leaveStatus;
 
-  if(reason){
-    leave.cancelReason = reason
+  if (reason) {
+    leave.cancelReason = reason;
   }
 
   await leave.save();
@@ -247,14 +248,12 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
       ]);
     })
   );
-
   const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
   const allocatedLeavesOfUser = allocatedLeaves || {};
   const totalQuarter = Object.values(allocatedLeavesOfUser);
   totalQuarter.length = currentQuarterIndex;
 
   let remainingLeaves = 0;
-
   if (req.user.position.name !== POSITIONS.intern) {
     totalQuarter.forEach((q, i) => {
       if (
@@ -263,6 +262,8 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
         q - quarterLeaves[i][0].leavesTaken > 0
       ) {
         remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
+      } else {
+        remainingLeaves += q - 0;
       }
     });
   }
@@ -732,25 +733,39 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
         email: [INFOWENEMAIL, HRWENEMAIL],
         subject: emailContent.title || `${user.name} applied for leave`,
         message:
-          emailContent.body.replace(/@username/i, user.name).replace(
-            /@date/i,
-            req.body.leaveDates
-              .toString()
-              .split(',')
-              .map((x) => `<p>${x.split('T')[0]}</p>`)
-              .join('')
-          ) || message
+          emailContent.body
+            .replace(/@username/i, user.name)
+            .replace(/@reason/i, req.body.leaveReason)
+            .replace(/@leavetype/i, req.body.leaveType)
+            .replace(
+              /@date/i,
+              req.body.leaveDates
+                .toString()
+                .split(',')
+                .map((x) => `<p>${x.split('T')[0]}</p>`)
+                .join('')
+            ) || message
       });
     } else if (req.body.leaveStatus === LEAVE_CANCELLED) {
       const emailContent = await Email.findOne({ module: 'leave-cancel' });
 
       new EmailNotification().sendEmail({
-        email: [INFOWENEMAIL, HRWENEMAIL],
+        email: [INFOWENEMAIL, HRWENEMAIL, req.body.user.email],
         subject:
           emailContent.title || `${req.body.user.name}  leaves cancelled`,
         message:
           req.body.leaveCancelReason ||
           `${req.body.user.name}  leaves cancelled`
+      });
+    } else if (req.body.leaveStatus === LEAVE_APPROVED) {
+      const emailContent = await Email.findOne({ module: 'leave-approve' });
+
+      new EmailNotification().sendEmail({
+        email: [req.body.user.email],
+        subject: emailContent.title || `${req.body.user.name}  leaves approved`,
+        message: emailContent.body
+          .replace(/@username/i, req.body.user.name)
+          .replace(/@reason/i, req.body.leaveApproveReason || '')
       });
     }
     res.status(200).json({
