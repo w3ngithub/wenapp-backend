@@ -753,9 +753,18 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
         email: [INFOWENEMAIL, HRWENEMAIL, req.body.user.email],
         subject:
           emailContent.title || `${req.body.user.name}  leaves cancelled`,
-        message:
-          req.body.leaveCancelReason ||
-          `${req.body.user.name}  leaves cancelled`
+          message : emailContent.body.replace(/@username/i,req.body.user.name).replace(/@reason/i, req.body.leaveCancelReason || '')
+          .replace(
+            /@date/i,
+            req.body.leaveDates
+              .toString()
+              .split(',')
+              .map((x) => `<p>${x.split('T')[0]}</p>`)
+              .join('')
+          ) || 'Leave Cancelled'
+          // message:
+        //   req.body.leaveCancelReason ||
+        //   `${req.body.user.name}  leaves cancelled`
       });
     } else if (req.body.leaveStatus === LEAVE_APPROVED) {
       const emailContent = await Email.findOne({ module: 'leave-approve' });
