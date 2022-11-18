@@ -135,7 +135,9 @@ exports.projectMaintentceRemainder = asyncError(async (req, res, next) => {
           if (todayDate().getDate() === maintenance.emailDay) {
             new EmailNotification().sendEmail({
               email: [INFOWENEMAIL, maintenance.sendEmailTo],
-              subject: emailContent.title || 'maintenance of project',
+              subject:
+                emailContent.title.replace(/@project/i, project.name) ||
+                'maintenance of project',
               message: emailContent.body.replace(/@project/i, project.name)
             });
           }
