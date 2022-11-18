@@ -5,7 +5,7 @@ const timeLogRouter = require('../timelogs/timeLogRoutes');
 const authMiddleware = require('../../middlewares/authMiddleware');
 
 const router = express.Router();
-router.get('/maintenance', projectController.projectmaintenanceReminder);
+router.get('/maintenance', projectController.projectMaintenanceReminder);
 
 router.use('/:projectId/timelogs', timeLogRouter);
 
