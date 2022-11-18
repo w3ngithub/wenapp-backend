@@ -83,7 +83,9 @@ exports.disableUser = asyncError(async (req, res, next) => {
 
   new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL],
-    subject: emailContent.title || 'User was disabled',
+    subject:
+      emailContent.title.replace(/@username/i, user.name) ||
+      'User was disabled',
     message: emailContent.body.replace(/@username/i, user.name) || message
   });
 
