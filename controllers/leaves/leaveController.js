@@ -731,7 +731,9 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
 
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL],
-        subject: emailContent.title || `${user.name} applied for leave`,
+        subject:
+          emailContent.title.replace(/@username/i, user.name) ||
+          `${user.name} applied for leave`,
         message:
           emailContent.body
             .replace(/@username/i, user.name)
@@ -752,19 +754,20 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL, req.body.user.email],
         subject:
-          emailContent.title || `${req.body.user.name}  leaves cancelled`,
-          message : emailContent.body.replace(/@username/i,req.body.user.name).replace(/@reason/i, req.body.leaveCancelReason || '')
-          .replace(
-            /@date/i,
-            req.body.leaveDates
-              .toString()
-              .split(',')
-              .map((x) => `<p>${x.split('T')[0]}</p>`)
-              .join('')
-          ) || 'Leave Cancelled'
-          // message:
-        //   req.body.leaveCancelReason ||
-        //   `${req.body.user.name}  leaves cancelled`
+          emailContent.title.replace(/@username/i, req.body.user.name) ||
+          `${req.body.user.name}  leaves cancelled`,
+        message:
+          emailContent.body
+            .replace(/@username/i, req.body.user.name)
+            .replace(/@reason/i, req.body.leaveCancelReason || '')
+            .replace(
+              /@date/i,
+              req.body.leaveDates
+                .toString()
+                .split(',')
+                .map((x) => `<p>${x.split('T')[0]}</p>`)
+                .join('')
+            ) || 'Leave Cancelled'
       });
     } else if (req.body.leaveStatus === LEAVE_APPROVED) {
       const emailContent = await Email.findOne({ module: 'leave-approve' });
