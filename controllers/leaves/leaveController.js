@@ -262,8 +262,14 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
         q - quarterLeaves[i][0].leavesTaken > 0
       ) {
         remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
+      } else if (
+        quarterLeaves[i][0] &&
+        quarterLeaves[i][0].leavesTaken &&
+        q - quarterLeaves[i][0].leavesTaken <= 0
+      ) {
+        remainingLeaves += 0;
       } else {
-        remainingLeaves += q - 0;
+        remainingLeaves += q;
       }
     });
   }
