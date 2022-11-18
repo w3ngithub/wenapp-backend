@@ -294,7 +294,9 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
 
   new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL, leaveCutUser.email],
-    subject: emailContent.title || `late arrival leave cut`,
+    subject:
+      emailContent.title.replace(/@username/i, leaveCutUser.name) ||
+      `late arrival leave cut`,
     message:
       emailContent.body.replace(/@username/i, leaveCutUser.name).replace(
         /@date/i,

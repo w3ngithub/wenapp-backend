@@ -178,7 +178,9 @@ exports.signup = asyncError(async (req, res, next) => {
     const message = `<b><em>${newUser.name}</em> joined WENAPP</b>`;
     new EmailNotification().sendEmail({
       email: [INFOWENEMAIL, HRWENEMAIL],
-      subject: emailContent.title || 'User was Created',
+      subject:
+        emailContent.title.replace(/@username/i, newUser.name) ||
+        'User was Created',
       message: emailContent.body.replace(
         /@username/i,
         `<em>${newUser.name}</em>` || message
