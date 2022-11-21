@@ -116,20 +116,25 @@ exports.getWeeklyTimeSpent = asyncError(async (req, res, next) => {
 });
 
 exports.projectMaintenanceReminder = asyncError(async (req, res, next) => {
-  const projects = await Project.find({});
+  const projects = await Project.find({
+    $and: [
+      {
+        maintenance: { $exists: true, $ne: [] }
+      },
+      {
+        maintenance: {
+          $elemMatch: {
+            enabled: true
+          }
+        }
+      }
+    ]
+  });
   const emailContent = await Email.findOne({ module: 'project-maintenance' });
 
-  const projectWithMaintenance = Array.from(projects).filter(
-    (project) => project.maintenance.length !== 0
-  );
-
-  projectWithMaintenance.forEach((project) => {
+  projects.forEach((project) => {
     const maintenance = project.maintenance[0];
-    if (
-      maintenance.enabled === true &&
-      maintenance.selectMonths &&
-      maintenance.selectMonths.length !== 0
-    ) {
+    if (maintenance.selectMonths && maintenance.selectMonths.length !== 0) {
       maintenance.selectMonths.forEach((month) => {
         if (todayDate().getMonth() === MONTHS[month]) {
           if (todayDate().getDate() === maintenance.emailDay) {
