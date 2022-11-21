@@ -256,18 +256,10 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
   let remainingLeaves = 0;
   if (req.user.position.name !== POSITIONS.intern) {
     totalQuarter.forEach((q, i) => {
-      if (
-        quarterLeaves[i][0] &&
-        quarterLeaves[i][0].leavesTaken &&
-        q - quarterLeaves[i][0].leavesTaken > 0
-      ) {
+      if (remainingLeaves < 0) {
+        remainingLeaves = 0;
+      } else if (quarterLeaves[i][0] && quarterLeaves[i][0].leavesTaken) {
         remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
-      } else if (
-        quarterLeaves[i][0] &&
-        quarterLeaves[i][0].leavesTaken &&
-        q - quarterLeaves[i][0].leavesTaken <= 0
-      ) {
-        remainingLeaves += 0;
       } else {
         remainingLeaves += q;
       }
@@ -278,7 +270,7 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
     leavesTaken: 0
   };
 
-  if (remainingLeaves === 0) {
+  if (req.user.position.name === POSITIONS.intern) {
     remainingLeaves = totalQuarter[totalQuarter.length - 1] - leavesTaken;
   }
 
