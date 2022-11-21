@@ -22,12 +22,6 @@ const leaveSchema = new mongoose.Schema(
       enum: ['pending', 'approved', 'cancelled'],
       default: 'pending'
     },
-    assignTo: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: 'User'
-      }
-    ],
     reason: {
       type: String,
       trim: true,
@@ -52,7 +46,7 @@ const leaveSchema = new mongoose.Schema(
 // Populate required data
 leaveSchema.pre(/^find/, function (next) {
   this.populate({
-    path: 'user assignTo',
+    path: 'user',
     select: '-role -position name email'
   }).populate({
     path: 'leaveType',
