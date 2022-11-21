@@ -19,12 +19,19 @@ const attendanceSchema = new mongoose.Schema(
     punchInLocation: {
       type: [Number, Number]
     },
+
     punchOutLocation: {
       type: [Number, Number]
     },
     punchOutTime: Date,
     punchInNote: String,
     punchOutNote: String,
+    punchInIp: {
+      type: String
+    },
+    punchOutIp: {
+      type: String
+    },
     lateArrivalLeaveCut: {
       type: Boolean,
       default: false
