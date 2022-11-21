@@ -258,7 +258,8 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
     totalQuarter.forEach((q, i) => {
       if (remainingLeaves < 0) {
         remainingLeaves = 0;
-      } else if (quarterLeaves[i][0] && quarterLeaves[i][0].leavesTaken) {
+      }
+      if (quarterLeaves[i][0] && quarterLeaves[i][0].leavesTaken) {
         remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
       } else {
         remainingLeaves += q;
