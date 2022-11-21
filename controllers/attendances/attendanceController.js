@@ -24,7 +24,8 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
     punchOutTime: Date.now(),
     punchOutNote: req.body.punchOutNote,
     updatedBy: req.user.id,
-    punchOutLocation: req.body.punchOutLocation
+    punchOutLocation: req.body.punchOutLocation,
+    punchOutIp: req.headers['x-forwarded-for'] || req.socket.remoteAddress
   };
 
   const doc = await Attendance.findByIdAndUpdate(req.params.id, reqBody, {
