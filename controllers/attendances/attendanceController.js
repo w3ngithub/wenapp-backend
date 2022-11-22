@@ -105,7 +105,9 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             punchOutNote: '$punchOutNote',
             punchInNote: '$punchInNote',
             punchInLocation: '$punchInLocation',
-            punchOutLocation: '$punchOutLocation'
+            punchOutLocation: '$punchOutLocation',
+            punchInIp: '$punchInIp',
+            punchOutIp: '$punchOutIp'
           }
         }
       }

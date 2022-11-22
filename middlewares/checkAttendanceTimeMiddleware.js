@@ -36,3 +36,9 @@ exports.checkAttendaceTime = asyncError(async (req, res, next) => {
 
   next();
 });
+
+exports.setIpForAttendance = asyncError(async (req, res, next) => {
+  req.body.punchInIp =
+    req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  next();
+});
