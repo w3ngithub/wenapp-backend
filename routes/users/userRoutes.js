@@ -18,10 +18,11 @@ router.get('/logout', authController.logout);
 
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
-router.get('/', userController.getAllUsers);
 
 // Protect all routes after this middleware
 router.use(authMiddleware.protect);
+
+router.get('/', userController.getAllUsers);
 
 router.get('/count', userController.getActiveUser);
 
