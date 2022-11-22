@@ -44,6 +44,7 @@ const policyRouter = require('./routes/resources/policyRoutes');
 const holidayRouter = require('./routes/resources/holidayRoutes');
 
 const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
+const authMiddleware = require('./middlewares/authMiddleware');
 
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
 
@@ -104,6 +105,8 @@ app.use('/api/v1/projects/status', projectStatusRouter);
 app.use('/api/v1/projects/tags', projectTagRouter);
 app.use('/api/v1/projects/clients', clientRouter);
 app.use('/api/v1/projects', projectRouter);
+
+app.use(authMiddleware.protect);
 
 app.use('/api/v1/timelogs/types', timeLogTypeRouter);
 app.use('/api/v1/timelogs', timeLogRouter);
