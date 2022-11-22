@@ -44,11 +44,7 @@ router
     authMiddleware.protect,
     checkAttendaceTimeMiddleware.checkAttendaceTime,
     authMiddleware.setUserIdForNestedRoutes,
-    (req, res, next) => {
-      req.body.punchInIp =
-        req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-      next();
-    },
+    checkAttendaceTimeMiddleware.setIpForAttendance,
     attendanceController.createAttendance
   );
 
