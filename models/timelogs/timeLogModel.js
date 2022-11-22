@@ -73,7 +73,7 @@ timeLogSchema.pre(/^find/, function (next) {
     .populate({
       path: 'project',
       select:
-        '-projectTypes -projectStatus -projectTags -client -developers -designers -qa -devOps name'
+        '-projectTypes -projectStatus -projectTags -client -developers -designers -qa -devOps name slug'
     })
     .populate({
       path: 'logType',
