@@ -250,7 +250,13 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
   );
   const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
   const allocatedLeavesOfUser = allocatedLeaves || {};
-  const                                                                                                                                                                                                          totalQuarter = Object.values(allocatedLeavesOfUser);
+  const totalQuarter = [
+    allocatedLeavesOfUser.firstQuarter,
+    allocatedLeavesOfUser.secondQuarter,
+    allocatedLeavesOfUser.thirdQuarter,
+    allocatedLeavesOfUser.fourthQuarter
+  ];
+
   totalQuarter.length = currentQuarterIndex;
 
   let remainingLeaves = 0;
