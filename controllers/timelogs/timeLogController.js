@@ -299,6 +299,7 @@ exports.getTimelogForChart = asyncError(async (req, res, next) => {
       $project: {
         _id: 0,
         'logType.name': 1,
+        'logType.color': 1,
         timeSpent: 1
       }
     }
