@@ -301,14 +301,17 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
       emailContent.title.replace(/@username/i, leaveCutUser.name) ||
       `late arrival leave cut`,
     message:
-      emailContent.body.replace(/@username/i, leaveCutUser.name).replace(
-        /@date/i,
-        req.body.leaveCutdate
-          .toString()
-          .split(',')
-          .map((x) => `<p>${x.split('T')[0]}</p>`)
-          .join('')
-      ) || message
+      emailContent.body
+        .replace(/@username/i, leaveCutUser.name)
+        .replace(
+          /@date/i,
+          req.body.leaveCutdate
+            .toString()
+            .split(',')
+            .map((x) => `<p>${x.split('T')[0]}</p>`)
+            .join('')
+        )
+        .replace(/@leavetype/i, req.body.leaveType || '') || message
   });
 
   res.status(200).json({
