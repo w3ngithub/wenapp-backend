@@ -216,6 +216,8 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         midDayExit: '$data.data.midDayExit',
         punchInTime: '$data.data.punchInTime',
         punchOutTime: '$data.data.punchOutTime',
+        punchInNote: '$data.data.punchInNote',
+        punchOutNote: '$data.data.punchOutNote',
         userId: '$data.data.userId',
         punchInLocation: '$punchInLocation',
         punchOutLocation: '$punchOutLocation',
