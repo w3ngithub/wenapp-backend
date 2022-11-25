@@ -44,6 +44,8 @@ const policyRouter = require('./routes/resources/policyRoutes');
 const holidayRouter = require('./routes/resources/holidayRoutes');
 
 const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
+const activityLogsRouter = require('./routes/activityLogs/activityLogsRoute');
+
 const authMiddleware = require('./middlewares/authMiddleware');
 
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
@@ -95,6 +97,8 @@ app.use(compression());
 app.use(checkTeamAccess);
 
 // Routes
+app.use('/api/v1/activitylogs', activityLogsRouter);
+
 app.use('/api/v1/users/roles', userRoleRouter);
 app.use('/api/v1/users/positions', userPositionRouter);
 app.use('/api/v1/users/positionTypes', userPositionTypeRouter);

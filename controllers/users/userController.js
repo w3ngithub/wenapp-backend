@@ -5,6 +5,7 @@ const factory = require('../factoryController');
 const EmailNotification = require('../../utils/email');
 const Email = require('../../models/email/emailSettingModel');
 const UserRole = require('../../models/users/userRoleModel');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
@@ -87,6 +88,12 @@ exports.disableUser = asyncError(async (req, res, next) => {
       emailContent.title.replace(/@username/i, user.name) ||
       'User was disabled',
     message: emailContent.body.replace(/@username/i, user.name) || message
+  });
+
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'User',
+    activity: `${req.user.name} made User: ${user.name} inactive`
   });
 
   res.status(200).json({
@@ -317,6 +324,12 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
     }
   ]);
 
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'User',
+    activity: `${req.user.name} updated Allocated Leaves of all Co-workers`
+  });
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -327,5 +340,5 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
-exports.updateUser = factory.updateOne(User);
-exports.deleteUser = factory.deleteOne(User);
+exports.updateUser = factory.updateOne(User, ActivityLogs, 'User');
+exports.deleteUser = factory.deleteOne(User, ActivityLogs, 'User');
