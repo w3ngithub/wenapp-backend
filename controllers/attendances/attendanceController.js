@@ -25,7 +25,7 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
     punchOutNote: req.body.punchOutNote,
     updatedBy: req.user.id,
     punchOutLocation: req.body.punchOutLocation,
-    punchOutIp: req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    punchOutIp: req.body.punchOutIp
   };
 
   const doc = await Attendance.findByIdAndUpdate(req.params.id, reqBody, {
@@ -216,6 +216,8 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         midDayExit: '$data.data.midDayExit',
         punchInTime: '$data.data.punchInTime',
         punchOutTime: '$data.data.punchOutTime',
+        punchInNote: '$data.data.punchInNote',
+        punchOutNote: '$data.data.punchOutNote',
         userId: '$data.data.userId',
         punchInLocation: '$punchInLocation',
         punchOutLocation: '$punchOutLocation',
@@ -301,14 +303,17 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
       emailContent.title.replace(/@username/i, leaveCutUser.name) ||
       `late arrival leave cut`,
     message:
-      emailContent.body.replace(/@username/i, leaveCutUser.name).replace(
-        /@date/i,
-        req.body.leaveCutdate
-          .toString()
-          .split(',')
-          .map((x) => `<p>${x.split('T')[0]}</p>`)
-          .join('')
-      ) || message
+      emailContent.body
+        .replace(/@username/i, leaveCutUser.name)
+        .replace(
+          /@date/i,
+          req.body.leaveCutdate
+            .toString()
+            .split(',')
+            .map((x) => `<p>${x.split('T')[0]}</p>`)
+            .join('')
+        )
+        .replace(/@leavetype/i, req.body.leaveType || '') || message
   });
 
   res.status(200).json({

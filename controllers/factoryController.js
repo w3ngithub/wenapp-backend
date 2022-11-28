@@ -50,11 +50,25 @@ exports.getAll = (Model) =>
     });
   });
 
-exports.createOne = (Model) =>
+exports.createOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, createdBy: req.user.id };
 
     const doc = await Model.create(reqBody);
+
+    if (LogModel) {
+      LogModel.create({
+        status: 'created',
+        module: ModelToLog,
+        activity: `${req.user.name} created ${ModelToLog}: ${
+          doc.name || doc.title
+        }`,
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
+      });
+    }
 
     res.status(201).json({
       status: 'success',
@@ -64,7 +78,7 @@ exports.createOne = (Model) =>
     });
   });
 
-exports.updateOne = (Model) =>
+exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, updatedBy: req.user.id };
 
@@ -77,6 +91,20 @@ exports.updateOne = (Model) =>
       return next(new AppError('No document found with that ID', 404));
     }
 
+    if (LogModel) {
+      LogModel.create({
+        status: 'updated',
+        module: ModelToLog,
+        activity: `${req.user.name} updated ${ModelToLog}: ${
+          doc.name || doc.title
+        }`,
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
+      });
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -85,12 +113,26 @@ exports.updateOne = (Model) =>
     });
   });
 
-exports.deleteOne = (Model) =>
+exports.deleteOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const doc = await Model.findByIdAndDelete(req.params.id);
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
+    }
+
+    if (LogModel) {
+      LogModel.create({
+        status: 'deleted',
+        module: ModelToLog,
+        activity: `${req.user.name} deleted ${ModelToLog}:${
+          doc.name || doc.title
+        }`,
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
+      });
     }
 
     res.status(204).json({

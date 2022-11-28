@@ -44,7 +44,6 @@ router
     authMiddleware.protect,
     checkAttendaceTimeMiddleware.checkAttendaceTime,
     authMiddleware.setUserIdForNestedRoutes,
-    checkAttendaceTimeMiddleware.setIpForAttendance,
     attendanceController.createAttendance
   );
 
