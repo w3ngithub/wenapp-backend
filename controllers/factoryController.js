@@ -62,7 +62,11 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
         module: ModelToLog,
         activity: `${req.user.name} created ${ModelToLog}: ${
           doc.name || doc.title
-        }`
+        }`,
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
       });
     }
 
@@ -93,7 +97,11 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
         module: ModelToLog,
         activity: `${req.user.name} updated ${ModelToLog}: ${
           doc.name || doc.title
-        }`
+        }`,
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
       });
     }
 
@@ -119,7 +127,11 @@ exports.deleteOne = (Model, LogModel, ModelToLog) =>
         module: ModelToLog,
         activity: `${req.user.name} deleted ${ModelToLog}:${
           doc.name || doc.title
-        }`
+        }`,
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
       });
     }
 

@@ -7,12 +7,12 @@ const router = express.Router();
 router
   .route('/')
   .get(activityLogsController.getAllActivityLogs)
-  .post(activityLogsController.createActivityLog);
+  .post(activityLogsController.createActivityLog)
+  .delete(activityLogsController.deleteActivityLog);
 
 router
   .route('/:id')
   .get(activityLogsController.getActivityLog)
-  .patch(activityLogsController.updateActivityLog)
-  .delete(activityLogsController.deleteActivityLog);
+  .patch(activityLogsController.updateActivityLog);
 
 module.exports = router;

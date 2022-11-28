@@ -93,7 +93,11 @@ exports.disableUser = asyncError(async (req, res, next) => {
   ActivityLogs.create({
     status: 'updated',
     module: 'User',
-    activity: `${req.user.name} made User: ${user.name} inactive`
+    activity: `${req.user.name} made User: ${user.name} inactive`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
 
   res.status(200).json({
@@ -327,7 +331,11 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
   ActivityLogs.create({
     status: 'updated',
     module: 'User',
-    activity: `${req.user.name} updated Allocated Leaves of all Co-workers`
+    activity: `${req.user.name} updated Allocated Leaves of all Co-workers`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
 
   res.status(200).json({

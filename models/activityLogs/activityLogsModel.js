@@ -6,7 +6,11 @@ const activityLogSchema = new mongoose.Schema(
       type: String
     },
     status: { type: String, enum: ['created', 'updated', 'deleted'] },
-    module: String
+    module: String,
+    user: {
+      name: String,
+      photo: { type: String, default: null }
+    }
   },
   {
     timestamps: true
