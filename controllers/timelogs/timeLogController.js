@@ -21,11 +21,14 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
       mongoose.Schema.Types.ObjectId &&
     req.query.sort.includes('user')
   ) {
-    const ApiInstance = new APIFeatures(TimeLog.find({}), req.query);
-    const newfeatures = ApiInstance.filter().search().formattedQuery;
-    const paginatedfeature = ApiInstance.paginate().paginateObject;
+    const ApiInstance = new APIFeatures(TimeLog.find({}), req.query)
+      .filter()
+      .search()
+      .paginate();
+    const newfeatures = ApiInstance.formattedQuery;
+    const paginatedfeature = ApiInstance.paginateObject;
 
-    let newFilter = {};
+    const newFilter = {};
 
     Object.keys(newfeatures).forEach((data) => {
       if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
@@ -48,22 +51,8 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
             pipeline: [
               { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
               {
-                $lookup: {
-                  from: 'user_position_types',
-                  localField: 'positionType',
-                  foreignField: '_id',
-                  as: 'positionTypes'
-                }
-              },
-              {
-                $set: {
-                  positionType: { $arrayElemAt: ['$positionTypes', 0] }
-                }
-              },
-              {
                 $project: {
-                  name: 1,
-                  positionType: 1
+                  name: 1
                 }
               }
             ],
@@ -82,30 +71,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
             let: { project_id: '$project' },
             pipeline: [
               { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'createdBy',
-                  foreignField: '_id',
-                  as: 'createdBy'
-                }
-              },
-
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'updatedBy',
-                  foreignField: '_id',
-                  as: 'updatedBy'
-                }
-              },
-              {
-                $set: {
-                  createdBy: { $arrayElemAt: ['$createdBy', 0] },
-                  updatedBy: { $arrayElemAt: ['$updatedBy', 0] }
-                }
-              },
-              { $project: { name: 1, slug: 1, createdBy: 1, updatedBy: 1 } }
+              { $project: { name: 1, slug: 1 } }
             ],
             as: 'projects'
           }
@@ -190,8 +156,7 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
       mongoose.Schema.Types.ObjectId &&
     req.query.sort.includes('project')
   ) {
-    const ApiInstance = new APIFeatures(TimeLog.find({}), req.query);
-    const paginatedfeature = ApiInstance.paginate().paginateObject;
+    const paginatedfeature = features.paginateObject;
 
     const orderSort = req.query.sort[0] === '-' ? -1 : 1;
 
@@ -212,22 +177,8 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
             pipeline: [
               { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
               {
-                $lookup: {
-                  from: 'user_position_types',
-                  localField: 'positionType',
-                  foreignField: '_id',
-                  as: 'positionTypes'
-                }
-              },
-              {
-                $set: {
-                  positionType: { $arrayElemAt: ['$positionTypes', 0] }
-                }
-              },
-              {
                 $project: {
-                  name: 1,
-                  positionType: 1
+                  name: 1
                 }
               }
             ],
@@ -245,34 +196,9 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
             pipeline: [
               { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
               {
-                $lookup: {
-                  from: 'users',
-                  localField: 'createdBy',
-                  foreignField: '_id',
-                  as: 'createdBy'
-                }
-              },
-
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'updatedBy',
-                  foreignField: '_id',
-                  as: 'updatedBy'
-                }
-              },
-              {
-                $set: {
-                  createdBy: { $arrayElemAt: ['$createdBy', 0] },
-                  updatedBy: { $arrayElemAt: ['$updatedBy', 0] }
-                }
-              },
-              {
                 $project: {
                   name: 1,
                   slug: 1,
-                  createdBy: 1,
-                  updatedBy: 1,
                   lowerName: { $toLower: '$name' }
                 }
               }
