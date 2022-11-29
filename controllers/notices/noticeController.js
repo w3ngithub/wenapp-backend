@@ -5,9 +5,9 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 exports.getNotice = factory.getOne(Notice);
 exports.getAllNotices = factory.getAll(Notice);
-exports.createNotice = factory.createOne(Notice, ActivityLogs, 'NoticeBoard');
-exports.updateNotice = factory.updateOne(Notice, ActivityLogs, 'NoticeBoard');
-exports.deleteNotice = factory.deleteOne(Notice, ActivityLogs, 'NoticeBoard');
+exports.createNotice = factory.createOne(Notice, ActivityLogs, 'Notice');
+exports.updateNotice = factory.updateOne(Notice, ActivityLogs, 'Notice');
+exports.deleteNotice = factory.deleteOne(Notice, ActivityLogs, 'Notice');
 
 exports.getWeekNotices = asyncError(async (req, res, next) => {
   const { todayDate, afterOneWeekDate } = req;

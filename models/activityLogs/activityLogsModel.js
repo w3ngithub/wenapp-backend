@@ -10,6 +10,10 @@ const activityLogSchema = new mongoose.Schema(
     user: {
       name: String,
       photo: { type: String, default: null }
+    },
+    viewedBy: {
+      type: [String],
+      default: undefined
     }
   },
   {
