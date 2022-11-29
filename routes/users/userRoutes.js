@@ -11,7 +11,7 @@ const router = express.Router();
 router
   .route('/invite')
   .get(authController.getAllInvitedUsers)
-  .post(authController.inviteUser);
+  .post(authMiddleware.protect, authController.inviteUser);
 router.post('/signup/:token', authController.signup);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);

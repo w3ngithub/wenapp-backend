@@ -60,9 +60,9 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
       LogModel.create({
         status: 'created',
         module: ModelToLog,
-        activity: `${req.user.name} created ${ModelToLog}: ${
-          doc.name || doc.title
-        }`,
+        activity: `${req.user.name} created ${ModelToLog} (${
+          doc.name || doc.title || ''
+        })`,
         user: {
           name: req.user.name,
           photo: req.user.photoURL
@@ -95,9 +95,9 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
       LogModel.create({
         status: 'updated',
         module: ModelToLog,
-        activity: `${req.user.name} updated ${ModelToLog}: ${
-          doc.name || doc.title
-        }`,
+        activity: `${req.user.name} updated ${ModelToLog} (${
+          doc.name || doc.title || doc.user.name
+        })`,
         user: {
           name: req.user.name,
           photo: req.user.photoURL
@@ -125,9 +125,9 @@ exports.deleteOne = (Model, LogModel, ModelToLog) =>
       LogModel.create({
         status: 'deleted',
         module: ModelToLog,
-        activity: `${req.user.name} deleted ${ModelToLog}:${
-          doc.name || doc.title
-        }`,
+        activity: `${req.user.name} deleted ${ModelToLog} (${
+          doc.name || doc.title || doc.user.name
+        })`,
         user: {
           name: req.user.name,
           photo: req.user.photoURL
