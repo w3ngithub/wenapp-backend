@@ -1,3 +1,9 @@
+const {
+  createActivityLogMessage,
+  deleteActivityLogMessage,
+  updateActivityLogMessage
+} = require('./common');
+
 exports.LEAVETYPES = {
   casualLeave: 'Casual Leave',
   sickLeave: 'Sick Leave'
@@ -33,4 +39,82 @@ exports.MONTHS = {
   October: 9,
   November: 10,
   December: 11
+};
+
+exports.CREATE_ACTIVITY_LOG_MESSAGE = {
+  Attendance: (user, ModelToLog) => `${user} created ${ModelToLog} Punch`,
+  Blog: createActivityLogMessage,
+  'Blog Category': createActivityLogMessage,
+  'Email Setting': createActivityLogMessage,
+  'Leave Type': createActivityLogMessage,
+  'Leave Quarter': createActivityLogMessage,
+  Leave: createActivityLogMessage,
+  NoticeBoard: createActivityLogMessage,
+  'Notice Type': createActivityLogMessage,
+  Client: createActivityLogMessage,
+  Project: createActivityLogMessage,
+  'Project Status': createActivityLogMessage,
+  'Project Tag': createActivityLogMessage,
+  'Project Type': createActivityLogMessage,
+  FAQ: createActivityLogMessage,
+  Holiday: createActivityLogMessage,
+  Policy: createActivityLogMessage,
+  TimeLog: (user, ModelToLog) => `${user} created ${ModelToLog}`,
+  'Log Type': createActivityLogMessage,
+  User: createActivityLogMessage,
+  'User Position': createActivityLogMessage,
+  'User Position Type': createActivityLogMessage,
+  'User Role': createActivityLogMessage
+};
+
+exports.UPDATE_ACTIVITY_LOG_MESSAGE = {
+  Attendance: (user, ModelToLog) => `${user} updated ${ModelToLog} Punch`,
+  Blog: updateActivityLogMessage,
+  'Blog Category': updateActivityLogMessage,
+  'Email Setting': updateActivityLogMessage,
+  'Leave Type': updateActivityLogMessage,
+  'Leave Quarter': updateActivityLogMessage,
+  Leave: updateActivityLogMessage,
+  NoticeBoard: updateActivityLogMessage,
+  'Notice Type': updateActivityLogMessage,
+  Client: updateActivityLogMessage,
+  Project: updateActivityLogMessage,
+  'Project Status': updateActivityLogMessage,
+  'Project Tag': updateActivityLogMessage,
+  'Project Type': updateActivityLogMessage,
+  FAQ: updateActivityLogMessage,
+  Holiday: updateActivityLogMessage,
+  Policy: updateActivityLogMessage,
+  TimeLog: (user, ModelToLog) => `${user} updated ${ModelToLog}`,
+  'Log Type': updateActivityLogMessage,
+  User: updateActivityLogMessage,
+  'User Position': updateActivityLogMessage,
+  'User Position Type': updateActivityLogMessage,
+  'User Role': updateActivityLogMessage
+};
+
+exports.DELETE_ACTIVITY_LOG_MESSAGE = {
+  Attendance: (user, ModelToLog) => `${user} deleted ${ModelToLog} Punch`,
+  Blog: deleteActivityLogMessage,
+  'Blog Category': deleteActivityLogMessage,
+  'Email Setting': deleteActivityLogMessage,
+  'Leave Type': deleteActivityLogMessage,
+  'Leave Quarter': deleteActivityLogMessage,
+  Leave: deleteActivityLogMessage,
+  NoticeBoard: deleteActivityLogMessage,
+  'Notice Type': deleteActivityLogMessage,
+  Client: deleteActivityLogMessage,
+  Project: deleteActivityLogMessage,
+  'Project Status': deleteActivityLogMessage,
+  'Project Tag': deleteActivityLogMessage,
+  'Project Type': deleteActivityLogMessage,
+  FAQ: deleteActivityLogMessage,
+  Holiday: deleteActivityLogMessage,
+  Policy: deleteActivityLogMessage,
+  TimeLog: (user, ModelToLog) => `${user} deleted ${ModelToLog}`,
+  'Log Type': deleteActivityLogMessage,
+  User: deleteActivityLogMessage,
+  'User Position': deleteActivityLogMessage,
+  'User Position Type': deleteActivityLogMessage,
+  'User Role': deleteActivityLogMessage
 };
