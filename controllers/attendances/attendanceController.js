@@ -7,15 +7,28 @@ const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
 const Email = require('../../models/email/emailSettingModel');
 const User = require('../../models/users/userModel');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 const EmailNotification = require('../../utils/email');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
-exports.createAttendance = factory.createOne(Attendance);
-exports.updateAttendance = factory.updateOne(Attendance);
-exports.deleteAttendance = factory.deleteOne(Attendance);
+exports.createAttendance = factory.createOne(
+  Attendance,
+  ActivityLogs,
+  'Attendance'
+);
+exports.updateAttendance = factory.updateOne(
+  Attendance,
+  ActivityLogs,
+  'Attendance'
+);
+exports.deleteAttendance = factory.deleteOne(
+  Attendance,
+  ActivityLogs,
+  'Attendance'
+);
 
 // Update punch out time and mid day exit and notes
 exports.updatePunchOutTime = asyncError(async (req, res, next) => {
@@ -36,6 +49,18 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
   if (!doc) {
     return next(new AppError('No document found with that ID', 404));
   }
+
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'Attendance',
+    activity: `${req.user.name} updated ${'Attendance'} Punch Out of (${
+      doc.user.name || doc.title
+    })`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
+  });
 
   res.status(200).json({
     status: 'success',
@@ -314,6 +339,16 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
             .join('')
         )
         .replace(/@leavetype/i, req.body.leaveType || '') || message
+  });
+
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'Attendance',
+    activity: `${req.user.name} updated Attendance (${leaveCutUser.name})`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
 
   res.status(200).json({

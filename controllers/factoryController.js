@@ -1,6 +1,11 @@
 const asyncError = require('../utils/asyncError');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
+const {
+  DELETE_ACTIVITY_LOG_MESSAGE,
+  UPDATE_ACTIVITY_LOG_MESSAGE,
+  CREATE_ACTIVITY_LOG_MESSAGE
+} = require('../utils/constants');
 
 exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
@@ -60,9 +65,11 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
       LogModel.create({
         status: 'created',
         module: ModelToLog,
-        activity: `${req.user.name} created ${ModelToLog}: ${
+        activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+          req.user.name,
+          ModelToLog,
           doc.name || doc.title
-        }`,
+        ),
         user: {
           name: req.user.name,
           photo: req.user.photoURL
@@ -95,9 +102,11 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
       LogModel.create({
         status: 'updated',
         module: ModelToLog,
-        activity: `${req.user.name} updated ${ModelToLog}: ${
+        activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+          req.user.name,
+          ModelToLog,
           doc.name || doc.title
-        }`,
+        ),
         user: {
           name: req.user.name,
           photo: req.user.photoURL
@@ -125,9 +134,11 @@ exports.deleteOne = (Model, LogModel, ModelToLog) =>
       LogModel.create({
         status: 'deleted',
         module: ModelToLog,
-        activity: `${req.user.name} deleted ${ModelToLog}:${
+        activity: DELETE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+          req.user.name,
+          ModelToLog,
           doc.name || doc.title
-        }`,
+        ),
         user: {
           name: req.user.name,
           photo: req.user.photoURL

@@ -11,6 +11,7 @@ const Invite = require('../../models/users/inviteModel');
 const EmailNotification = require('../../utils/email');
 const factory = require('../factoryController');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 // Create sign-in token
 const signToken = (id) =>
@@ -115,6 +116,12 @@ exports.inviteUser = asyncError(async (req, res, next) => {
     );
   }
 
+  ActivityLogs.create({
+    status: 'created',
+    module: 'User',
+    activity: `${req.user.name} invited ${emails} to WENAPP`
+  });
+
   res.status(200).json({
     status: 'success',
     message: 'Invitation for sign up sent to email!'
@@ -187,6 +194,12 @@ exports.signup = asyncError(async (req, res, next) => {
       )
     });
   }
+
+  ActivityLogs.create({
+    status: 'created',
+    module: 'User',
+    activity: `${newUser.name} signed up to WENAPP`
+  });
   createSendToken(newUser, 201, req, res);
 });
 

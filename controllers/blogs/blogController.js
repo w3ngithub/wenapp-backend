@@ -1,3 +1,4 @@
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const Blog = require('../../models/blogs/blogModel');
 const asyncError = require('../../utils/asyncError');
 const factory = require('../factoryController');
@@ -39,6 +40,6 @@ exports.getBlogAuthors = asyncError(async (req, res, next) => {
 
 exports.getBlog = factory.getOne(Blog);
 exports.getAllBlogs = factory.getAll(Blog);
-exports.createBlog = factory.createOne(Blog);
-exports.updateBlog = factory.updateOne(Blog);
-exports.deleteBlog = factory.deleteOne(Blog);
+exports.createBlog = factory.createOne(Blog, ActivityLogs, 'Blog');
+exports.updateBlog = factory.updateOne(Blog, ActivityLogs, 'Blog');
+exports.deleteBlog = factory.deleteOne(Blog, ActivityLogs, 'Blog');
