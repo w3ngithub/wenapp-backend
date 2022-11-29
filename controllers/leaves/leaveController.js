@@ -18,11 +18,12 @@ const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 const User = require('../../models/users/userModel');
 const EmailNotification = require('../../utils/email');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 exports.getLeave = factory.getOne(Leave);
-exports.createLeave = factory.createOne(Leave);
-exports.updateLeave = factory.updateOne(Leave);
-exports.deleteLeave = factory.deleteOne(Leave);
+exports.createLeave = factory.createOne(Leave, ActivityLogs, 'Leave');
+exports.updateLeave = factory.updateOne(Leave, ActivityLogs, 'Leave');
+exports.deleteLeave = factory.deleteOne(Leave, ActivityLogs, 'Leave');
 
 exports.getAllLeaves = asyncError(async (req, res, next) => {
   const { fromDate, toDate } = req.query;
@@ -101,6 +102,16 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   }
 
   await leave.save();
+
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'Leave',
+    activity: `${req.user.name} updated leave status of ${leave.user.name}`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
+  });
 
   res.status(200).json({
     status: 'success',
@@ -548,6 +559,16 @@ exports.deleteSelectedLeaveDate = asyncError(async (req, res, next) => {
 
   await Leave.findByIdAndUpdate(leaveId, {
     $pull: { leaveDates: leaveDate }
+  });
+
+  ActivityLogs.create({
+    status: 'deleted',
+    module: 'Leave',
+    activity: `${req.user.name} deleted Leave Date : ${req.params.leaveDate}`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
 
   res.status(200).json({

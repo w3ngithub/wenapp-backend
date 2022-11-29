@@ -8,12 +8,13 @@ const { INFOWENEMAIL, MONTHS } = require('../../utils/constants');
 const EmailNotification = require('../../utils/email');
 const { todayDate } = require('../../utils/common');
 const Email = require('../../models/email/emailSettingModel');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 exports.getProject = factory.getOne(Project, { path: 'timeLogs' });
 exports.getAllProjects = factory.getAll(Project);
-exports.createProject = factory.createOne(Project);
-exports.updateProject = factory.updateOne(Project);
-exports.deleteProject = factory.deleteOne(Project);
+exports.createProject = factory.createOne(Project, ActivityLogs, 'Project');
+exports.updateProject = factory.updateOne(Project, ActivityLogs, 'Project');
+exports.deleteProject = factory.deleteOne(Project, ActivityLogs, 'Project');
 
 // Partial search for the project name
 exports.searchProject = asyncError(async (req, res, next) => {
@@ -150,6 +151,7 @@ exports.projectMaintenanceReminder = asyncError(async (req, res, next) => {
       });
     }
   });
+
   res.status(200).json({
     status: 'success',
     data: {

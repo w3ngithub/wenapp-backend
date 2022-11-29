@@ -56,6 +56,16 @@ exports.updateMe = asyncError(async (req, res, next) => {
     runValidators: true
   });
 
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'User',
+    activity: `${req.user.name} made User (${updatedUser.name}) inactive`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
+  });
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -93,7 +103,7 @@ exports.disableUser = asyncError(async (req, res, next) => {
   ActivityLogs.create({
     status: 'updated',
     module: 'User',
-    activity: `${req.user.name} made User: ${user.name} inactive`,
+    activity: `${req.user.name} made User (${user.name}) inactive`,
     user: {
       name: req.user.name,
       photo: req.user.photoURL
