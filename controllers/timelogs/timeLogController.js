@@ -13,6 +13,126 @@ exports.createTimeLog = factory.createOne(TimeLog);
 exports.updateTimeLog = factory.updateOne(TimeLog);
 exports.deleteTimeLog = factory.deleteOne(TimeLog);
 
+//get all the timelogs with sorting
+
+exports.getAllTimeLogs = asyncError(async (req, res, next) => {
+  if (
+    TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
+      mongoose.Schema.Types.ObjectId &&
+    req.query.sort.includes('user')
+  ) {
+    const ApiInstance = new APIFeatures(TimeLog.find({}), req.query)
+      .filter()
+      .search()
+      .paginate();
+    const newfeatures = ApiInstance.formattedQuery;
+    const paginatedfeature = ApiInstance.paginateObject;
+
+    const newFilter = {};
+
+    Object.keys(newfeatures).forEach((data) => {
+      if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
+        newFilter[data] = new mongoose.Types.ObjectId(newfeatures[data]);
+      } else {
+        newFilter[data] = newfeatures[data];
+      }
+    });
+    const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+
+    const [sortedData, totalCount] = await Promise.all([
+      TimeLog.aggregate([
+        {
+          $match: newFilter
+        },
+        {
+          $lookup: {
+            from: 'users',
+            let: { user_id: '$user' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+              {
+                $project: {
+                  name: 1
+                }
+              }
+            ],
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
+          $sort: { 'user.name': orderSort }
+        },
+        {
+          $lookup: {
+            from: 'projects',
+            let: { project_id: '$project' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+              { $project: { name: 1, slug: 1 } }
+            ],
+            as: 'projects'
+          }
+        },
+        {
+          $lookup: {
+            from: 'timelog_types',
+            let: { logtype_id: '$logType' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+              { $project: { name: 1 } }
+            ],
+            as: 'logTypes'
+          }
+        },
+        { $skip: paginatedfeature.skip },
+        { $limit: paginatedfeature.limit },
+        {
+          $set: {
+            project: { $arrayElemAt: ['$projects', 0] },
+            logType: { $arrayElemAt: ['$logTypes', 0] }
+          }
+        },
+        {
+          $unset: ['logTypes', 'projects']
+        }
+      ]),
+      TimeLog.countDocuments(newfeatures)
+    ]);
+
+    return res.status(200).json({
+      status: 'success',
+      results: sortedData.length,
+      data: {
+        data: sortedData,
+        count: totalCount
+      }
+    });
+  }
+  const features = new APIFeatures(TimeLog.find({}), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate()
+    .search();
+
+  const [doc, count] = await Promise.all([
+    features.query,
+    TimeLog.countDocuments(features.formattedQuery)
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    results: doc.length,
+    data: {
+      data: doc,
+      count
+    }
+  });
+});
+
 // Get weekly logs of user
 exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
   const { firstDayOfWeek, lastDayOfWeek } = common.dateInThisWeek();
@@ -30,6 +150,107 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     .sort()
     .limitFields()
     .paginate();
+
+  if (
+    TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
+      mongoose.Schema.Types.ObjectId &&
+    req.query.sort.includes('project')
+  ) {
+    const paginatedfeature = features.paginateObject;
+
+    const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+
+    const [sortedData, totalCount] = await Promise.all([
+      TimeLog.aggregate([
+        {
+          $match: {
+            $and: [
+              { logDate: { $gte: firstDayOfWeek } },
+              { logDate: { $lte: lastDayOfWeek } }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            let: { user_id: '$user' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+              {
+                $project: {
+                  name: 1
+                }
+              }
+            ],
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+
+        {
+          $lookup: {
+            from: 'projects',
+            let: { project_id: '$project' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+              {
+                $project: {
+                  name: 1,
+                  slug: 1,
+                  lowerName: { $toLower: '$name' }
+                }
+              }
+            ],
+            as: 'project'
+          }
+        },
+        {
+          $unwind: '$project'
+        },
+        {
+          $sort: {
+            'project.lowerName': orderSort
+          }
+        },
+        {
+          $lookup: {
+            from: 'timelog_types',
+            let: { logtype_id: '$logType' },
+            pipeline: [
+              { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+              { $project: { name: 1 } }
+            ],
+            as: 'logTypes'
+          }
+        },
+        { $skip: paginatedfeature.skip },
+        { $limit: paginatedfeature.limit },
+        {
+          $set: {
+            logType: { $arrayElemAt: ['$logTypes', 0] }
+          }
+        },
+        {
+          $unset: ['logTypes', 'projects', 'project.lowerName']
+        }
+      ]),
+      TimeLog.countDocuments({
+        ...features.formattedQuery,
+        logDate: { $gte: firstDayOfWeek }
+      })
+    ]);
+
+    return res.status(200).json({
+      status: 'success',
+      results: sortedData.length,
+      data: {
+        data: sortedData,
+        count: totalCount
+      }
+    });
+  }
 
   const [doc, count] = await Promise.all([
     features.query,
