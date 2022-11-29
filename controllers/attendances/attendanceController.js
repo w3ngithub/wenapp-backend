@@ -51,7 +51,7 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
   }
 
   ActivityLogs.create({
-    status: 'deleted',
+    status: 'updated',
     module: 'Attendance',
     activity: `${req.user.name} updated ${'Attendance'} Punch Out of (${
       doc.user.name || doc.title
