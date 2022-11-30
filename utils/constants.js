@@ -48,7 +48,7 @@ exports.CREATE_ACTIVITY_LOG_MESSAGE = {
   'Email Setting': createActivityLogMessage,
   'Leave Type': createActivityLogMessage,
   'Leave Quarter': createActivityLogMessage,
-  Leave: createActivityLogMessage,
+  Leave: (user, ModelToLog, name) => `${user} applied ${ModelToLog} of ${name}`,
   Notice: createActivityLogMessage,
   'Notice Type': createActivityLogMessage,
   Client: createActivityLogMessage,
