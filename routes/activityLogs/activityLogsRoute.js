@@ -8,11 +8,9 @@ router
   .route('/')
   .get(activityLogsController.getAllActivityLogs)
   .post(activityLogsController.createActivityLog)
-  .delete(activityLogsController.deleteActivityLog);
-
-router
-  .route('/:id')
-  .get(activityLogsController.getActivityLog)
+  .delete(activityLogsController.deleteActivityLog)
   .patch(activityLogsController.updateActivityLog);
+
+router.route('/:id').get(activityLogsController.getActivityLog);
 
 module.exports = router;
