@@ -6,6 +6,7 @@ const {
   UPDATE_ACTIVITY_LOG_MESSAGE,
   CREATE_ACTIVITY_LOG_MESSAGE
 } = require('../utils/constants');
+const User = require('../models/users/userModel');
 
 exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
@@ -59,7 +60,11 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, createdBy: req.user.id };
 
-    const doc = await Model.create(reqBody);
+    let doc = await Model.create(reqBody);
+
+    if (ModelToLog === 'Leave') {
+      doc = await User.findOne({ _id: doc.user });
+    }
 
     if (LogModel) {
       LogModel.create({
