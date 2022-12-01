@@ -48,8 +48,11 @@ exports.CREATE_ACTIVITY_LOG_MESSAGE = {
   'Email Setting': createActivityLogMessage,
   'Leave Type': createActivityLogMessage,
   'Leave Quarter': createActivityLogMessage,
-  Leave: createActivityLogMessage,
-  NoticeBoard: createActivityLogMessage,
+  Leave: (user, ModelToLog, name) =>
+    user === name
+      ? `${user} applied ${ModelToLog}`
+      : `${user} applied ${ModelToLog} of ${name}`,
+  Notice: createActivityLogMessage,
   'Notice Type': createActivityLogMessage,
   Client: createActivityLogMessage,
   Project: createActivityLogMessage,
@@ -75,7 +78,7 @@ exports.UPDATE_ACTIVITY_LOG_MESSAGE = {
   'Leave Type': updateActivityLogMessage,
   'Leave Quarter': updateActivityLogMessage,
   Leave: updateActivityLogMessage,
-  NoticeBoard: updateActivityLogMessage,
+  Notice: updateActivityLogMessage,
   'Notice Type': updateActivityLogMessage,
   Client: updateActivityLogMessage,
   Project: updateActivityLogMessage,
@@ -101,7 +104,7 @@ exports.DELETE_ACTIVITY_LOG_MESSAGE = {
   'Leave Type': deleteActivityLogMessage,
   'Leave Quarter': deleteActivityLogMessage,
   Leave: deleteActivityLogMessage,
-  NoticeBoard: deleteActivityLogMessage,
+  Notice: deleteActivityLogMessage,
   'Notice Type': deleteActivityLogMessage,
   Client: deleteActivityLogMessage,
   Project: deleteActivityLogMessage,
