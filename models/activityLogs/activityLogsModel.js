@@ -11,9 +11,9 @@ const activityLogSchema = new mongoose.Schema(
       name: String,
       photo: { type: String, default: null }
     },
-    viewedBy: {
-      type: [String],
-      default: undefined
+    isViewed: {
+      default: false,
+      type: Boolean
     }
   },
   {
