@@ -238,9 +238,14 @@ exports.login = asyncError(async (req, res, next) => {
  */
 exports.forgotPassword = asyncError(async (req, res, next) => {
   // Get user based on POSTed email
-  const user = await User.findOne({ email: req.body.email });
+  const user = await User.findOne({
+    email: req.body.email
+  });
   if (!user) {
     return next(new AppError('User not found with entered email.', 404));
+  }
+  if (!user.active) {
+    return next(new AppError('User is deactivated.', 404));
   }
 
   // Generate the random reset token
