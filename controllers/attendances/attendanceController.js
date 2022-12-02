@@ -62,6 +62,11 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
   const limits = limit * 1 || 100;
   const skip = (pages - 1) * limit;
 
+  let dataPipe = [];
+  if (page && limit) {
+    dataPipe = [{ $skip: +skip }, { $limit: +limits }];
+  }
+
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
     { attendanceDate: { $lte: new Date(toDate) } }
@@ -124,7 +129,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     {
       $facet: {
         metadata: [{ $count: 'total' }],
-        data: [{ $skip: +skip }, { $limit: +limits }]
+        data: dataPipe
       }
     }
   ]);
