@@ -24,11 +24,7 @@ exports.updateAttendance = factory.updateOne(
   ActivityLogs,
   'Attendance'
 );
-exports.deleteAttendance = factory.deleteOne(
-  Attendance,
-  ActivityLogs,
-  'Attendance'
-);
+exports.deleteAttendance = factory.deleteOne(Attendance);
 
 // Update punch out time and mid day exit and notes
 exports.updatePunchOutTime = asyncError(async (req, res, next) => {
