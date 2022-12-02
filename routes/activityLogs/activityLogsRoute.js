@@ -11,6 +11,4 @@ router
   .delete(activityLogsController.deleteActivityLog)
   .patch(activityLogsController.updateActivityLog);
 
-router.route('/:id').get(activityLogsController.getActivityLog);
-
 module.exports = router;

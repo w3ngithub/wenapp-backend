@@ -1,11 +1,51 @@
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
+const APIFeatures = require('../../utils/apiFeatures');
 const asyncError = require('../../utils/asyncError');
 const factory = require('../factoryController');
 
-exports.getActivityLog = factory.getOne(ActivityLogs);
-exports.getAllActivityLogs = factory.getAll(ActivityLogs);
+exports.getAllActivityLogs = asyncError(async (req, res, next) => {
+  const { fromDate, toDate } = req.query;
+
+  const features = new APIFeatures(ActivityLogs.find({}), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate()
+    .search();
+  if (fromDate && toDate) {
+    const doc = await features.query.find({
+      createdAt: { $gte: fromDate, $lte: toDate }
+    });
+    const count = await ActivityLogs.countDocuments({
+      ...features.formattedQuery,
+      createdAt: { $gt: fromDate, $lt: toDate }
+    });
+
+    res.status(200).json({
+      status: 'success',
+      results: doc.length,
+      data: {
+        data: doc,
+        count
+      }
+    });
+  } else {
+    const [doc, count] = await Promise.all([
+      features.query,
+      ActivityLogs.countDocuments(features.formattedQuery)
+    ]);
+    res.status(200).json({
+      status: 'success',
+      results: doc.length,
+      data: {
+        data: doc,
+        count
+      }
+    });
+  }
+});
+
 exports.createActivityLog = factory.createOne(ActivityLogs);
-// exports.updateActivityLog = factory.updateOne(ActivityLogs);
 
 exports.deleteActivityLog = asyncError(async (req, res, next) => {
   await ActivityLogs.deleteMany({
