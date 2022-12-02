@@ -62,7 +62,7 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 
     let doc = await Model.create(reqBody);
 
-    if (ModelToLog === 'Leave') {
+    if (ModelToLog === 'Leave' || ModelToLog === 'Attendance') {
       doc = await User.findOne({ _id: doc.user });
     }
 
@@ -94,13 +94,17 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, updatedBy: req.user.id };
 
-    const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
+    let doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true
     });
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
+    }
+
+    if (ModelToLog === 'Attendance') {
+      doc = await User.findOne({ _id: doc.user });
     }
 
     if (LogModel) {

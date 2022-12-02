@@ -56,16 +56,6 @@ exports.updateMe = asyncError(async (req, res, next) => {
     runValidators: true
   });
 
-  ActivityLogs.create({
-    status: 'updated',
-    module: 'User',
-    activity: `${req.user.name} made User (${updatedUser.name}) inactive`,
-    user: {
-      name: req.user.name,
-      photo: req.user.photoURL
-    }
-  });
-
   res.status(200).json({
     status: 'success',
     data: {
@@ -359,4 +349,4 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
 exports.updateUser = factory.updateOne(User, ActivityLogs, 'User');
-exports.deleteUser = factory.deleteOne(User, ActivityLogs, 'User');
+exports.deleteUser = factory.deleteOne(User);
