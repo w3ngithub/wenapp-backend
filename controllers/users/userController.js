@@ -348,5 +348,5 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
-exports.updateUser = factory.updateOne(User);
+exports.updateUser = factory.updateOne(User, ActivityLogs, 'User');
 exports.deleteUser = factory.deleteOne(User);

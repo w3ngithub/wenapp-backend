@@ -104,9 +104,16 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   await leave.save();
 
   ActivityLogs.create({
-    status: 'updated',
+    status: status === 'cancel' ? 'deleted' : 'updated',
     module: 'Leave',
-    activity: `${req.user.name} updated leave status of ${leave.user.name}`,
+    activity:
+      req.user.name === leave.user.name
+        ? `${req.user.name} ${
+            status === 'approve' ? 'approved' : 'cancelled'
+          } Leave`
+        : `${req.user.name} ${
+            status === 'approve' ? 'approved' : 'cancelled'
+          } Leave of ${leave.user.name}`,
     user: {
       name: req.user.name,
       photo: req.user.photoURL
