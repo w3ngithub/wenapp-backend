@@ -42,12 +42,15 @@ exports.MONTHS = {
 };
 
 exports.CREATE_ACTIVITY_LOG_MESSAGE = {
-  Attendance: (user, ModelToLog) => `${user} created ${ModelToLog} Punch`,
+  Attendance: (user, ModelToLog, name) =>
+    user === name
+      ? `${user} created ${ModelToLog} Punch`
+      : `${user} added Punch of ${name}`,
   Blog: createActivityLogMessage,
   'Blog Category': createActivityLogMessage,
   'Email Setting': createActivityLogMessage,
   'Leave Type': createActivityLogMessage,
-  'Leave Quarter': createActivityLogMessage,
+  'Leave Quarter': (user, ModelToLog) => `${user} created ${ModelToLog}`,
   Leave: (user, ModelToLog, name) =>
     user === name
       ? `${user} applied ${ModelToLog}`
@@ -71,12 +74,15 @@ exports.CREATE_ACTIVITY_LOG_MESSAGE = {
 };
 
 exports.UPDATE_ACTIVITY_LOG_MESSAGE = {
-  Attendance: (user, ModelToLog) => `${user} updated ${ModelToLog} Punch`,
+  Attendance: (user, ModelToLog, name) =>
+    user === name
+      ? `${user} created ${ModelToLog} Punch`
+      : `${user} updated Punch of ${name}`,
   Blog: updateActivityLogMessage,
   'Blog Category': updateActivityLogMessage,
   'Email Setting': updateActivityLogMessage,
   'Leave Type': updateActivityLogMessage,
-  'Leave Quarter': updateActivityLogMessage,
+  'Leave Quarter': (user, ModelToLog) => `${user} updated ${ModelToLog}`,
   Leave: updateActivityLogMessage,
   Notice: updateActivityLogMessage,
   'Notice Type': updateActivityLogMessage,
@@ -102,7 +108,7 @@ exports.DELETE_ACTIVITY_LOG_MESSAGE = {
   'Blog Category': deleteActivityLogMessage,
   'Email Setting': deleteActivityLogMessage,
   'Leave Type': deleteActivityLogMessage,
-  'Leave Quarter': deleteActivityLogMessage,
+  'Leave Quarter': (user, ModelToLog) => `${user} deleted ${ModelToLog}`,
   Leave: deleteActivityLogMessage,
   Notice: deleteActivityLogMessage,
   'Notice Type': deleteActivityLogMessage,

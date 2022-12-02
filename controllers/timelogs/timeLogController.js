@@ -10,8 +10,8 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 exports.getTimeLog = factory.getOne(TimeLog);
 exports.getAllTimeLogs = factory.getAll(TimeLog);
-exports.createTimeLog = factory.createOne(TimeLog, ActivityLogs, 'TimeLog');
-exports.updateTimeLog = factory.updateOne(TimeLog, ActivityLogs, 'TimeLog');
+exports.createTimeLog = factory.createOne(TimeLog);
+exports.updateTimeLog = factory.updateOne(TimeLog);
 exports.deleteTimeLog = factory.deleteOne(TimeLog, ActivityLogs, 'TimeLog');
 
 //get all the timelogs with sorting

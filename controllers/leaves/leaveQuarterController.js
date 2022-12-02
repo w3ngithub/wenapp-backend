@@ -1,6 +1,6 @@
-const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 const factory = require('../factoryController');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 exports.getLeaveQuarter = factory.getOne(LeaveQuarter);
 exports.getAllLeaveQuarters = factory.getAll(LeaveQuarter);
