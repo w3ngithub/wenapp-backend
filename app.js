@@ -108,6 +108,11 @@ app.get('/about', (req, res) => {
 app.get('/test', (req, res) => {
   res.json({ messge: 'successfully connected to vercel' });
 });
+app.use(function(req, res, next) {
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+      res.header("Access-Control-Allow-credentials", true);
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, UPDATE");
+    });
 app.use(checkTeamAccess);
 
 // Routes
