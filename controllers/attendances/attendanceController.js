@@ -75,12 +75,19 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, page, limit } = req.query;
 
   const pages = page * 1 || 1;
-  const limits = limit * 1 || 100;
+  const limits = limit * 1 || 1000;
   const skip = (pages - 1) * limit;
 
-  let dataPipe = [];
-  if (page && limit) {
-    dataPipe = [{ $skip: +skip }, { $limit: +limits }];
+  let sortObject = { $sort: { createdAt: -1 } };
+
+  if (req.query.sort === 'csv-import') {
+    sortObject = {
+      $sort: { 'data.user': 1, 'data.attendanceDate': 1 }
+    };
+  } else if (req.query.sort) {
+    const orderType = req.query.sort.includes('-') ? -1 : 1;
+    const sortString = 'data.' + req.query.sort.replace('-', '').trim();
+    sortObject = { $sort: { [sortString]: orderType } };
   }
 
   const matchConditions = [
@@ -94,7 +101,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     });
   }
 
-  const attendances = await Attendance.aggregate([
+  const aggregateArray = [
     {
       $match: {
         $and: matchConditions
@@ -141,11 +148,17 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
           }
         }
       }
-    },
+    }
+  ];
+
+  aggregateArray.push(sortObject);
+
+  const attendances = await Attendance.aggregate([
+    ...aggregateArray,
     {
       $facet: {
         metadata: [{ $count: 'total' }],
-        data: dataPipe
+        data: [{ $skip: +skip }, { $limit: +limits }]
       }
     }
   ]);
