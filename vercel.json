@@ -1,7 +1,7 @@
 {
     "builds": [{
       "src": "server.js",
-      "use": "nodemon"
+      "use": "@now/node"
       }],
     "routes": [
         {
