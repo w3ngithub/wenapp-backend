@@ -5,6 +5,8 @@ const authMiddleware = require('../../middlewares/authMiddleware');
 
 const router = express.Router();
 
+router.get('/blog-authors', blogController.getBlogAuthors);
+
 router
   .route('/')
   .get(blogController.getAllBlogs)

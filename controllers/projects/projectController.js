@@ -8,12 +8,13 @@ const { INFOWENEMAIL, MONTHS } = require('../../utils/constants');
 const EmailNotification = require('../../utils/email');
 const { todayDate } = require('../../utils/common');
 const Email = require('../../models/email/emailSettingModel');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 exports.getProject = factory.getOne(Project, { path: 'timeLogs' });
 exports.getAllProjects = factory.getAll(Project);
-exports.createProject = factory.createOne(Project);
-exports.updateProject = factory.updateOne(Project);
-exports.deleteProject = factory.deleteOne(Project);
+exports.createProject = factory.createOne(Project, ActivityLogs, 'Project');
+exports.updateProject = factory.updateOne(Project, ActivityLogs, 'Project');
+exports.deleteProject = factory.deleteOne(Project, ActivityLogs, 'Project');
 
 // Partial search for the project name
 exports.searchProject = asyncError(async (req, res, next) => {
@@ -115,27 +116,34 @@ exports.getWeeklyTimeSpent = asyncError(async (req, res, next) => {
   });
 });
 
-exports.projectMaintentceRemainder = asyncError(async (req, res, next) => {
-  const projects = await Project.find({});
+exports.projectMaintenanceReminder = asyncError(async (req, res, next) => {
+  const projects = await Project.find({
+    $and: [
+      {
+        maintenance: { $exists: true, $ne: [] }
+      },
+      {
+        maintenance: {
+          $elemMatch: {
+            enabled: true
+          }
+        }
+      }
+    ]
+  });
   const emailContent = await Email.findOne({ module: 'project-maintenance' });
 
-  const projectwithMaintance = Array.from(projects).filter(
-    (project) => project.maintenance.length !== 0
-  );
-
-  projectwithMaintance.forEach((project) => {
+  projects.forEach((project) => {
     const maintenance = project.maintenance[0];
-    if (
-      maintenance.enabled === true &&
-      maintenance.selectMonths &&
-      maintenance.selectMonths.length !== 0
-    ) {
+    if (maintenance.selectMonths && maintenance.selectMonths.length !== 0) {
       maintenance.selectMonths.forEach((month) => {
         if (todayDate().getMonth() === MONTHS[month]) {
           if (todayDate().getDate() === maintenance.emailDay) {
             new EmailNotification().sendEmail({
               email: [INFOWENEMAIL, maintenance.sendEmailTo],
-              subject: emailContent.title || 'maintenance of project',
+              subject:
+                emailContent.title.replace(/@project/i, project.name) ||
+                'maintenance of project',
               message: emailContent.body.replace(/@project/i, project.name)
             });
           }
@@ -143,6 +151,7 @@ exports.projectMaintentceRemainder = asyncError(async (req, res, next) => {
       });
     }
   });
+
   res.status(200).json({
     status: 'success',
     data: {

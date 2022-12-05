@@ -3,6 +3,10 @@ class APIFeatures {
     this.query = query;
     this.queryString = queryString;
     this.formattedQuery = queryString;
+    this.paginateObject = {
+      skip: 0,
+      limit: 100
+    };
   }
 
   filter() {
@@ -55,6 +59,11 @@ class APIFeatures {
     const skip = (page - 1) * limit;
 
     this.query = this.query.skip(skip).limit(limit);
+
+    this.paginateObject = {
+      skip,
+      limit
+    };
 
     return this;
   }

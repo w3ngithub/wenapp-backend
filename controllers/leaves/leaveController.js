@@ -18,11 +18,12 @@ const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 const User = require('../../models/users/userModel');
 const EmailNotification = require('../../utils/email');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 exports.getLeave = factory.getOne(Leave);
-exports.createLeave = factory.createOne(Leave);
-exports.updateLeave = factory.updateOne(Leave);
-exports.deleteLeave = factory.deleteOne(Leave);
+exports.createLeave = factory.createOne(Leave, ActivityLogs, 'Leave');
+exports.updateLeave = factory.updateOne(Leave, ActivityLogs, 'Leave');
+exports.deleteLeave = factory.deleteOne(Leave, ActivityLogs, 'Leave');
 
 exports.getAllLeaves = asyncError(async (req, res, next) => {
   const { fromDate, toDate } = req.query;
@@ -35,7 +36,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
     .search();
   if (fromDate && toDate) {
     const doc = await features.query.find({
-      leaveDates: { $gt: fromDate, $lt: toDate }
+      leaveDates: { $gte: fromDate, $lte: toDate }
     });
     const count = await Leave.countDocuments({
       ...features.formattedQuery,
@@ -101,6 +102,23 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   }
 
   await leave.save();
+
+  ActivityLogs.create({
+    status: status === 'cancel' ? 'deleted' : 'updated',
+    module: 'Leave',
+    activity:
+      req.user.name === leave.user.name
+        ? `${req.user.name} ${
+            status === 'approve' ? 'approved' : 'cancelled'
+          } Leave`
+        : `${req.user.name} ${
+            status === 'approve' ? 'approved' : 'cancelled'
+          } Leave of ${leave.user.name}`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
+  });
 
   res.status(200).json({
     status: 'success',
@@ -248,22 +266,27 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
       ]);
     })
   );
-
   const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
   const allocatedLeavesOfUser = allocatedLeaves || {};
-  const totalQuarter = Object.values(allocatedLeavesOfUser);
+  const totalQuarter = [
+    allocatedLeavesOfUser.firstQuarter,
+    allocatedLeavesOfUser.secondQuarter,
+    allocatedLeavesOfUser.thirdQuarter,
+    allocatedLeavesOfUser.fourthQuarter
+  ];
+
   totalQuarter.length = currentQuarterIndex;
 
   let remainingLeaves = 0;
-
   if (req.user.position.name !== POSITIONS.intern) {
     totalQuarter.forEach((q, i) => {
-      if (
-        quarterLeaves[i][0] &&
-        quarterLeaves[i][0].leavesTaken &&
-        q - quarterLeaves[i][0].leavesTaken > 0
-      ) {
+      if (remainingLeaves < 0) {
+        remainingLeaves = 0;
+      }
+      if (quarterLeaves[i][0] && quarterLeaves[i][0].leavesTaken) {
         remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
+      } else {
+        remainingLeaves += q;
       }
     });
   }
@@ -272,7 +295,7 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
     leavesTaken: 0
   };
 
-  if (remainingLeaves === 0) {
+  if (req.user.position.name === POSITIONS.intern) {
     remainingLeaves = totalQuarter[totalQuarter.length - 1] - leavesTaken;
   }
 
@@ -545,6 +568,16 @@ exports.deleteSelectedLeaveDate = asyncError(async (req, res, next) => {
     $pull: { leaveDates: leaveDate }
   });
 
+  ActivityLogs.create({
+    status: 'deleted',
+    module: 'Leave',
+    activity: `${req.user.name} deleted Leave Date : ${req.params.leaveDate}`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
+  });
+
   res.status(200).json({
     status: 'success',
     message: `Selected Leave Date : ${req.params.leaveDate} has been deleted.`
@@ -731,11 +764,14 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
 
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL],
-        subject: emailContent.title || `${user.name} applied for leave`,
+        subject:
+          emailContent.title.replace(/@username/i, user.name) ||
+          `${user.name} applied for leave`,
         message:
           emailContent.body
             .replace(/@username/i, user.name)
             .replace(/@reason/i, req.body.leaveReason)
+            .replace(/@leavetype/i, req.body.leaveType)
             .replace(
               /@date/i,
               req.body.leaveDates
@@ -751,10 +787,20 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL, req.body.user.email],
         subject:
-          emailContent.title || `${req.body.user.name}  leaves cancelled`,
+          emailContent.title.replace(/@username/i, req.body.user.name) ||
+          `${req.body.user.name}  leaves cancelled`,
         message:
-          req.body.leaveCancelReason ||
-          `${req.body.user.name}  leaves cancelled`
+          emailContent.body
+            .replace(/@username/i, req.body.user.name)
+            .replace(/@reason/i, req.body.leaveCancelReason || '')
+            .replace(
+              /@date/i,
+              req.body.leaveDates
+                .toString()
+                .split(',')
+                .map((x) => `<p>${x.split('T')[0]}</p>`)
+                .join('')
+            ) || 'Leave Cancelled'
       });
     } else if (req.body.leaveStatus === LEAVE_APPROVED) {
       const emailContent = await Email.findOne({ module: 'leave-approve' });
@@ -764,7 +810,7 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
         subject: emailContent.title || `${req.body.user.name}  leaves approved`,
         message: emailContent.body
           .replace(/@username/i, req.body.user.name)
-          .replace(/@reason/i, req.body.leaveApproveReason)
+          .replace(/@reason/i, req.body.leaveApproveReason || '')
       });
     }
     res.status(200).json({

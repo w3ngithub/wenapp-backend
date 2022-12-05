@@ -1,6 +1,12 @@
 const asyncError = require('../utils/asyncError');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
+const {
+  DELETE_ACTIVITY_LOG_MESSAGE,
+  UPDATE_ACTIVITY_LOG_MESSAGE,
+  CREATE_ACTIVITY_LOG_MESSAGE
+} = require('../utils/constants');
+const User = require('../models/users/userModel');
 
 exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
@@ -50,11 +56,31 @@ exports.getAll = (Model) =>
     });
   });
 
-exports.createOne = (Model) =>
+exports.createOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, createdBy: req.user.id };
 
-    const doc = await Model.create(reqBody);
+    let doc = await Model.create(reqBody);
+
+    if (ModelToLog === 'Leave' || ModelToLog === 'Attendance') {
+      doc = await User.findOne({ _id: doc.user });
+    }
+
+    if (LogModel) {
+      LogModel.create({
+        status: 'created',
+        module: ModelToLog,
+        activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+          req.user.name,
+          ModelToLog,
+          doc.name || doc.title
+        ),
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
+      });
+    }
 
     res.status(201).json({
       status: 'success',
@@ -64,17 +90,37 @@ exports.createOne = (Model) =>
     });
   });
 
-exports.updateOne = (Model) =>
+exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, updatedBy: req.user.id };
 
-    const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
+    let doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true
     });
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
+    }
+
+    if (ModelToLog === 'Attendance') {
+      doc = await User.findOne({ _id: doc.user });
+    }
+
+    if (LogModel) {
+      LogModel.create({
+        status: 'updated',
+        module: ModelToLog,
+        activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+          req.user.name,
+          ModelToLog,
+          doc.name || doc.title
+        ),
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
+      });
     }
 
     res.status(200).json({
@@ -85,12 +131,28 @@ exports.updateOne = (Model) =>
     });
   });
 
-exports.deleteOne = (Model) =>
+exports.deleteOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const doc = await Model.findByIdAndDelete(req.params.id);
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
+    }
+
+    if (LogModel) {
+      LogModel.create({
+        status: 'deleted',
+        module: ModelToLog,
+        activity: DELETE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+          req.user.name,
+          ModelToLog,
+          doc.name || doc.title
+        ),
+        user: {
+          name: req.user.name,
+          photo: req.user.photoURL
+        }
+      });
     }
 
     res.status(204).json({

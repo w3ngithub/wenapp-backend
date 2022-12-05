@@ -50,3 +50,12 @@ exports.todayDate = () => {
 
   return new Date(todayDate);
 };
+
+exports.createActivityLogMessage = (user, ModelToLog, name) =>
+  `${user} created ${ModelToLog} (${name || ''})`;
+
+exports.updateActivityLogMessage = (user, ModelToLog, name) =>
+  `${user} updated ${ModelToLog} (${name || ''})`;
+
+exports.deleteActivityLogMessage = (user, ModelToLog, name) =>
+  `${user} deleted ${ModelToLog} (${name || ''})`;

@@ -7,14 +7,23 @@ const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
 const Email = require('../../models/email/emailSettingModel');
 const User = require('../../models/users/userModel');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 const EmailNotification = require('../../utils/email');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
-exports.createAttendance = factory.createOne(Attendance);
-exports.updateAttendance = factory.updateOne(Attendance);
+exports.createAttendance = factory.createOne(
+  Attendance,
+  ActivityLogs,
+  'Attendance'
+);
+exports.updateAttendance = factory.updateOne(
+  Attendance,
+  ActivityLogs,
+  'Attendance'
+);
 exports.deleteAttendance = factory.deleteOne(Attendance);
 
 // Update punch out time and mid day exit and notes
@@ -24,7 +33,8 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
     punchOutTime: Date.now(),
     punchOutNote: req.body.punchOutNote,
     updatedBy: req.user.id,
-    punchOutLocation: req.body.punchOutLocation
+    punchOutLocation: req.body.punchOutLocation,
+    punchOutIp: req.body.punchOutIp
   };
 
   const doc = await Attendance.findByIdAndUpdate(req.params.id, reqBody, {
@@ -51,6 +61,11 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
   const pages = page * 1 || 1;
   const limits = limit * 1 || 100;
   const skip = (pages - 1) * limit;
+
+  let dataPipe = [];
+  if (page && limit) {
+    dataPipe = [{ $skip: +skip }, { $limit: +limits }];
+  }
 
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
@@ -104,7 +119,9 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             punchOutNote: '$punchOutNote',
             punchInNote: '$punchInNote',
             punchInLocation: '$punchInLocation',
-            punchOutLocation: '$punchOutLocation'
+            punchOutLocation: '$punchOutLocation',
+            punchInIp: '$punchInIp',
+            punchOutIp: '$punchOutIp'
           }
         }
       }
@@ -112,7 +129,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     {
       $facet: {
         metadata: [{ $count: 'total' }],
-        data: [{ $skip: +skip }, { $limit: +limits }]
+        data: dataPipe
       }
     }
   ]);
@@ -213,6 +230,8 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         midDayExit: '$data.data.midDayExit',
         punchInTime: '$data.data.punchInTime',
         punchOutTime: '$data.data.punchOutTime',
+        punchInNote: '$data.data.punchInNote',
+        punchOutNote: '$data.data.punchOutNote',
         userId: '$data.data.userId',
         punchInLocation: '$punchInLocation',
         punchOutLocation: '$punchOutLocation',
@@ -226,7 +245,7 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         punchHour: {
           $hour: '$punchInTime'
         },
-        PunchMinutes: {
+        punchMinutes: {
           $minute: '$punchInTime'
         },
         startHour: { $convert: { input: '$officeTime.hour', to: 'int' } },
@@ -294,16 +313,31 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
 
   new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL, leaveCutUser.email],
-    subject: emailContent.title || `late arrival leave cut`,
+    subject:
+      emailContent.title.replace(/@username/i, leaveCutUser.name) ||
+      `late arrival leave cut`,
     message:
-      emailContent.body.replace(/@username/i, leaveCutUser.name).replace(
-        /@date/i,
-        req.body.leaveCutdate
-          .toString()
-          .split(',')
-          .map((x) => `<p>${x.split('T')[0]}</p>`)
-          .join('')
-      ) || message
+      emailContent.body
+        .replace(/@username/i, leaveCutUser.name)
+        .replace(
+          /@date/i,
+          req.body.leaveCutdate
+            .toString()
+            .split(',')
+            .map((x) => `<p>${x.split('T')[0]}</p>`)
+            .join('')
+        )
+        .replace(/@leavetype/i, req.body.leaveType || '') || message
+  });
+
+  ActivityLogs.create({
+    status: 'deleted',
+    module: 'Attendance',
+    activity: `${req.user.name} added Late Arrival Leave Cut of (${leaveCutUser.name})`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
 
   res.status(200).json({

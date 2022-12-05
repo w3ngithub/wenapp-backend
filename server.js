@@ -1,16 +1,21 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const { createServer } = require('http');
+const { Server: SocketServer } = require('socket.io');
 
 // Handle uncaught exception of application and exit application
-// process.on('uncaughtException', (err) => {
-//   console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-//   console.log(err.name, err.message);
-//   process.exit(1);
-// });
+process.on('uncaughtException', (err) => {
+  console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
 
 // Load config variables
 dotenv.config({ path: './config.env' });
 const app = require('./app');
+const {
+  registerActivityLogHandlers
+} = require('./socketHandlers/activityLogHandlers');
 
 // Replace db password stored in config file
 const DB = process.env.DATABASE.replace(
@@ -19,15 +24,33 @@ const DB = process.env.DATABASE.replace(
 );
 
 // Connect mongo db using mongoose client
+// mongoose
+//   .connect('mongodb://wenappu:w3nN3pal@192.168.2.112:27017/wen-app-v2', {
+//     useNewUrlParser: true
+//   })
+//   .then(() => console.log('DB connection successful!'));
 mongoose
   .connect(DB, {
     useNewUrlParser: true
   })
   .then(() => console.log('DB connection successful!'));
 
+const expressServer = createServer(app);
+const io = new SocketServer(expressServer);
+
+io.on('connection', (socket) => {
+  console.log('successful connection of socket', socket.id);
+
+  registerActivityLogHandlers(io, socket);
+
+  socket.on('disconnect', () => {
+    console.log('socket disconnected');
+  });
+});
+
 // Start express node application
 const port = process.env.PORT || 3000;
-const server = app.listen(port, () => {
+const server = expressServer.listen(port, () => {
   console.log(`App running on port ${port}...`);
 });
 

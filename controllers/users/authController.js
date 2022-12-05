@@ -11,6 +11,7 @@ const Invite = require('../../models/users/inviteModel');
 const EmailNotification = require('../../utils/email');
 const factory = require('../factoryController');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 // Create sign-in token
 const signToken = (id) =>
@@ -83,7 +84,7 @@ exports.inviteUser = asyncError(async (req, res, next) => {
       // eslint-disable-next-line no-await-in-loop
       await user.save({ validateBeforeSave: false });
 
-      const inviteURL = `${req.get('origin')}/api/v1/users/signup/${token}`;
+      const inviteURL = `${req.get('origin')}/users/signup/${token}`;
 
       const message = `<b>Please signup and complete your profile by clicking the provided link : <a href={${inviteURL}}>${inviteURL}</a></b>`;
       // Send it to user's email
@@ -114,6 +115,12 @@ exports.inviteUser = asyncError(async (req, res, next) => {
       500
     );
   }
+
+  ActivityLogs.create({
+    status: 'created',
+    module: 'User',
+    activity: `${req.user.name} invited ${emails} to WENAPP`
+  });
 
   res.status(200).json({
     status: 'success',
@@ -178,13 +185,21 @@ exports.signup = asyncError(async (req, res, next) => {
     const message = `<b><em>${newUser.name}</em> joined WENAPP</b>`;
     new EmailNotification().sendEmail({
       email: [INFOWENEMAIL, HRWENEMAIL],
-      subject: emailContent.title || 'User was Created',
+      subject:
+        emailContent.title.replace(/@username/i, newUser.name) ||
+        'User was Created',
       message: emailContent.body.replace(
         /@username/i,
         `<em>${newUser.name}</em>` || message
       )
     });
   }
+
+  ActivityLogs.create({
+    status: 'created',
+    module: 'User',
+    activity: `${newUser.name} signed up to WENAPP`
+  });
   createSendToken(newUser, 201, req, res);
 });
 
@@ -223,9 +238,14 @@ exports.login = asyncError(async (req, res, next) => {
  */
 exports.forgotPassword = asyncError(async (req, res, next) => {
   // Get user based on POSTed email
-  const user = await User.findOne({ email: req.body.email });
+  const user = await User.findOne({
+    email: req.body.email
+  });
   if (!user) {
     return next(new AppError('User not found with entered email.', 404));
+  }
+  if (!user.active) {
+    return next(new AppError('User is deactivated.', 404));
   }
 
   // Generate the random reset token
@@ -234,9 +254,7 @@ exports.forgotPassword = asyncError(async (req, res, next) => {
 
   // Send it to user's email
   try {
-    const resetURL = `${req.get(
-      'origin'
-    )}/api/v1/users/resetPassword/${resetToken}`;
+    const resetURL = `${req.get('origin')}/users/resetPassword/${resetToken}`;
 
     const message = `<b>Please use provided link for password reset : </b><p>${resetURL}</p>`;
 

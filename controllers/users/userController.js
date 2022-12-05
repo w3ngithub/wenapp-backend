@@ -5,6 +5,8 @@ const factory = require('../factoryController');
 const EmailNotification = require('../../utils/email');
 const Email = require('../../models/email/emailSettingModel');
 const UserRole = require('../../models/users/userRoleModel');
+const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
+const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 
@@ -82,8 +84,20 @@ exports.disableUser = asyncError(async (req, res, next) => {
 
   new EmailNotification().sendEmail({
     email: [INFOWENEMAIL, HRWENEMAIL],
-    subject: emailContent.title || 'User was disabled',
+    subject:
+      emailContent.title.replace(/@username/i, user.name) ||
+      'User was disabled',
     message: emailContent.body.replace(/@username/i, user.name) || message
+  });
+
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'User',
+    activity: `${req.user.name} made User (${user.name}) inactive`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
 
   res.status(200).json({
@@ -257,59 +271,72 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
 exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
   const { currentQuarter } = req.body;
 
+  const quarters = await LeaveQuarter.find().sort({
+    createdAt: -1
+  });
+
   let user = null;
-  if (currentQuarter === 'firstQuarter')
-    user = await User.updateMany(
-      {},
-      {
-        allocatedLeaves: {
-          firstQuarter: 4,
-          secondQuarter: 4,
-          thirdQuarter: 4,
-          fourthQuarter: 3
-        }
-      }
-    );
-  else
-    user = await User.updateMany({}, [
-      {
-        $set: {
-          'allocatedLeaves.secondQuarter': {
-            $switch: {
-              branches: [
-                {
-                  case: { $eq: ['secondQuarter', currentQuarter] },
-                  then: 4
-                }
-              ],
-              default: '$allocatedLeaves.secondQuarter'
-            }
-          },
-          'allocatedLeaves.thirdQuarter': {
-            $switch: {
-              branches: [
-                {
-                  case: { $eq: ['thirdQuarter', currentQuarter] },
-                  then: 4
-                }
-              ],
-              default: '$allocatedLeaves.thirdQuarter'
-            }
-          },
-          'allocatedLeaves.fourthQuarter': {
-            $switch: {
-              branches: [
-                {
-                  case: { $eq: ['fourthQuarter', currentQuarter] },
-                  then: 3
-                }
-              ],
-              default: '$allocatedLeaves.fourthQuarter'
-            }
+
+  user = await User.updateMany({}, [
+    {
+      $set: {
+        'allocatedLeaves.firstQuarter': {
+          $switch: {
+            branches: [
+              {
+                case: { $eq: ['firstQuarter', currentQuarter] },
+                then: quarters[0][currentQuarter].leaves
+              }
+            ],
+            default: '$allocatedLeaves.firstQuarter'
+          }
+        },
+        'allocatedLeaves.secondQuarter': {
+          $switch: {
+            branches: [
+              {
+                case: { $eq: ['secondQuarter', currentQuarter] },
+                then: quarters[0][currentQuarter].leaves
+              }
+            ],
+            default: '$allocatedLeaves.secondQuarter'
+          }
+        },
+        'allocatedLeaves.thirdQuarter': {
+          $switch: {
+            branches: [
+              {
+                case: { $eq: ['thirdQuarter', currentQuarter] },
+                then: quarters[0][currentQuarter].leaves
+              }
+            ],
+            default: '$allocatedLeaves.thirdQuarter'
+          }
+        },
+        'allocatedLeaves.fourthQuarter': {
+          $switch: {
+            branches: [
+              {
+                case: { $eq: ['fourthQuarter', currentQuarter] },
+                then: quarters[0][currentQuarter].leaves
+              }
+            ],
+            default: '$allocatedLeaves.fourthQuarter'
           }
         }
       }
-    ]);
+    }
+  ]);
+
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'User',
+    activity: `${req.user.name} updated Allocated Leaves of all Co-workers`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
+  });
 
   res.status(200).json({
     status: 'success',
@@ -321,5 +348,5 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 
 exports.getUser = factory.getOne(User);
 exports.getAllUsers = factory.getAll(User);
-exports.updateUser = factory.updateOne(User);
+exports.updateUser = factory.updateOne(User, ActivityLogs, 'User');
 exports.deleteUser = factory.deleteOne(User);

@@ -11,17 +11,18 @@ const router = express.Router();
 router
   .route('/invite')
   .get(authController.getAllInvitedUsers)
-  .post(authController.inviteUser);
+  .post(authMiddleware.protect, authController.inviteUser);
 router.post('/signup/:token', authController.signup);
 router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
-router.get('/', userController.getAllUsers);
 
 // Protect all routes after this middleware
 router.use(authMiddleware.protect);
+
+router.get('/', userController.getAllUsers);
 
 router.get('/count', userController.getActiveUser);
 
