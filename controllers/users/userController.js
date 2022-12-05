@@ -103,7 +103,8 @@ exports.disableUser = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      message: 'User disabled.'
+      message: 'User disabled.',
+      data: user
     }
   });
 });

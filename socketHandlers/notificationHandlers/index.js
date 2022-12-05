@@ -1,14 +1,24 @@
 const Notifications = require('../../models/notification/notificationModel');
 
 const registerNotificationHandlers = (io, socket) => {
-  socket.on('initial-notification', (response) => {
-    console.log('inital notification', response);
-    io.emit('notification', 'hello');
+  socket.on('invite-user', async (response) => {
+    const bellNotification = await Notifications.create(response);
+    socket.emit('bell-notification', bellNotification);
   });
 
-  socket.on('invite-user', async (response) => {
-    console.log(response);
-    await Notifications.create(response);
+  socket.on('disable-user', async (response) => {
+    const bellNotification = await Notifications.create(response);
+    socket.emit('bell-notification', bellNotification);
+  });
+
+  socket.on('signup-user', async (response) => {
+    const bellNotification = await Notifications.create(response);
+    socket.emit('bell-notification', bellNotification);
+  });
+
+  socket.on('late-attendance', async (response) => {
+    const bellNotification = await Notifications.create(response);
+    socket.emit('bell-notification-for-user', bellNotification);
   });
 };
 
