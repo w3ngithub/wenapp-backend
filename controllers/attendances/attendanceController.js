@@ -24,11 +24,7 @@ exports.updateAttendance = factory.updateOne(
   ActivityLogs,
   'Attendance'
 );
-exports.deleteAttendance = factory.deleteOne(
-  Attendance,
-  ActivityLogs,
-  'Attendance'
-);
+exports.deleteAttendance = factory.deleteOne(Attendance);
 
 // Update punch out time and mid day exit and notes
 exports.updatePunchOutTime = asyncError(async (req, res, next) => {
@@ -49,18 +45,6 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
   if (!doc) {
     return next(new AppError('No document found with that ID', 404));
   }
-
-  ActivityLogs.create({
-    status: 'updated',
-    module: 'Attendance',
-    activity: `${req.user.name} updated ${'Attendance'} Punch Out of (${
-      doc.user.name || doc.title
-    })`,
-    user: {
-      name: req.user.name,
-      photo: req.user.photoURL
-    }
-  });
 
   res.status(200).json({
     status: 'success',
@@ -360,9 +344,9 @@ exports.leaveCutForLateAttendace = asyncError(async (req, res, next) => {
   });
 
   ActivityLogs.create({
-    status: 'updated',
+    status: 'deleted',
     module: 'Attendance',
-    activity: `${req.user.name} updated Attendance (${leaveCutUser.name})`,
+    activity: `${req.user.name} added Late Arrival Leave Cut of (${leaveCutUser.name})`,
     user: {
       name: req.user.name,
       photo: req.user.photoURL
