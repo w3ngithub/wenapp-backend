@@ -94,6 +94,9 @@ app.use(cookieParser());
 app.use(compression());
 
 // check Team access Middleware (only for development purpose...)
+app.get('/about', (req, res) => {
+  res.json({ messge: 'successfully connected to vercel' });
+});
 app.use(checkTeamAccess);
 
 // Routes
