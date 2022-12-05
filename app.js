@@ -104,6 +104,10 @@ app.use(compression());
 app.get('/about', (req, res) => {
   res.json({ messge: 'successfully connected to vercel' });
 });
+
+app.get('/test', (req, res) => {
+  res.json({ messge: 'successfully connected to vercel' });
+});
 app.use(checkTeamAccess);
 
 // Routes
