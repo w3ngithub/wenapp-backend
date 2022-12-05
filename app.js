@@ -57,16 +57,9 @@ const app = express();
 const corsOpts = {
   origin: '*',
 
-  methods: [
-    'GET',
-    'POST',
-    'PUT',
-    'DELETE',
-  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
 
-  allowedHeaders: [
-    'Content-Type',
-  ],
+  allowedHeaders: ['Content-Type']
 };
 
 // Implement CORS
