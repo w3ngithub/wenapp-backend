@@ -54,9 +54,23 @@ const { checkTeamAccess } = require('./middlewares/authMiddleware');
 const app = express();
 
 // app.enable('trust proxy');
+const corsOpts = {
+  origin: '*',
+
+  methods: [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+  ],
+
+  allowedHeaders: [
+    'Content-Type',
+  ],
+};
 
 // Implement CORS
-app.use(cors());
+app.use(cors(corsOpts));
 // app.options('*', cors());
 
 // Set security HTTP headers
