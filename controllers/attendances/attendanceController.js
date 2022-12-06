@@ -59,12 +59,19 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, page, limit } = req.query;
 
   const pages = page * 1 || 1;
-  const limits = limit * 1 || 100;
+  const limits = limit * 1 || 1000;
   const skip = (pages - 1) * limit;
 
-  let dataPipe = [];
-  if (page && limit) {
-    dataPipe = [{ $skip: +skip }, { $limit: +limits }];
+  let sortObject = { $sort: { _id: -1 } };
+
+  if (req.query.sort === 'csv-import') {
+    sortObject = {
+      $sort: { 'data.user': 1, 'data.attendanceDate': 1 }
+    };
+  } else if (req.query.sort) {
+    const orderType = req.query.sort.includes('-') ? -1 : 1;
+    const sortString = 'data.' + req.query.sort.replace('-', '').trim();
+    sortObject = { $sort: { [sortString]: orderType } };
   }
 
   const matchConditions = [
@@ -78,7 +85,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     });
   }
 
-  const attendances = await Attendance.aggregate([
+  const aggregateArray = [
     {
       $match: {
         $and: matchConditions
@@ -121,15 +128,59 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             punchInLocation: '$punchInLocation',
             punchOutLocation: '$punchOutLocation',
             punchInIp: '$punchInIp',
-            punchOutIp: '$punchOutIp'
+            punchOutIp: '$punchOutIp',
+            punchTimeDifference: {
+              $dateDiff: {
+                startDate: '$punchInTime',
+                endDate: '$punchOutTime',
+                unit: 'millisecond'
+              }
+            }
           }
         }
       }
     },
     {
+      ...sortObject
+    },
+    {
+      $project: {
+        _id: 1,
+        data: 1,
+
+        officehour: {
+          $reduce: {
+            input: '$data',
+            initialValue: 0,
+            in: {
+              $add: ['$$value', '$$this.punchTimeDifference']
+            }
+          }
+        }
+      }
+    }
+  ];
+
+  if (req.query.officehour) {
+    let officeHourQuery = JSON.stringify(req.query.officehour).replace(
+      /\b(gte|gt|lte|lt|eq)\b/g,
+      (match) => `$${match}`
+    );
+    officeHourQuery = JSON.parse(officeHourQuery);
+    let op = Object.keys(officeHourQuery)[0];
+    officeHourQuery[op] = ['$officehour', Number(officeHourQuery[op])];
+
+    aggregateArray.push({
+      $match: { $expr: officeHourQuery }
+    });
+  }
+
+  const attendances = await Attendance.aggregate([
+    ...aggregateArray,
+    {
       $facet: {
         metadata: [{ $count: 'total' }],
-        data: dataPipe
+        data: [{ $skip: +skip }, { $limit: +limits }]
       }
     }
   ]);
