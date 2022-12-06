@@ -59,7 +59,7 @@ const corsOpts = {
 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 
-  allowedHeaders: ['Content-Type']
+  allowedHeaders: ['Origin, X-Requested-With, Content-Type, Accept, Authorization,x-team-access']
 };
 
 // Implement CORS
@@ -110,12 +110,6 @@ app.get('/test', (req, res) => {
 });
 
 app.use(checkTeamAccess);
-
-app.use(function(req, res, next) {
-      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization,x-team-access");
-      res.header("Access-Control-Allow-credentials", true);
-      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, UPDATE");
-    });
 
 // Routes
 app.use('/api/v1/activitylogs', activityLogsRouter);
