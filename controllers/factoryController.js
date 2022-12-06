@@ -67,7 +67,10 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
       newDoc = await User.findOne({ _id: doc.user });
     }
 
-    if (LogModel) {
+    if (
+      LogModel !== 'Attendance' ||
+      (LogModel === 'Attendance' && req.user.name !== newDoc.name)
+    ) {
       LogModel.create({
         status: 'created',
         module: ModelToLog,
