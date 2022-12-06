@@ -34,32 +34,32 @@ const registerNotificationHandlers = (io, socket) => {
 
   socket.on('invite-user', async (response) => {
     const bellNotification = await Notifications.create(response);
-    socket.emit('bell-notification', bellNotification);
+    io.sockets.emit('bell-notification', bellNotification);
   });
 
   socket.on('disable-user', async (response) => {
     const bellNotification = await Notifications.create(response);
-    socket.emit('bell-notification', bellNotification);
+    io.sockets.emit('bell-notification', bellNotification);
   });
 
   socket.on('signup-user', async (response) => {
     const bellNotification = await Notifications.create(response);
-    socket.emit('bell-notification', bellNotification);
+    io.sockets.emit('bell-notification', bellNotification);
   });
 
   socket.on('late-attendance', async (response) => {
     const bellNotification = await Notifications.create(response);
-    socket.emit('bell-notification-for-user', bellNotification);
+    io.sockets.emit('bell-notification-for-user', bellNotification);
   });
 
   socket.on('approve-leave', async (response) => {
     const bellNotification = await Notifications.create(response);
-    socket.emit('bell-notification-for-user', bellNotification);
+    io.sockets.emit('bell-notification-for-user', bellNotification);
   });
 
   socket.on('cancel-leave', async (response) => {
     const bellNotification = await Notifications.create(response);
-    socket.emit('bell-notification-for-user', bellNotification);
+    io.sockets.emit('bell-notification-for-user', bellNotification);
   });
 
   socket.on('apply-leave', async (response) => {
@@ -81,7 +81,7 @@ const registerNotificationHandlers = (io, socket) => {
 
   socket.on('add-blog', async (response) => {
     const bellNotification = await Notifications.create(response);
-    socket.emit('bell-notification', bellNotification);
+    io.sockets.emit('bell-notification', bellNotification);
   });
 
   socket.on('add-notice', async (response) => {
@@ -93,7 +93,7 @@ const registerNotificationHandlers = (io, socket) => {
       remarks: `You have new ${noticeType.name}.`
     });
 
-    socket.emit('bell-notification', bellNotification);
+    io.sockets.emit('bell-notification', bellNotification);
   });
 };
 
