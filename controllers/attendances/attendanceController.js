@@ -62,7 +62,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
   const limits = limit * 1 || 1000;
   const skip = (pages - 1) * limit;
 
-  let sortObject = { $sort: { createdAt: -1 } };
+  let sortObject = { $sort: { _id: -1 } };
 
   if (req.query.sort === 'csv-import') {
     sortObject = {
