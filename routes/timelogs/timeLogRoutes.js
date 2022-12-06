@@ -9,6 +9,10 @@ const router = express.Router({ mergeParams: true });
 router.use(authMiddleware.protect);
 
 router.get('/users/weeklytime', timeLogController.getUserWeeklyTimeSpent);
+router.get(
+  '/users/weeklytimeproject/',
+  timeLogController.getWeeklyTimeSpentProject
+);
 router.get('/users/todaytime', timeLogController.getUserTodayTimeSpent);
 router.get('/users/weeklyLogs', timeLogController.getWeeklyLogsOfUser);
 router.post('/weeklyreport', timeLogController.getWeeklyReport);

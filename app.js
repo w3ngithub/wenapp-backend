@@ -45,6 +45,7 @@ const holidayRouter = require('./routes/resources/holidayRoutes');
 
 const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
 const activityLogsRouter = require('./routes/activityLogs/activityLogsRoute');
+const notificationsRouter = require('./routes/notifications/notificationsRoutes');
 
 const authMiddleware = require('./middlewares/authMiddleware');
 
@@ -54,9 +55,16 @@ const { checkTeamAccess } = require('./middlewares/authMiddleware');
 const app = express();
 
 // app.enable('trust proxy');
+const corsOpts = {
+  origin: '*',
+
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+
+  allowedHeaders: ['Origin, X-Requested-With, Content-Type, Accept, Authorization,x-team-access']
+};
 
 // Implement CORS
-app.use(cors());
+app.use(cors(corsOpts));
 // app.options('*', cors());
 
 // Set security HTTP headers
@@ -94,10 +102,19 @@ app.use(cookieParser());
 app.use(compression());
 
 // check Team access Middleware (only for development purpose...)
+app.get('/about', (req, res) => {
+  res.json({ messge: 'successfully connected to vercel' });
+});
+
+app.get('/test', (req, res) => {
+  res.json({ messge: 'successfully connected to vercel' });
+});
+
 app.use(checkTeamAccess);
 
 // Routes
 app.use('/api/v1/activitylogs', activityLogsRouter);
+app.use('/api/v1/notifications', notificationsRouter);
 
 app.use('/api/v1/users/roles', userRoleRouter);
 app.use('/api/v1/users/positions', userPositionRouter);

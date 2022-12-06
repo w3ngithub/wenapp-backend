@@ -367,6 +367,41 @@ exports.getUserWeeklyTimeSpent = asyncError(async (req, res, next) => {
   });
 });
 
+//Get user total time spent on a day for projects
+exports.getWeeklyTimeSpentProject = asyncError(async (req, res, next) => {
+  const projectId = mongoose.Types.ObjectId(req.query.projectId);
+  const { firstDayOfWeek, lastDayOfWeek } = common.dateInThisWeek();
+
+  const timeSpendWeekly = await TimeLog.aggregate([
+    {
+      $match: {
+        project: projectId,
+        $and: [
+          { logDate: { $gte: firstDayOfWeek } },
+          { logDate: { $lte: lastDayOfWeek } }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: '$project',
+        timeSpentThisWeek: { $sum: '$totalHours' }
+      }
+    },
+    {
+      $project: {
+        timeSpentThisWeek: '$timeSpentThisWeek'
+      }
+    }
+  ]);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      weeklySummary: timeSpendWeekly
+    }
+  });
+});
+
 // Get user total time spent on a day for projects
 exports.getUserTodayTimeSpent = asyncError(async (req, res, next) => {
   const userId = mongoose.Types.ObjectId(req.user.id);
