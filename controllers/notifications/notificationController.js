@@ -3,7 +3,16 @@ const APIFeatures = require('../../utils/apiFeatures');
 const asyncError = require('../../utils/asyncError');
 
 exports.getAllNotifications = asyncError(async (req, res, next) => {
-  const features = new APIFeatures(Notifications.find({}), req.query)
+  const { role, userId } = req.query;
+
+  const features = new APIFeatures(
+    Notifications.find({
+      showTo: {
+        $in: [role, userId]
+      }
+    }),
+    req.query
+  )
     .filter()
     .sort()
     .limitFields()
@@ -12,7 +21,12 @@ exports.getAllNotifications = asyncError(async (req, res, next) => {
 
   const [doc, count] = await Promise.all([
     features.query,
-    Notifications.countDocuments(features.formattedQuery)
+    Notifications.countDocuments({
+      ...features.formattedQuery,
+      showTo: {
+        $in: [role, userId]
+      }
+    })
   ]);
   res.status(200).json({
     status: 'success',

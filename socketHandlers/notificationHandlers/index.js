@@ -3,6 +3,35 @@ const Leave = require('../../models/leaves/leaveModel');
 const NoticeType = require('../../models/notices/noticeTypeModel');
 
 const registerNotificationHandlers = (io, socket) => {
+  // gets total count of not viewed notification of individual user
+  socket.on('get-notification-count', async ({ _id, key }) => {
+    const notViewNotification = await Notifications.find({
+      showTo: {
+        $in: [_id, key]
+      },
+      viewedBy: {
+        $nin: [_id]
+      }
+    }).count();
+
+    socket.emit('send-notViewed-notification-count', notViewNotification);
+  });
+
+  // updates viewed notifications of individual user
+  socket.on('viewed-notification', async ({ _id, key }) => {
+    await Notifications.updateMany(
+      {
+        showTo: {
+          $in: [_id, key]
+        },
+        viewedBy: {
+          $nin: [_id]
+        }
+      },
+      { $push: { viewedBy: _id } }
+    );
+  });
+
   socket.on('invite-user', async (response) => {
     const bellNotification = await Notifications.create(response);
     socket.emit('bell-notification', bellNotification);
