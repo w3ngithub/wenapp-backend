@@ -62,7 +62,7 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 
     const doc = await Model.create(reqBody);
 
-    let newDoc = { ...doc };
+    let newDoc = null;
     if (ModelToLog === 'Leave' || ModelToLog === 'Attendance') {
       newDoc = await User.findOne({ _id: doc.user });
     }
@@ -74,7 +74,7 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
         activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
           req.user.name,
           ModelToLog,
-          newDoc.name || newDoc.title
+          newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
         ),
         user: {
           name: req.user.name,
@@ -103,8 +103,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
     }
-
-    let newDoc = { ...doc };
+    let newDoc = null;
     if (ModelToLog === 'Attendance') {
       newDoc = await User.findOne({ _id: doc.user });
     }
@@ -116,7 +115,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
         activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
           req.user.name,
           ModelToLog,
-          newDoc.name || newDoc.title
+          newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
         ),
         user: {
           name: req.user.name,
