@@ -75,8 +75,8 @@ const registerNotificationHandlers = (io, socket) => {
       module: 'Leave'
     });
 
-    socket.emit('bell-notification', bellNotificationUser);
-    socket.emit('bell-notification', bellNotification);
+    io.sockets.emit('bell-notification', bellNotificationUser);
+    io.sockets.emit('bell-notification', bellNotification);
   });
 
   socket.on('add-blog', async (response) => {
