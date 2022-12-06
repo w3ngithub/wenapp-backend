@@ -128,14 +128,52 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             punchInLocation: '$punchInLocation',
             punchOutLocation: '$punchOutLocation',
             punchInIp: '$punchInIp',
-            punchOutIp: '$punchOutIp'
+            punchOutIp: '$punchOutIp',
+            punchTimeDifference: {
+              $dateDiff: {
+                startDate: '$punchInTime',
+                endDate: '$punchOutTime',
+                unit: 'millisecond'
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      ...sortObject
+    },
+    {
+      $project: {
+        _id: 1,
+        data: 1,
+
+        officehour: {
+          $reduce: {
+            input: '$data',
+            initialValue: 0,
+            in: {
+              $add: ['$$value', '$$this.punchTimeDifference']
+            }
           }
         }
       }
     }
   ];
 
-  aggregateArray.push(sortObject);
+  if (req.query.officehour) {
+    let officeHourQuery = JSON.stringify(req.query.officehour).replace(
+      /\b(gte|gt|lte|lt|eq)\b/g,
+      (match) => `$${match}`
+    );
+    officeHourQuery = JSON.parse(officeHourQuery);
+    let op = Object.keys(officeHourQuery)[0];
+    officeHourQuery[op] = ['$officehour', Number(officeHourQuery[op])];
+
+    aggregateArray.push({
+      $match: { $expr: officeHourQuery }
+    });
+  }
 
   const attendances = await Attendance.aggregate([
     ...aggregateArray,
