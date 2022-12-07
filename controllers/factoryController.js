@@ -62,28 +62,32 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 
     const doc = await Model.create(reqBody);
 
+    console.log(doc, reqBody);
+
     let newDoc = null;
     if (ModelToLog === 'Leave' || ModelToLog === 'Attendance') {
       newDoc = await User.findOne({ _id: doc.user });
     }
 
-    if (
-      LogModel !== 'Attendance' ||
-      (LogModel === 'Attendance' && req.user.name !== newDoc.name)
-    ) {
-      LogModel.create({
-        status: 'created',
-        module: ModelToLog,
-        activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
-          req.user.name,
-          ModelToLog,
-          newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
-        ),
-        user: {
-          name: req.user.name,
-          photo: req.user.photoURL
-        }
-      });
+    if (LogModel) {
+      if (
+        LogModel !== 'Attendance' ||
+        (LogModel === 'Attendance' && req.user.name !== newDoc.name)
+      ) {
+        LogModel.create({
+          status: 'created',
+          module: ModelToLog,
+          activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+            req.user.name,
+            ModelToLog,
+            newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
+          ),
+          user: {
+            name: req.user.name,
+            photo: req.user.photoURL
+          }
+        });
+      }
     }
 
     res.status(201).json({
