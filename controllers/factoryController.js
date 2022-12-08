@@ -62,8 +62,6 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 
     const doc = await Model.create(reqBody);
 
-    console.log(doc, reqBody);
-
     let newDoc = null;
     if (ModelToLog === 'Leave' || ModelToLog === 'Attendance') {
       newDoc = await User.findOne({ _id: doc.user });
