@@ -120,7 +120,8 @@ exports.DELETE_ACTIVITY_LOG_MESSAGE = {
   FAQ: deleteActivityLogMessage,
   Holiday: deleteActivityLogMessage,
   Policy: deleteActivityLogMessage,
-  TimeLog: (user, ModelToLog) => `${user} deleted ${ModelToLog}`,
+  TimeLog: (user, ModelToLog, projectName) =>
+    `${user} deleted ${ModelToLog} of Project ${projectName}`,
   'Log Type': deleteActivityLogMessage,
   User: deleteActivityLogMessage,
   'User Position': deleteActivityLogMessage,

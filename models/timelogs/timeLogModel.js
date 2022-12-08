@@ -64,6 +64,38 @@ timeLogSchema.post('findOneAndUpdate', async function (next) {
   docToUpdate.save();
 });
 
+// Calculate total time spent for project before deletoin of log from db
+timeLogSchema.pre('findOneAndDelete', async function (next) {
+  const docToUpdate = await this.model.findOne(this.getQuery());
+  const projectId = docToUpdate.project
+    ? docToUpdate.project._id
+    : process.env.OTHER_PROJECT_ID;
+
+  const logTime = docToUpdate.project ? docToUpdate.totalHours : 0;
+
+  const totalProjectTime = await this.model.aggregate([
+    {
+      $match: { project: projectId }
+    },
+    {
+      $group: {
+        _id: '$project',
+        timeSpent: { $sum: '$totalHours' }
+      }
+    }
+  ]);
+  if (totalProjectTime.length > 0) {
+    await Project.findByIdAndUpdate(projectId, {
+      totalTimeSpent: totalProjectTime[0].timeSpent - logTime
+    });
+  } else {
+    await Project.findByIdAndUpdate(projectId, {
+      totalTimeSpent: 0
+    });
+  }
+  next();
+});
+
 // Populate required data
 timeLogSchema.pre(/^find/, function (next) {
   this.populate({
