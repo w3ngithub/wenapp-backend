@@ -11,7 +11,7 @@ router
   .get(userPositionTypeController.getAllUserPositionTypes)
   .post(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.restrictTo('admin', 'manager', 'hr'),
     userPositionTypeController.createUserPositionType
   );
 
@@ -20,12 +20,12 @@ router
   .get(userPositionTypeController.getUserPositionType)
   .patch(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.restrictTo('admin', 'manager', 'hr'),
     userPositionTypeController.updateUserPositionType
   )
   .delete(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.restrictTo('admin', 'manager', 'hr'),
     authMiddleware.checkIfValueToDeleteIsUsed(User, 'positionType'),
 
     userPositionTypeController.deleteUserPositionType
