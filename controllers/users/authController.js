@@ -119,7 +119,11 @@ exports.inviteUser = asyncError(async (req, res, next) => {
   ActivityLogs.create({
     status: 'created',
     module: 'User',
-    activity: `${req.user.name} invited ${emails} to WENAPP`
+    activity: `${req.user.name} invited ${emails} to WENAPP`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
 
   res.status(200).json({
@@ -198,7 +202,11 @@ exports.signup = asyncError(async (req, res, next) => {
   ActivityLogs.create({
     status: 'created',
     module: 'User',
-    activity: `${newUser.name} signed up to WENAPP`
+    activity: `${newUser.name} has signed up to WENAPP`,
+    user: {
+      name: newUser.name,
+      photo: newUser.photoURL
+    }
   });
   createSendToken(newUser, 201, req, res);
 });
