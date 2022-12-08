@@ -11,7 +11,7 @@ router
   .get(noticeController.getAllNotices)
   .post(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'hr', 'manager'),
+    authMiddleware.restrictTo('admin', 'hr', 'manager', 'officeAdmin'),
     noticeController.createNotice
   );
 
@@ -26,12 +26,12 @@ router
   .get(noticeController.getNotice)
   .patch(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'hr', 'manager'),
+    authMiddleware.restrictTo('admin', 'hr', 'manager', 'officeAdmin'),
     noticeController.updateNotice
   )
   .delete(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'hr', 'manager'),
+    authMiddleware.restrictTo('admin', 'hr', 'manager', 'officeAdmin'),
     noticeController.deleteNotice
   );
 

@@ -11,7 +11,7 @@ router
   .get(noticeTypeController.getAllNoticeTypes)
   .post(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'hr'),
+    authMiddleware.restrictTo('admin', 'hr', 'officeAdmin'),
     noticeTypeController.createNoticeType
   );
 
@@ -20,12 +20,12 @@ router
   .get(noticeTypeController.getNoticeType)
   .patch(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'hr'),
+    authMiddleware.restrictTo('admin', 'hr', 'officeAdmin'),
     noticeTypeController.updateNoticeType
   )
   .delete(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'hr'),
+    authMiddleware.restrictTo('admin', 'hr', 'officeAdmin'),
     authMiddleware.checkIfValueToDeleteIsUsed(Notice, 'noticeType'),
 
     noticeTypeController.deleteNoticeType
