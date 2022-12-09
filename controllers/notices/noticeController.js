@@ -10,7 +10,7 @@ exports.updateNotice = factory.updateOne(Notice, ActivityLogs, 'Notice');
 exports.deleteNotice = factory.deleteOne(Notice, ActivityLogs, 'Notice');
 
 exports.getWeekNotices = asyncError(async (req, res, next) => {
-  const { todayDate, afterOneWeekDate } = req;
+  const { todayDate, afterTwoWeek } = req;
 
   const notices = await Notice.find({
     $or: [
@@ -20,7 +20,7 @@ exports.getWeekNotices = asyncError(async (req, res, next) => {
             startDate: { $gte: todayDate }
           },
           {
-            startDate: { $lte: afterOneWeekDate }
+            startDate: { $lte: afterTwoWeek }
           }
         ]
       },
