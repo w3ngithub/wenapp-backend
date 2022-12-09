@@ -69,8 +69,8 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 
     if (LogModel) {
       if (
-        LogModel !== 'Attendance' ||
-        (LogModel === 'Attendance' && req.user.name !== newDoc.name)
+        ModelToLog !== 'Attendance' ||
+        (ModelToLog === 'Attendance' && req.user.name !== newDoc.name)
       ) {
         LogModel.create({
           status: 'created',
