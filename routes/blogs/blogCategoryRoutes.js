@@ -16,7 +16,7 @@ router
       'lead',
       'manager',
       'editor',
-      'officeAdmin'
+      'officeadmin'
     ),
     blogCategoryController.createBlogCategory
   );
@@ -26,12 +26,12 @@ router
   .get(blogCategoryController.getBlogCategory)
   .patch(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'lead', 'officeAdmin'),
+    authMiddleware.restrictTo('admin', 'lead', 'officeadmin'),
     blogCategoryController.updateBlogCategory
   )
   .delete(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'lead', 'officeAdmin'),
+    authMiddleware.restrictTo('admin', 'lead', 'officeadmin'),
     authMiddleware.checkIfValueToDeleteIsUsed(Blog, 'blogCategories'),
 
     blogCategoryController.deleteBlogCategory
