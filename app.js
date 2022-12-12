@@ -50,6 +50,7 @@ const notificationsRouter = require('./routes/notifications/notificationsRoutes'
 const authMiddleware = require('./middlewares/authMiddleware');
 
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
+const { checkMaintenanceMode } = require('./middlewares/checkMaintenanceMode');
 
 // Initialized and start express application
 const app = express();
@@ -93,6 +94,9 @@ app.use(cookieParser());
 
 // Compression
 app.use(compression());
+
+// check if maintenance mode is on
+app.use(checkMaintenanceMode);
 
 // check Team access Middleware (only for development purpose...)
 app.get('/about', (req, res) => {
