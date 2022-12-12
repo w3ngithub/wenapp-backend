@@ -11,7 +11,7 @@ router
   .get(userRoleController.getAllUserRoles)
   .post(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.restrictTo('admin', 'manager', 'hr'),
     userRoleController.createUserRole
   );
 
@@ -20,12 +20,12 @@ router
   .get(userRoleController.getUserRole)
   .patch(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.restrictTo('admin', 'manager', 'hr'),
     userRoleController.updateUserRole
   )
   .delete(
     authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'manager'),
+    authMiddleware.restrictTo('admin', 'manager', 'hr'),
     authMiddleware.checkIfValueToDeleteIsUsed(User, 'role'),
 
     userRoleController.deleteUserRole

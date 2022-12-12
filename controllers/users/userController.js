@@ -181,13 +181,50 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
         return (
           new Date(x.dob) >=
             new Date(`${dobYear}/${currentDate.getMonth()}/15`) &&
-          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) >
+            new Date(x.dob)
         );
       }
       return (
         new Date(x.dob) >=
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
-        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`)
+        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`) > new Date(x.dob)
+      );
+    });
+  } else if (currentDate.getMonth() === 0) {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() > 14) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+          new Date(x.dob) <
+            new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
+        );
+      }
+      return (
+        new Date(x.dob) >= new Date(`${dobYear - 1}/${12}/15`) &&
+        new Date(x.dob) <
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
+      );
+    });
+  } else if (currentDate.getMonth() === 1) {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() > 14) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+          new Date(x.dob) <
+            new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
+        );
+      }
+      return (
+        new Date(x.dob) >= new Date(`${dobYear}/${1}/15`) &&
+        new Date(x.dob) <
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
       );
     });
   } else {

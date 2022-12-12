@@ -19,6 +19,7 @@ const {
 const {
   registerNotificationHandlers
 } = require('./socketHandlers/notificationHandlers');
+const { registerLeaveHandlers } = require('./socketHandlers/leaveHandlers');
 
 // Replace db password stored in config file
 const DB = process.env.DATABASE.replace(
@@ -46,6 +47,7 @@ io.on('connection', (socket) => {
 
   registerActivityLogHandlers(io, socket);
   registerNotificationHandlers(io, socket);
+  registerLeaveHandlers(io, socket);
 
   socket.on('disconnect', () => {
     console.log('socket disconnected');
