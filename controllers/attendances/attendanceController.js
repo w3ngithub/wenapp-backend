@@ -63,13 +63,15 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
   const skip = (pages - 1) * limit;
 
   let sortObject = { $sort: { _id: -1 } };
+  const orderType = req.query.sort.includes('-') ? -1 : 1;
 
   if (req.query.sort === 'csv-import') {
     sortObject = {
       $sort: { 'data.user': 1, 'data.attendanceDate': 1 }
     };
+  } else if (req.query.sort.includes('officeHour')) {
+    sortObject = { $sort: { officehour: orderType } };
   } else if (req.query.sort) {
-    const orderType = req.query.sort.includes('-') ? -1 : 1;
     const sortString = 'data.' + req.query.sort.replace('-', '').trim();
     sortObject = { $sort: { [sortString]: orderType } };
   }
@@ -141,9 +143,6 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       }
     },
     {
-      ...sortObject
-    },
-    {
       $project: {
         _id: 1,
         data: 1,
@@ -153,11 +152,14 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             input: '$data',
             initialValue: 0,
             in: {
-              $add: ['$$value', '$$this.punchTimeDifference']
+              $add: ['$$value', { $ifNull: ['$$this.punchTimeDifference', 0] }]
             }
           }
         }
       }
+    },
+    {
+      ...sortObject
     }
   ];
 
