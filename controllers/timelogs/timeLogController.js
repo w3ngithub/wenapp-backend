@@ -167,7 +167,8 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
           $match: {
             $and: [
               { logDate: { $gte: firstDayOfWeek } },
-              { logDate: { $lte: lastDayOfWeek } }
+              { logDate: { $lte: lastDayOfWeek } },
+              { user: { $eq: mongoose.Types.ObjectId(req.query.user) } }
             ]
           }
         },
@@ -189,7 +190,6 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
         {
           $unwind: '$user'
         },
-
         {
           $lookup: {
             from: 'projects',
