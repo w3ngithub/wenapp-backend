@@ -103,7 +103,8 @@ exports.disableUser = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      message: 'User disabled.'
+      message: 'User disabled.',
+      data: user
     }
   });
 });
@@ -180,13 +181,50 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
         return (
           new Date(x.dob) >=
             new Date(`${dobYear}/${currentDate.getMonth()}/15`) &&
-          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) >
+            new Date(x.dob)
         );
       }
       return (
         new Date(x.dob) >=
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
-        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`)
+        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`) > new Date(x.dob)
+      );
+    });
+  } else if (currentDate.getMonth() === 0) {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() > 14) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+          new Date(x.dob) <
+            new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
+        );
+      }
+      return (
+        new Date(x.dob) >= new Date(`${dobYear - 1}/${12}/15`) &&
+        new Date(x.dob) <
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
+      );
+    });
+  } else if (currentDate.getMonth() === 1) {
+    birthMonthUsers = activeUsers.filter((x) => {
+      const dobYear = new Date(x.dob).getFullYear();
+
+      if (currentDate.getDate() > 14) {
+        return (
+          new Date(x.dob) >=
+            new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
+          new Date(x.dob) <
+            new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
+        );
+      }
+      return (
+        new Date(x.dob) >= new Date(`${dobYear}/${1}/15`) &&
+        new Date(x.dob) <
+          new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
       );
     });
   } else {
@@ -209,6 +247,16 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
       );
     });
   }
+
+  birthMonthUsers = birthMonthUsers.map((user) => {
+    const formattedDob = user.dob.toISOString().split('-');
+    return {
+      _id: user._id,
+      name: user.name,
+      photoURL: user.photoURL,
+      dob: [currentDate.getFullYear(), ...formattedDob.slice(1)].join('-')
+    };
+  });
 
   res.status(200).json({
     status: 'success',

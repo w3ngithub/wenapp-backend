@@ -16,6 +16,10 @@ const app = require('./app');
 const {
   registerActivityLogHandlers
 } = require('./socketHandlers/activityLogHandlers');
+const {
+  registerNotificationHandlers
+} = require('./socketHandlers/notificationHandlers');
+const { registerLeaveHandlers } = require('./socketHandlers/leaveHandlers');
 
 // Replace db password stored in config file
 const DB = process.env.DATABASE.replace(
@@ -42,6 +46,8 @@ io.on('connection', (socket) => {
   console.log('successful connection of socket', socket.id);
 
   registerActivityLogHandlers(io, socket);
+  registerNotificationHandlers(io, socket);
+  registerLeaveHandlers(io, socket);
 
   socket.on('disconnect', () => {
     console.log('socket disconnected');
@@ -62,3 +68,5 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   });
 });
+
+module.exports = expressServer;

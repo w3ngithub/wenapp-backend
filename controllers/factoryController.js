@@ -60,26 +60,32 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, createdBy: req.user.id };
 
-    let doc = await Model.create(reqBody);
+    const doc = await Model.create(reqBody);
 
+    let newDoc = null;
     if (ModelToLog === 'Leave' || ModelToLog === 'Attendance') {
-      doc = await User.findOne({ _id: doc.user });
+      newDoc = await User.findOne({ _id: doc.user });
     }
 
     if (LogModel) {
-      LogModel.create({
-        status: 'created',
-        module: ModelToLog,
-        activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
-          req.user.name,
-          ModelToLog,
-          doc.name || doc.title
-        ),
-        user: {
-          name: req.user.name,
-          photo: req.user.photoURL
-        }
-      });
+      if (
+        ModelToLog !== 'Attendance' ||
+        (ModelToLog === 'Attendance' && req.user.name !== newDoc.name)
+      ) {
+        LogModel.create({
+          status: 'created',
+          module: ModelToLog,
+          activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+            req.user.name,
+            ModelToLog,
+            newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
+          ),
+          user: {
+            name: req.user.name,
+            photo: req.user.photoURL
+          }
+        });
+      }
     }
 
     res.status(201).json({
@@ -94,7 +100,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, updatedBy: req.user.id };
 
-    let doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
+    const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true
     });
@@ -102,9 +108,9 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
     }
-
+    let newDoc = null;
     if (ModelToLog === 'Attendance') {
-      doc = await User.findOne({ _id: doc.user });
+      newDoc = await User.findOne({ _id: doc.user });
     }
 
     if (LogModel) {
@@ -114,7 +120,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
         activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
           req.user.name,
           ModelToLog,
-          doc.name || doc.title
+          newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
         ),
         user: {
           name: req.user.name,
@@ -133,7 +139,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
 
 exports.deleteOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
-    const doc = await Model.findByIdAndDelete(req.params.id);
+    const doc = await Model.findOneAndDelete({ _id: req.params.id });
 
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
@@ -146,7 +152,9 @@ exports.deleteOne = (Model, LogModel, ModelToLog) =>
         activity: DELETE_ACTIVITY_LOG_MESSAGE[ModelToLog](
           req.user.name,
           ModelToLog,
-          doc.name || doc.title
+          ModelToLog === 'TimeLog'
+            ? (doc.project && doc.project.name) || 'Other'
+            : doc.name || doc.title
         ),
         user: {
           name: req.user.name,
