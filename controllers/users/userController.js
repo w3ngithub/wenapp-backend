@@ -248,6 +248,16 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
     });
   }
 
+  birthMonthUsers = birthMonthUsers.map((user) => {
+    const formattedDob = user.dob.toISOString().split('-');
+    return {
+      _id: user._id,
+      name: user.name,
+      photoURL: user.photoURL,
+      dob: [currentDate.getFullYear(), ...formattedDob.slice(1)].join('-')
+    };
+  });
+
   res.status(200).json({
     status: 'success',
     data: {
