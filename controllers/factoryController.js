@@ -68,10 +68,22 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
     }
 
     if (LogModel) {
-      if (
-        ModelToLog !== 'Attendance' ||
-        (ModelToLog === 'Attendance' && req.user.name !== newDoc.name)
-      ) {
+      if (ModelToLog === 'Attendance' && req.user.name !== newDoc.name) {
+        LogModel.create({
+          status: 'created',
+          module: ModelToLog,
+          activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+            req.user.name,
+            ModelToLog,
+            newDoc.name || newDoc.title,
+            reqBody.punchOutTime
+          ),
+          user: {
+            name: req.user.name,
+            photo: req.user.photoURL
+          }
+        });
+      } else {
         LogModel.create({
           status: 'created',
           module: ModelToLog,
@@ -114,19 +126,36 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
     }
 
     if (LogModel) {
-      LogModel.create({
-        status: 'updated',
-        module: ModelToLog,
-        activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
-          req.user.name,
-          ModelToLog,
-          newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
-        ),
-        user: {
-          name: req.user.name,
-          photo: req.user.photoURL
-        }
-      });
+      if (ModelToLog === 'Attendance') {
+        LogModel.create({
+          status: 'updated',
+          module: ModelToLog,
+          activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+            req.user.name,
+            ModelToLog,
+            newDoc.name || newDoc.title,
+            reqBody.punchOutTime ? 'Out' : 'In'
+          ),
+          user: {
+            name: req.user.name,
+            photo: req.user.photoURL
+          }
+        });
+      } else {
+        LogModel.create({
+          status: 'updated',
+          module: ModelToLog,
+          activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+            req.user.name,
+            ModelToLog,
+            doc.name || doc.title
+          ),
+          user: {
+            name: req.user.name,
+            photo: req.user.photoURL
+          }
+        });
+      }
     }
 
     res.status(200).json({
