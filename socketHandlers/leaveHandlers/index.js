@@ -33,7 +33,11 @@ const registerLeaveHandlers = (io, socket) => {
       }
     ]);
 
-    io.sockets.emit('today-leave-count', leaves[0].count);
+    const pendingLeaveCount = await Leave.find({
+      leaveStatus: { $eq: 'pending' }
+    }).count();
+
+    io.sockets.emit('today-leave-count', leaves[0].count, pendingLeaveCount);
   });
 };
 
