@@ -71,6 +71,22 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     };
   } else if (req.query.sort.includes('officeHour')) {
     sortObject = { $sort: { officehour: orderType } };
+  } else if (req.query.sort.includes('punchInTime')) {
+    sortObject = {
+      $sort: {
+        'PunchInPart.hour': orderType,
+        'PunchInPart.minute': orderType,
+        'PunchInPart.second': orderType
+      }
+    };
+  } else if (req.query.sort.includes('punchOutTime')) {
+    sortObject = {
+      $sort: {
+        'PunchOutPart.hour': orderType,
+        'PunchOutPart.minute': orderType,
+        'PunchOutPart.second': orderType
+      }
+    };
   } else if (req.query.sort) {
     const sortString = 'data.' + req.query.sort.replace('-', '').trim();
     sortObject = { $sort: { [sortString]: orderType } };
@@ -143,10 +159,39 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       }
     },
     {
+      $unwind: '$data'
+    },
+    {
+      $sort: {
+        'data.punchInTime': 1
+      }
+    },
+    {
+      $group: {
+        _id: '$_id',
+        data: {
+          $push: '$data'
+        },
+        firstPunchInTime: { $min: '$data.punchInTime' },
+        lastPunchOutTime: { $last: '$data.punchOutTime' }
+      }
+    },
+    {
       $project: {
         _id: 1,
         data: 1,
-
+        PunchInPart: {
+          hour: { $hour: '$firstPunchInTime' },
+          minute: { $minute: '$firstPunchInTime' },
+          second: { $second: '$firstPunchInTime' }
+        },
+        PunchOutPart: {
+          hour: {
+            $ifNull: [{ $hour: '$lastPunchOutTime' }, 0]
+          },
+          minute: { $ifNull: [{ $minute: '$lastPunchOutTime' }, 0] },
+          second: { $ifNull: [{ $second: '$lastPunchOutTime' }, 0] }
+        },
         officehour: {
           $reduce: {
             input: '$data',
