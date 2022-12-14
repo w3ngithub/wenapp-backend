@@ -13,7 +13,7 @@ router
   .get(authController.getAllInvitedUsers)
   .post(authMiddleware.protect, authController.inviteUser);
 router.post('/signup/:token', authController.signup);
-router.post('/login', authController.login);
+// router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 
 router.post('/forgotPassword', authController.forgotPassword);

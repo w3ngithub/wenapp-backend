@@ -46,11 +46,13 @@ const holidayRouter = require('./routes/resources/holidayRoutes');
 const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
 const activityLogsRouter = require('./routes/activityLogs/activityLogsRoute');
 const notificationsRouter = require('./routes/notifications/notificationsRoutes');
+const configurationsRoutes = require('./routes/configurations/configurationsRoutes');
 
 const authMiddleware = require('./middlewares/authMiddleware');
 
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
 const { checkMaintenanceMode } = require('./middlewares/checkMaintenanceMode');
+const authController = require('./controllers/users/authController');
 
 // Initialized and start express application
 const app = express();
@@ -95,9 +97,6 @@ app.use(cookieParser());
 // Compression
 app.use(compression());
 
-// check if maintenance mode is on
-app.use(checkMaintenanceMode);
-
 // check Team access Middleware (only for development purpose...)
 app.get('/about', (req, res) => {
   res.json({ messge: 'successfully connected to vercel' });
@@ -108,6 +107,12 @@ app.get('/test', (req, res) => {
 });
 
 app.use(checkTeamAccess);
+
+app.post('/api/v1/users/login', authController.login);
+app.use('/api/v1/configurations', configurationsRoutes);
+
+// check if maintenance mode is on
+app.use(checkMaintenanceMode);
 
 // Routes
 app.use('/api/v1/activitylogs', activityLogsRouter);
