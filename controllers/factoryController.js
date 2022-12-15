@@ -68,21 +68,23 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
     }
 
     if (LogModel) {
-      if (ModelToLog === 'Attendance' && req.user.name !== newDoc.name) {
-        LogModel.create({
-          status: 'created',
-          module: ModelToLog,
-          activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
-            req.user.name,
-            ModelToLog,
-            newDoc.name || newDoc.title,
-            reqBody.punchOutTime
-          ),
-          user: {
-            name: req.user.name,
-            photo: req.user.photoURL
-          }
-        });
+      if (ModelToLog === 'Attendance') {
+        if (req.user.name !== newDoc.name) {
+          LogModel.create({
+            status: 'created',
+            module: ModelToLog,
+            activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+              req.user.name,
+              ModelToLog,
+              newDoc.name || newDoc.title,
+              reqBody.punchOutTime
+            ),
+            user: {
+              name: req.user.name,
+              photo: req.user.photoURL
+            }
+          });
+        }
       } else {
         LogModel.create({
           status: 'created',
