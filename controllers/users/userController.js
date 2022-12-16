@@ -262,12 +262,18 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
     });
   }
 
-  birthMonthUsers = birthMonthUsers.map((user) => ({
-    _id: user._id,
-    name: user.name,
-    photoURL: user.photoURL,
-    dob: user.dob
-  }));
+  birthMonthUsers = birthMonthUsers.map((user) => {
+    const formattedDob = user.dob.toISOString().split('-');
+    return {
+      _id: user._id,
+      name: user.name,
+      photoURL: user.photoURL,
+      dob:
+        currentDate.getMonth() === 11 && new Date(user.dob).getMonth() === 0
+          ? [currentDate.getFullYear() + 1, ...formattedDob.slice(1)].join('-')
+          : [currentDate.getFullYear(), ...formattedDob.slice(1)].join('-')
+    };
+  });
 
   res.status(200).json({
     status: 'success',
