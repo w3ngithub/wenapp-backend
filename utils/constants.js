@@ -85,7 +85,8 @@ exports.UPDATE_ACTIVITY_LOG_MESSAGE = {
   'Email Setting': updateActivityLogMessage,
   'Leave Type': updateActivityLogMessage,
   'Leave Quarter': (user, ModelToLog) => `${user} updated ${ModelToLog}`,
-  Leave: updateActivityLogMessage,
+  Leave: (user, ModelToLog, name) =>
+    `${user} updated ${ModelToLog} of ${name || ''}`,
   Notice: updateActivityLogMessage,
   'Notice Type': updateActivityLogMessage,
   Client: updateActivityLogMessage,
