@@ -185,10 +185,17 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
             new Date(x.dob)
         );
       }
+
+      if (new Date(x.dob).getMonth() === 0) {
+        return (
+          new Date(x.dob) >= new Date(`${dobYear}/${1}/1`) &&
+          new Date(x.dob) < new Date(`${dobYear}/${1}/15`)
+        );
+      }
       return (
         new Date(x.dob) >=
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
-        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`) > new Date(x.dob)
+        new Date(x.dob) <= new Date(`${dobYear}/${12}/31`)
       );
     });
   } else if (currentDate.getMonth() === 0) {
@@ -203,8 +210,15 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
             new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
         );
       }
+
+      if (new Date(x.dob).getMonth() === 11) {
+        return (
+          new Date(x.dob) >= new Date(`${dobYear}/${12}/15`) &&
+          new Date(x.dob) <= new Date(`${dobYear}/${12}/31`)
+        );
+      }
       return (
-        new Date(x.dob) >= new Date(`${dobYear - 1}/${12}/15`) &&
+        new Date(x.dob) >= new Date(`${dobYear}/${1}/1`) &&
         new Date(x.dob) <
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
       );
@@ -250,11 +264,25 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 
   birthMonthUsers = birthMonthUsers.map((user) => {
     const formattedDob = user.dob.toISOString().split('-');
+
+    let DOB = '';
+
+    if (currentDate.getMonth() === 11 && new Date(user.dob).getMonth() === 0) {
+      DOB = [currentDate.getFullYear() + 1, ...formattedDob.slice(1)].join('-');
+    } else if (
+      currentDate.getMonth() === 0 &&
+      new Date(user.dob).getMonth() === 11
+    ) {
+      DOB = [currentDate.getFullYear() - 1, ...formattedDob.slice(1)].join('-');
+    } else {
+      DOB = [currentDate.getFullYear(), ...formattedDob.slice(1)].join('-');
+    }
+
     return {
       _id: user._id,
       name: user.name,
       photoURL: user.photoURL,
-      dob: [currentDate.getFullYear(), ...formattedDob.slice(1)].join('-')
+      dob: DOB
     };
   });
 

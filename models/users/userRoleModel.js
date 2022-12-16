@@ -11,6 +11,9 @@ const userRoleSchema = new mongoose.Schema({
     required: [true, 'Please provide user role name.'],
     unique: true,
     trim: true
+  },
+  permission: {
+    type: String
   }
 });
 
