@@ -262,12 +262,29 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
     });
   }
 
-  birthMonthUsers = birthMonthUsers.map((user) => ({
-    _id: user._id,
-    name: user.name,
-    photoURL: user.photoURL,
-    dob: user.dob
-  }));
+  birthMonthUsers = birthMonthUsers.map((user) => {
+    const formattedDob = user.dob.toISOString().split('-');
+
+    let DOB = '';
+
+    if (currentDate.getMonth() === 11 && new Date(user.dob).getMonth() === 0) {
+      DOB = [currentDate.getFullYear() + 1, ...formattedDob.slice(1)].join('-');
+    } else if (
+      currentDate.getMonth() === 0 &&
+      new Date(user.dob).getMonth() === 11
+    ) {
+      DOB = [currentDate.getFullYear() - 1, ...formattedDob.slice(1)].join('-');
+    } else {
+      DOB = [currentDate.getFullYear(), ...formattedDob.slice(1)].join('-');
+    }
+
+    return {
+      _id: user._id,
+      name: user.name,
+      photoURL: user.photoURL,
+      dob: DOB
+    };
+  });
 
   res.status(200).json({
     status: 'success',
