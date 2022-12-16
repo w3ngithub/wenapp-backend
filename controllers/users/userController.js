@@ -185,10 +185,11 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
             new Date(x.dob)
         );
       }
+
       return (
         new Date(x.dob) >=
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
-        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`) > new Date(x.dob)
+        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`)
       );
     });
   } else if (currentDate.getMonth() === 0) {
