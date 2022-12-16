@@ -107,10 +107,10 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
           const trimmedData = current.replace('-', '').trim();
           const sortString = ['officehour'].includes(trimmedData)
             ? trimmedData
-            : 'data.' + trimmedData;
-          const orderType = current[0] === '-' ? -1 : 1;
+            : 'data.'.concat(trimmedData);
+          const orderTypes = current[0] === '-' ? -1 : 1;
           return Object.assign(prevobj, {
-            [sortString]: orderType
+            [sortString]: orderTypes
           });
         }, {});
       sortObject = { $sort: intermediate };
@@ -239,7 +239,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       (match) => `$${match}`
     );
     officeHourQuery = JSON.parse(officeHourQuery);
-    let op = Object.keys(officeHourQuery)[0];
+    const op = Object.keys(officeHourQuery)[0];
     officeHourQuery[op] = ['$officehour', Number(officeHourQuery[op])];
 
     aggregateArray.push({
