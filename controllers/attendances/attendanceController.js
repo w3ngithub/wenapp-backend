@@ -54,6 +54,30 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
   });
 });
 
+// office hour calculate
+exports.calculateTotalOfficeHour = asyncError(async (req, res, next) => {
+  const { fromDate, toDate, user } = req.query;
+
+  const matchConditions = [
+    { attendanceDate: { $gte: new Date(fromDate) } },
+    { attendanceDate: { $lte: new Date(toDate) } }
+  ];
+
+  if (user) {
+    matchConditions.push({
+      user: mongoose.Types.ObjectId(user)
+    });
+  }
+
+  const totalHours = await Attendance.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    }
+  ]);
+});
+
 // Search attendances with date range and for particular user
 exports.searchAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, page, limit } = req.query;
@@ -146,6 +170,9 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       $set: {
         user: {
           $arrayElemAt: ['$user.name', 0]
+        },
+        userId: {
+          $arrayElemAt: ['$user._id', 0]
         }
       }
     },
@@ -153,7 +180,8 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       $group: {
         _id: {
           attendanceDate: '$attendanceDate',
-          user: '$user'
+          user: '$user',
+          userId: '$userId'
         },
         data: {
           $addToSet: {
