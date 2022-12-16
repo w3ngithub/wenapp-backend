@@ -65,31 +65,56 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
   let sortObject = { $sort: { _id: -1 } };
   const orderType = req.query.sort.includes('-') ? -1 : 1;
 
-  if (req.query.sort === 'csv-import') {
-    sortObject = {
-      $sort: { 'data.user': 1, 'data.attendanceDate': 1 }
-    };
-  } else if (req.query.sort.includes('officeHour')) {
-    sortObject = { $sort: { officehour: orderType } };
-  } else if (req.query.sort.includes('punchInTime')) {
-    sortObject = {
-      $sort: {
-        'PunchInPart.hour': orderType,
-        'PunchInPart.minute': orderType,
-        'PunchInPart.second': orderType
-      }
-    };
-  } else if (req.query.sort.includes('punchOutTime')) {
-    sortObject = {
-      $sort: {
-        'PunchOutPart.hour': orderType,
-        'PunchOutPart.minute': orderType,
-        'PunchOutPart.second': orderType
-      }
-    };
-  } else if (req.query.sort) {
-    const sortString = 'data.' + req.query.sort.replace('-', '').trim();
-    sortObject = { $sort: { [sortString]: orderType } };
+  if (req.query.sort) {
+    if (req.query.sort.includes('punchInTime')) {
+      sortObject = req.query.sort.includes('user')
+        ? {
+            $sort: {
+              'PunchInPart.hour': orderType,
+              'PunchInPart.minute': orderType,
+              'PunchInPart.second': orderType,
+              'data.user': 1
+            }
+          }
+        : {
+            $sort: {
+              'PunchInPart.hour': orderType,
+              'PunchInPart.minute': orderType,
+              'PunchInPart.second': orderType
+            }
+          };
+    } else if (req.query.sort.includes('punchOutTime')) {
+      sortObject = req.query.sort.includes('user')
+        ? {
+            $sort: {
+              'PunchOutPart.hour': orderType,
+              'PunchOutPart.minute': orderType,
+              'PunchOutPart.second': orderType,
+              'data.user': 1
+            }
+          }
+        : {
+            $sort: {
+              'PunchOutPart.hour': orderType,
+              'PunchOutPart.minute': orderType,
+              'PunchOutPart.second': orderType
+            }
+          };
+    } else {
+      const intermediate = req.query.sort
+        .split(',')
+        .reduce((prevobj, current) => {
+          const trimmedData = current.replace('-', '').trim();
+          const sortString = ['officehour'].includes(trimmedData)
+            ? trimmedData
+            : 'data.' + trimmedData;
+          const orderType = current[0] === '-' ? -1 : 1;
+          return Object.assign(prevobj, {
+            [sortString]: orderType
+          });
+        }, {});
+      sortObject = { $sort: intermediate };
+    }
   }
 
   const matchConditions = [
