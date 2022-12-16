@@ -186,10 +186,16 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
         );
       }
 
+      if (new Date(x.dob).getMonth() === 0) {
+        return (
+          new Date(x.dob) >= new Date(`${dobYear}/${1}/1`) &&
+          new Date(x.dob) < new Date(`${dobYear}/${1}/15`)
+        );
+      }
       return (
         new Date(x.dob) >=
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`) &&
-        new Date(x.dob) < new Date(`${dobYear + 1}/${1}/15`)
+        new Date(x.dob) <= new Date(`${dobYear}/${12}/31`)
       );
     });
   } else if (currentDate.getMonth() === 0) {
@@ -204,8 +210,15 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
             new Date(`${dobYear}/${currentDate.getMonth() + 2}/15`)
         );
       }
+
+      if (new Date(x.dob).getMonth() === 11) {
+        return (
+          new Date(x.dob) >= new Date(`${dobYear}/${12}/15`) &&
+          new Date(x.dob) <= new Date(`${dobYear}/${12}/31`)
+        );
+      }
       return (
-        new Date(x.dob) >= new Date(`${dobYear - 1}/${12}/15`) &&
+        new Date(x.dob) >= new Date(`${dobYear}/${1}/1`) &&
         new Date(x.dob) <
           new Date(`${dobYear}/${currentDate.getMonth() + 1}/15`)
       );
@@ -249,15 +262,12 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
     });
   }
 
-  birthMonthUsers = birthMonthUsers.map((user) => {
-    const formattedDob = user.dob.toISOString().split('-');
-    return {
-      _id: user._id,
-      name: user.name,
-      photoURL: user.photoURL,
-      dob: [currentDate.getFullYear(), ...formattedDob.slice(1)].join('-')
-    };
-  });
+  birthMonthUsers = birthMonthUsers.map((user) => ({
+    _id: user._id,
+    name: user.name,
+    photoURL: user.photoURL,
+    dob: user.dob
+  }));
 
   res.status(200).json({
     status: 'success',
