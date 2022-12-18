@@ -20,6 +20,12 @@ router.get(
 );
 
 router.get(
+  '/totalofficehour',
+  authMiddleware.protect,
+  attendanceController.calculateTotalUserOfficeHour
+);
+
+router.get(
   '/today/count',
   authMiddleware.protect,
   attendanceController.getPunchInCountToday
