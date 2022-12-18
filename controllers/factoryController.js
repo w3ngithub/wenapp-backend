@@ -143,6 +143,20 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
             photo: req.user.photoURL
           }
         });
+      } else if (ModelToLog === 'Leave') {
+        LogModel.create({
+          status: 'updated',
+          module: ModelToLog,
+          activity: UPDATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+            req.user.name,
+            ModelToLog,
+            doc.user.name
+          ),
+          user: {
+            name: req.user.name,
+            photo: req.user.photoURL
+          }
+        });
       } else {
         LogModel.create({
           status: 'updated',
