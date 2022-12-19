@@ -1,5 +1,4 @@
 const asyncError = require('../utils/asyncError');
-const AppError = require('../utils/appError');
 const Configurations = require('../models/configurations/configurationsModel');
 
 /**
@@ -8,9 +7,13 @@ const Configurations = require('../models/configurations/configurationsModel');
 exports.checkMaintenanceMode = asyncError(async (req, res, next) => {
   const configs = await Configurations.find();
   if (configs[0] && configs[0].isMaintenanceEnabled) {
-    return next(
-      new AppError('service unavailable!  please try again later', 503)
-    );
+    return res.status(503).json({
+      status: 'error',
+      data: {
+        isMaintenanceEnabled: true,
+        message: 'service unavailable!  please try again later'
+      }
+    });
   }
 
   next();
