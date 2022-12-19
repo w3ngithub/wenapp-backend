@@ -54,6 +54,52 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
   });
 });
 
+// office hour calculate
+exports.calculateTotalUserOfficeHour = asyncError(async (req, res, next) => {
+  const { fromDate, toDate, user } = req.query;
+
+  const matchConditions = [
+    { attendanceDate: { $gte: new Date(fromDate) } },
+    { attendanceDate: { $lte: new Date(toDate) } },
+    { user: mongoose.Types.ObjectId(user) }
+  ];
+
+  const totalHours = await Attendance.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $addFields: {
+        punchTimeDifference: {
+          $ifNull: [
+            {
+              $dateDiff: {
+                startDate: '$punchInTime',
+                endDate: '$punchOutTime',
+                unit: 'millisecond'
+              }
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalhours: { $sum: '$punchTimeDifference' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: totalHours
+  });
+});
+
 // Search attendances with date range and for particular user
 exports.searchAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, page, limit } = req.query;
@@ -146,6 +192,9 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       $set: {
         user: {
           $arrayElemAt: ['$user.name', 0]
+        },
+        userId: {
+          $arrayElemAt: ['$user._id', 0]
         }
       }
     },
@@ -153,7 +202,8 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       $group: {
         _id: {
           attendanceDate: '$attendanceDate',
-          user: '$user'
+          user: '$user',
+          userId: '$userId'
         },
         data: {
           $addToSet: {
