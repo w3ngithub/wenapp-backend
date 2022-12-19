@@ -88,7 +88,7 @@ exports.calculateTotalUserOfficeHour = asyncError(async (req, res, next) => {
     },
     {
       $group: {
-        _id: '',
+        _id: null,
         totalhours: { $sum: '$punchTimeDifference' }
       }
     }
