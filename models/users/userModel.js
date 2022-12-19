@@ -130,7 +130,7 @@ userSchema.pre(/^find/, function (next) {
 
   this.populate({
     path: 'role',
-    select: 'key value'
+    select: 'key value permission'
   })
     .populate({
       path: 'position',
