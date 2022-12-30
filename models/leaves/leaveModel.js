@@ -19,7 +19,7 @@ const leaveSchema = new mongoose.Schema(
     leaveDates: [Date],
     leaveStatus: {
       type: String,
-      enum: ['pending', 'approved', 'cancelled'],
+      enum: ['pending', 'approved', 'cancelled','rejected'],
       default: 'pending'
     },
     reason: {
@@ -29,6 +29,11 @@ const leaveSchema = new mongoose.Schema(
       minlength: [10, 'Leave Reason must have more or equal then 50 characters']
     },
     cancelReason: {
+      type: String,
+      trim: true,
+      required: false
+    },
+    rejectReason: {
       type: String,
       trim: true,
       required: false
