@@ -19,6 +19,7 @@ const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 const User = require('../../models/users/userModel');
 const EmailNotification = require('../../utils/email');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
+const { clearConfigCache } = require('prettier');
 
 exports.getLeave = factory.getOne(Leave);
 exports.createLeave = factory.createOne(Leave, ActivityLogs, 'Leave');
@@ -88,7 +89,14 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
     leaveStatus = 'approved';
   } else if (status === 'cancel') {
     leaveStatus = 'cancelled';
-  } else {
+  }
+  else if(status === 'reject'){
+    leaveStatus='rejected'
+  }
+  else if(status ==='pending'){
+    leaveStatus = 'pending'
+  }
+  else {
     return next(
       new AppError('Please specify exact leave status in the route.', 400)
     );
@@ -97,12 +105,29 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   leave.remarks = remarks;
   leave.leaveStatus = leaveStatus;
 
-  if (reason) {
+  if (reason && status!=='pending') {
+    if(status==='reject'){
+      leave.rejectReason = reason
+    }
+    else{  
     leave.cancelReason = reason;
+    }
   }
 
   await leave.save();
-
+  if(status==='pending'){
+    ActivityLogs.create({
+      status: status === 'cancel' ? 'deleted' : 'updated',
+      module: 'Leave',
+      activity:
+      `${leave.user.name} reapplied Leave`,
+      user: {
+        name: req.user.name,
+        photo: req.user.photoURL
+      }
+    });
+  }
+  else{
   ActivityLogs.create({
     status: status === 'cancel' ? 'deleted' : 'updated',
     module: 'Leave',
@@ -119,6 +144,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
       photo: req.user.photoURL
     }
   });
+  }
 
   res.status(200).json({
     status: 'success',
