@@ -781,6 +781,7 @@ exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
 
 exports.sendLeaveApplyEmailNotifications = asyncError(
   async (req, res, next) => {
+    console.log(req.body)
     if (req.body.leaveStatus === LEAVE_PENDING) {
       const user = await User.findById(req.body.user);
 
@@ -791,8 +792,8 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL],
         subject:
-          emailContent.title.replace(/@username/i, user.name) ||
-          `${user.name} ${req.body.reapply?'re':''} applied for leave`,
+         !req.body.reapply ? emailContent.title.replace(/@username/i, user.name):
+          `${user.name}  re-applied for leave`,
         message:
           emailContent.body
             .replace(/@username/i, user.name)
