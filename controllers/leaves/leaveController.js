@@ -12,7 +12,8 @@ const {
   HRWENEMAIL,
   LEAVE_CANCELLED,
   LEAVE_PENDING,
-  LEAVE_APPROVED
+  LEAVE_APPROVED,
+  LEAVE_REJECTED
 } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
@@ -781,7 +782,6 @@ exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
 
 exports.sendLeaveApplyEmailNotifications = asyncError(
   async (req, res, next) => {
-    console.log(req.body)
     if (req.body.leaveStatus === LEAVE_PENDING) {
       const user = await User.findById(req.body.user);
 
@@ -797,7 +797,7 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
         message:
           emailContent.body
             .replace(/@username/i, user.name)
-            .replace(/@reason/i, req.body.leaveReason)
+            .replace(/@reason/i,req.body.leaveReason)
             .replace(/@leavetype/i, req.body.leaveType)
             .replace(
               /@date/i,
@@ -840,6 +840,27 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
           .replace(/@reason/i, req.body.leaveApproveReason || '')
       });
     }
+    else if(req.body.leaveStatus === LEAVE_REJECTED){
+      console.log(req.body)
+      const emailContent = await Email.findOne({ module: 'leave-reject'});
+
+      new EmailNotification().sendEmail({
+        email: [req.body.user.email],
+        subject:   emailContent.title.replace(/@username/i, req.body.user.name) || `${req.body.user.name}  leaves rejected`,
+        message: emailContent.body
+          .replace(/@username/i, req.body.user.name)
+          .replace(/@reason/i, req.body.leaveCancelReason || '')
+          .replace(
+            /@date/i,
+            req.body.leaveDates
+              .toString()
+              .split(',')
+              .map((x) => `<p>${x.split('T')[0]}</p>`)
+              .join('')
+          )
+      });
+    }
+
     res.status(200).json({
       status: 'success'
     });
