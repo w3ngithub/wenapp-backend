@@ -786,13 +786,13 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
 
       const emailContent = await Email.findOne({ module: 'leave-pending' });
 
-      const message = `<b><em>${user.name}</em> applied for leave on dates ${req.body.leaveDates}</b>`;
+      const message = `<b><em>${user.name}</em>  applied for leave on dates ${req.body.leaveDates}</b>`;
 
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL],
         subject:
           emailContent.title.replace(/@username/i, user.name) ||
-          `${user.name} applied for leave`,
+          `${user.name} ${req.body.reapply?'re':''} applied for leave`,
         message:
           emailContent.body
             .replace(/@username/i, user.name)
