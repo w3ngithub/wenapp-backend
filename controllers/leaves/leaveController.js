@@ -668,15 +668,11 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
     {
       $match: {
         leaveStatus: 'approved',
-        $or: [
-          {
-            'leaveDates.0': { $eq: todayDate }
-          },
-          {
-            'leaveDates.0': { $lte: todayDate },
-            'leaveDates.1': { $gte: todayDate }
+        leaveDates: {
+          $elemMatch: {
+            $eq: todayDate
           }
-        ]
+        }
       }
     },
     {
