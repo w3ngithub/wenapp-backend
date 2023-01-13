@@ -315,12 +315,8 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
     {
       $match: {
         $and: [
-          { newSalaryReviewDate: { $gte: presentDate } },
-          {
-            newSalaryReviewDate: {
-              $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
-            }
-          }
+          {active:{$eq:true}},
+          { newSalaryReviewDate: { $gte: presentDate, $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000) } },
         ]
       }
     },
