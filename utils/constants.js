@@ -42,10 +42,12 @@ exports.MONTHS = {
 };
 
 exports.CREATE_ACTIVITY_LOG_MESSAGE = {
-  Attendance: (user, ModelToLog, name) =>
+  Attendance: (user, ModelToLog, name, punch) =>
     user === name
-      ? `${user} created ${ModelToLog} Punch`
-      : `${user} added Punch of ${name}`,
+      ? `${user} created ${ModelToLog} Punch ${
+          punch ? 'In and Punch Out' : 'In'
+        }`
+      : `${user} added Punch ${punch ? 'In and Punch Out' : 'In'} of ${name}`,
   Blog: createActivityLogMessage,
   'Blog Category': createActivityLogMessage,
   'Email Setting': createActivityLogMessage,
@@ -74,16 +76,17 @@ exports.CREATE_ACTIVITY_LOG_MESSAGE = {
 };
 
 exports.UPDATE_ACTIVITY_LOG_MESSAGE = {
-  Attendance: (user, ModelToLog, name) =>
+  Attendance: (user, ModelToLog, name, punch) =>
     user === name
-      ? `${user} created ${ModelToLog} Punch`
-      : `${user} updated Punch of ${name}`,
+      ? `${user} updated ${ModelToLog} Punch ${punch}`
+      : `${user} updated Punch ${punch} of ${name}`,
   Blog: updateActivityLogMessage,
   'Blog Category': updateActivityLogMessage,
   'Email Setting': updateActivityLogMessage,
   'Leave Type': updateActivityLogMessage,
   'Leave Quarter': (user, ModelToLog) => `${user} updated ${ModelToLog}`,
-  Leave: updateActivityLogMessage,
+  Leave: (user, ModelToLog, name) =>
+    `${user} updated ${ModelToLog} of ${name || ''}`,
   Notice: updateActivityLogMessage,
   'Notice Type': updateActivityLogMessage,
   Client: updateActivityLogMessage,
@@ -120,7 +123,8 @@ exports.DELETE_ACTIVITY_LOG_MESSAGE = {
   FAQ: deleteActivityLogMessage,
   Holiday: deleteActivityLogMessage,
   Policy: deleteActivityLogMessage,
-  TimeLog: (user, ModelToLog) => `${user} deleted ${ModelToLog}`,
+  TimeLog: (user, ModelToLog, projectName) =>
+    `${user} deleted ${ModelToLog} of Project ${projectName}`,
   'Log Type': deleteActivityLogMessage,
   User: deleteActivityLogMessage,
   'User Position': deleteActivityLogMessage,

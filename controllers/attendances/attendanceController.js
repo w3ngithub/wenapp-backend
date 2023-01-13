@@ -54,17 +54,113 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
   });
 });
 
+// office hour calculate
+exports.calculateTotalUserOfficeHour = asyncError(async (req, res, next) => {
+  const { fromDate, toDate, user } = req.query;
+
+  const matchConditions = [
+    { attendanceDate: { $gte: new Date(fromDate) } },
+    { attendanceDate: { $lte: new Date(toDate) } },
+    { user: mongoose.Types.ObjectId(user) }
+  ];
+
+  const totalHours = await Attendance.aggregate([
+    {
+      $match: {
+        $and: matchConditions
+      }
+    },
+    {
+      $addFields: {
+        punchTimeDifference: {
+          $ifNull: [
+            {
+              $dateDiff: {
+                startDate: '$punchInTime',
+                endDate: '$punchOutTime',
+                unit: 'millisecond'
+              }
+            },
+            0
+          ]
+        }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalhours: { $sum: '$punchTimeDifference' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: totalHours
+  });
+});
+
 // Search attendances with date range and for particular user
 exports.searchAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, page, limit } = req.query;
 
   const pages = page * 1 || 1;
-  const limits = limit * 1 || 100;
+  const limits = limit * 1 || 1000;
   const skip = (pages - 1) * limit;
 
-  let dataPipe = [];
-  if (page && limit) {
-    dataPipe = [{ $skip: +skip }, { $limit: +limits }];
+  let sortObject = { $sort: { _id: -1 } };
+  const orderType = req.query.sort.includes('-') ? -1 : 1;
+
+  if (req.query.sort) {
+    if (req.query.sort.includes('punchInTime')) {
+      sortObject = req.query.sort.includes('user')
+        ? {
+            $sort: {
+              'PunchInPart.hour': orderType,
+              'PunchInPart.minute': orderType,
+              'PunchInPart.second': orderType,
+              'data.user': 1
+            }
+          }
+        : {
+            $sort: {
+              'PunchInPart.hour': orderType,
+              'PunchInPart.minute': orderType,
+              'PunchInPart.second': orderType
+            }
+          };
+    } else if (req.query.sort.includes('punchOutTime')) {
+      sortObject = req.query.sort.includes('user')
+        ? {
+            $sort: {
+              'PunchOutPart.hour': orderType,
+              'PunchOutPart.minute': orderType,
+              'PunchOutPart.second': orderType,
+              'data.user': 1
+            }
+          }
+        : {
+            $sort: {
+              'PunchOutPart.hour': orderType,
+              'PunchOutPart.minute': orderType,
+              'PunchOutPart.second': orderType
+            }
+          };
+    } else {
+      const intermediate = req.query.sort
+        .split(',')
+        .reduce((prevobj, current) => {
+          const trimmedData = current.replace('-', '').trim();
+          const sortString = ['officehour'].includes(trimmedData)
+            ? trimmedData
+            : 'data.'.concat(trimmedData);
+          const orderTypes = current[0] === '-' ? -1 : 1;
+          return Object.assign(prevobj, {
+            [sortString]: orderTypes
+          });
+        }, {});
+      sortObject = { $sort: intermediate };
+    }
   }
 
   const matchConditions = [
@@ -78,7 +174,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
     });
   }
 
-  const attendances = await Attendance.aggregate([
+  const aggregateArray = [
     {
       $match: {
         $and: matchConditions
@@ -96,6 +192,9 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       $set: {
         user: {
           $arrayElemAt: ['$user.name', 0]
+        },
+        userId: {
+          $arrayElemAt: ['$user._id', 0]
         }
       }
     },
@@ -103,7 +202,8 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
       $group: {
         _id: {
           attendanceDate: '$attendanceDate',
-          user: '$user'
+          user: '$user',
+          userId: '$userId'
         },
         data: {
           $addToSet: {
@@ -121,15 +221,88 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             punchInLocation: '$punchInLocation',
             punchOutLocation: '$punchOutLocation',
             punchInIp: '$punchInIp',
-            punchOutIp: '$punchOutIp'
+            punchOutIp: '$punchOutIp',
+            punchTimeDifference: {
+              $dateDiff: {
+                startDate: '$punchInTime',
+                endDate: '$punchOutTime',
+                unit: 'millisecond'
+              }
+            }
           }
         }
       }
     },
     {
+      $unwind: '$data'
+    },
+    {
+      $sort: {
+        'data.punchInTime': 1
+      }
+    },
+    {
+      $group: {
+        _id: '$_id',
+        data: {
+          $push: '$data'
+        },
+        firstPunchInTime: { $min: '$data.punchInTime' },
+        lastPunchOutTime: { $last: '$data.punchOutTime' }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        data: 1,
+        PunchInPart: {
+          hour: { $hour: '$firstPunchInTime' },
+          minute: { $minute: '$firstPunchInTime' },
+          second: { $second: '$firstPunchInTime' }
+        },
+        PunchOutPart: {
+          hour: {
+            $ifNull: [{ $hour: '$lastPunchOutTime' }, 0]
+          },
+          minute: { $ifNull: [{ $minute: '$lastPunchOutTime' }, 0] },
+          second: { $ifNull: [{ $second: '$lastPunchOutTime' }, 0] }
+        },
+        officehour: {
+          $reduce: {
+            input: '$data',
+            initialValue: 0,
+            in: {
+              $add: ['$$value', { $ifNull: ['$$this.punchTimeDifference', 0] }]
+            }
+          }
+        }
+      }
+    },
+    {
+      ...sortObject
+    }
+  ];
+
+  if (req.query.officehour) {
+    let officeHourQuery = JSON.stringify(req.query.officehour).replace(
+      /\b(gte|gt|lte|lt|eq)\b/g,
+      (match) => `$${match}`
+    );
+    officeHourQuery = JSON.parse(officeHourQuery);
+    const op = Object.keys(officeHourQuery)[0];
+    officeHourQuery[op] = ['$officehour', Number(officeHourQuery[op])];
+
+    aggregateArray.push({
+      $match: { $expr: officeHourQuery }
+    });
+  }
+
+  const attendances = await Attendance.aggregate([
+    ...aggregateArray,
+    {
       $facet: {
         metadata: [{ $count: 'total' }],
-        data: dataPipe
+        data: [{ $skip: +skip }, { $limit: +limits }]
       }
     }
   ]);
