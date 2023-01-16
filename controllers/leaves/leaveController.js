@@ -185,6 +185,8 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
 
   const userId = mongoose.Types.ObjectId(req.params.userId);
 
+  const user = await User.findById(userId);
+
   const { firstQuarter, secondQuarter, thirdQuarter, fourthQuarter } =
     latestYearQuarter;
 
@@ -266,7 +268,7 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
       ]);
     })
   );
-  const { allocatedLeaves } = JSON.parse(JSON.stringify(req.user));
+  const { allocatedLeaves } = user;
   const allocatedLeavesOfUser = allocatedLeaves || {};
   const totalQuarter = [
     allocatedLeavesOfUser.firstQuarter,
@@ -278,7 +280,7 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
   totalQuarter.length = currentQuarterIndex;
 
   let remainingLeaves = 0;
-  if (req.user.position.name !== POSITIONS.intern) {
+  if (user.position.name !== POSITIONS.intern) {
     totalQuarter.forEach((q, i) => {
       if (remainingLeaves < 0) {
         remainingLeaves = 0;
@@ -295,7 +297,7 @@ exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
     leavesTaken: 0
   };
 
-  if (req.user.position.name === POSITIONS.intern) {
+  if (user.position.name === POSITIONS.intern) {
     remainingLeaves = totalQuarter[totalQuarter.length - 1] - leavesTaken;
   }
 
@@ -668,15 +670,11 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
     {
       $match: {
         leaveStatus: 'approved',
-        $or: [
-          {
-            'leaveDates.0': { $eq: todayDate }
-          },
-          {
-            'leaveDates.0': { $lte: todayDate },
-            'leaveDates.1': { $gte: todayDate }
+        leaveDates: {
+          $elemMatch: {
+            $eq: todayDate
           }
-        ]
+        }
       }
     },
     {
