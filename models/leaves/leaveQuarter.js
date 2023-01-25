@@ -1,68 +1,22 @@
 const mongoose = require('mongoose');
+const common = require('../../utils/common');
 
-const leaveSchema = new mongoose.Schema(
-  {
-    firstQuarter: {
-      fromDate: {
-        type: Date,
-        required: true
-      },
-      toDate: {
-        type: Date,
-        required: true
-      },
-      leaves: {
-        required: true,
-        type: Number
-      }
-    },
-    secondQuarter: {
-      fromDate: {
-        type: Date,
-        required: true
-      },
-      toDate: {
-        type: Date,
-        required: true
-      },
-      leaves: {
-        required: true,
-        type: Number
-      }
-    },
-    thirdQuarter: {
-      fromDate: {
-        type: Date,
-        required: true
-      },
-      toDate: {
-        type: Date,
-        required: true
-      },
-      leaves: {
-        required: true,
-        type: Number
-      }
-    },
-    fourthQuarter: {
-      fromDate: {
-        type: Date,
-        required: true
-      },
-      toDate: {
-        type: Date,
-        required: true
-      },
-      leaves: {
-        required: true,
-        type: Number
-      }
-    }
+const quarterSchema = new mongoose.Schema({
+  quarterName: String,
+  fromDate: Date,
+  toDate: Date,
+  leaves: Number
+});
+
+const leaveQuarterSchema = new mongoose.Schema({
+  fiscalYear: {
+    type: Date,
+    required: true,
+    default: common.todayDate()
   },
-  {
-    timestamps: true
-  }
-);
+  quarters: [quarterSchema]
+});
 
-const LeaveQuarter = mongoose.model('Leave_Quarter', leaveSchema);
+const LeaveQuarter = mongoose.model('Leave_Quarter', leaveQuarterSchema);
+
 module.exports = LeaveQuarter;
