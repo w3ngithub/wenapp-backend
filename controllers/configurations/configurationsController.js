@@ -17,7 +17,9 @@ exports.updateConfiguration = asyncError(async (req, res, next) => {
 exports.updateLateAttendanceThreshold = asyncError(async (req, res, next) => {
   await Configurations.updateOne(
     {},
-    { lateArrivalThreshold: req.body.lateArrivalThreshold }
+    {
+      ...req.body
+    }
   );
 
   res.status(201).json({

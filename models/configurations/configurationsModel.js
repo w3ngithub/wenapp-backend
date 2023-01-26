@@ -10,6 +10,10 @@ const configurationsSchema = new mongoose.Schema(
     lateArrivalThreshold: {
       type: Number,
       default: 10
+    },
+    officeHour: {
+      type: Number,
+      default: 9
     }
   },
   {
