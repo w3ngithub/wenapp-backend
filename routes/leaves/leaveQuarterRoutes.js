@@ -9,8 +9,8 @@ router
   .route('/')
   .get(leaveQuarterController.getAllLeaveQuarters)
   .post(
-    authMiddleware.protect,
-    authMiddleware.restrictTo('admin', 'hr'),
+    // authMiddleware.protect,
+    // authMiddleware.restrictTo('admin', 'hr'),
     leaveQuarterController.createLeaveQuarters
   );
 

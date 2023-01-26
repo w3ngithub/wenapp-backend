@@ -34,7 +34,7 @@ const DB = process.env.DATABASE.replace(
 //   })
 //   .then(() => console.log('DB connection successful!'));
 mongoose
-  .connect(DB, {
+  .connect("mongodb+srv://pariskrit:JwCk408lla1jKahZ@lyricaldb.wwpgw.mongodb.net/?retryWrites=true&w=majority", {
     useNewUrlParser: true
   })
   .then(() => console.log('DB connection successful!'));

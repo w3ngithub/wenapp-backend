@@ -25,7 +25,7 @@ const UserLeaveSchema = new mongoose.Schema({
           type: Number,
           default: 0
         },
-        causalLeaves: {
+        casualLeaves: {
           type: Number,
           default: 0
         }
@@ -39,12 +39,20 @@ const UserLeaveSchema = new mongoose.Schema({
         default: 0
       },
       quarter: {
-        type: mongoose.Schemas.ObjectId,
+        type: mongoose.Schema.ObjectId,
         ref: 'Leave_Quarter.quarters',
         required: true
       }
     }
   ]
+});
+
+UserLeaveSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'user leaves.quarter',
+    select: ''
+  })
+  next();
 });
 
 const UserLeave = mongoose.model('User_Leave', UserLeaveSchema);

@@ -44,6 +44,8 @@ const policyRouter = require('./routes/resources/policyRoutes');
 const holidayRouter = require('./routes/resources/holidayRoutes');
 
 const emailSettingsRouter = require('./routes/emails/emailSettingRoute');
+const userLeavesRouter = require('./routes/userLeaves/userLeavesRoute');
+
 const activityLogsRouter = require('./routes/activityLogs/activityLogsRoute');
 const notificationsRouter = require('./routes/notifications/notificationsRoutes');
 const configurationsRoutes = require('./routes/configurations/configurationsRoutes');
@@ -129,7 +131,9 @@ app.use('/api/v1/projects/tags', projectTagRouter);
 app.use('/api/v1/projects/clients', clientRouter);
 app.use('/api/v1/projects', projectRouter);
 
-app.use(authMiddleware.protect);
+// app.use(authMiddleware.protect);
+
+app.use('/api/v1/userLeaves', userLeavesRouter);
 
 app.use('/api/v1/timelogs/types', timeLogTypeRouter);
 app.use('/api/v1/timelogs', timeLogRouter);
