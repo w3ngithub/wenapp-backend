@@ -32,6 +32,10 @@ const attendanceSchema = new mongoose.Schema(
     punchOutIp: {
       type: String
     },
+    isLateArrival:{
+      type: Boolean,
+      default: false
+    },
     lateArrivalLeaveCut: {
       type: Boolean,
       default: false
