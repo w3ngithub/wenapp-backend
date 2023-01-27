@@ -302,8 +302,8 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   // get Users with salary review time before 3 months
   const users = await User.aggregate([
     {
-      $match : {
-        active:{$eq:true}
+      $match: {
+        active: { $eq: true }
       }
     },
     {
@@ -318,8 +318,11 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
       }
     },
     {
-    $match: {
-    newSalaryReviewDate: { $gte: presentDate, $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000) },
+      $match: {
+        newSalaryReviewDate: {
+          $gte: presentDate,
+          $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
+        }
       }
     },
     {

@@ -13,4 +13,19 @@ exports.updateConfiguration = asyncError(async (req, res, next) => {
     data: req.body
   });
 });
+
+exports.updateLateAttendanceThreshold = asyncError(async (req, res, next) => {
+  await Configurations.updateOne(
+    {},
+    {
+      ...req.body
+    }
+  );
+
+  res.status(201).json({
+    status: 'success',
+    data: req.body
+  });
+});
+
 exports.deleteConfiguration = factory.deleteOne(Configurations);

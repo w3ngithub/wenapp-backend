@@ -6,6 +6,14 @@ const configurationsSchema = new mongoose.Schema(
       type: Boolean,
 
       default: false
+    },
+    lateArrivalThreshold: {
+      type: Number,
+      default: 10
+    },
+    officeHour: {
+      type: Number,
+      default: 9
     }
   },
   {

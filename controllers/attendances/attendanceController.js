@@ -341,6 +341,7 @@ exports.getPunchInCountToday = asyncError(async (req, res, next) => {
 exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
   const { fromDate, toDate, user, lateArrivalLeaveCut } = req.query;
   const matchConditions = [
+    { isLateArrival: { $eq: true } },
     { attendanceDate: { $gte: new Date(fromDate) } },
     { attendanceDate: { $lte: new Date(toDate) } },
     { lateArrivalLeaveCut: { $eq: +lateArrivalLeaveCut !== 1 } }
@@ -408,45 +409,13 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
         userId: '$data.data.userId',
         punchInLocation: '$punchInLocation',
         punchOutLocation: '$punchOutLocation',
+        isLateArrival: '$data.data.isLateArrival',
         officeTime: {
           $arrayElemAt: ['$data.data.officeTime', 0]
         }
       }
     },
-    {
-      $addFields: {
-        punchHour: {
-          $hour: '$punchInTime'
-        },
-        punchMinutes: {
-          $minute: '$punchInTime'
-        },
-        startHour: { $convert: { input: '$officeTime.hour', to: 'int' } },
-        startMinute: { $convert: { input: '$officeTime.minute', to: 'int' } }
-      }
-    },
-    {
-      $match: {
-        $expr: {
-          $or: [
-            {
-              $and: [
-                { $eq: ['$punchHour', '$startHour'] },
-                { $gt: ['$punchMinutes', '$startMinute'] }
-              ]
-            },
-            {
-              $and: [{ $gt: ['$punchHour', '$startHour'] }]
-            }
 
-            // {
-            //   $and: [{ punchHour: { $eq: 4 } }, { PunchMinutes: { $gt: 45 } }]
-            // },
-            // { $and: [{ punchHour: { $gt: 4 } }] }
-          ]
-        }
-      }
-    },
     {
       $group: {
         _id: {
