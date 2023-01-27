@@ -24,7 +24,7 @@ exports.updateLateAttendanceThreshold = asyncError(async (req, res, next) => {
 
   res.status(201).json({
     status: 'success',
-    data: req.body.lateArrivalThreshold
+    data: req.body
   });
 });
 
