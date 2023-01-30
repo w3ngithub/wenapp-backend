@@ -33,6 +33,7 @@ const DB = process.env.DATABASE.replace(
 //     useNewUrlParser: true
 //   })
 //   .then(() => console.log('DB connection successful!'));
+
 mongoose
   .connect(DB, {
     useNewUrlParser: true

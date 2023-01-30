@@ -113,7 +113,7 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, updatedBy: req.user.id };
-
+    console.log(req.params.id);
     const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true

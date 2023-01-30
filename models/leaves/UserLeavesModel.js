@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { quarterSchema } = require('./leaveQuarter');
 
 const UserLeaveSchema = new mongoose.Schema({
   user: {
@@ -25,7 +26,7 @@ const UserLeaveSchema = new mongoose.Schema({
           type: Number,
           default: 0
         },
-        causalLeaves: {
+        casualLeaves: {
           type: Number,
           default: 0
         }
@@ -38,13 +39,17 @@ const UserLeaveSchema = new mongoose.Schema({
         type: Number,
         default: 0
       },
-      quarter: {
-        type: mongoose.Schemas.ObjectId,
-        ref: 'Leave_Quarter.quarters',
-        required: true
-      }
+      quarter: quarterSchema
     }
   ]
+});
+
+UserLeaveSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'user',
+    select: ''
+  });
+  next();
 });
 
 const UserLeave = mongoose.model('User_Leave', UserLeaveSchema);

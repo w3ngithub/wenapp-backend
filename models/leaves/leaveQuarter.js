@@ -8,15 +8,21 @@ const quarterSchema = new mongoose.Schema({
   leaves: Number
 });
 
-const leaveQuarterSchema = new mongoose.Schema({
-  fiscalYear: {
-    type: Date,
-    required: true,
-    default: common.todayDate()
+const leaveQuarterSchema = new mongoose.Schema(
+  {
+    fiscalYear: {
+      type: Date,
+      required: true,
+      default: common.todayDate()
+    },
+    quarters: [quarterSchema]
   },
-  quarters: [quarterSchema]
-});
+  {
+    timestamps: true
+  }
+);
 
 const LeaveQuarter = mongoose.model('Leave_Quarter', leaveQuarterSchema);
 
-module.exports = LeaveQuarter;
+// module.exports = LeaveQuarter;
+module.exports = { quarterSchema, LeaveQuarter };
