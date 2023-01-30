@@ -14,6 +14,10 @@ const holidaysSchema = new mongoose.Schema(
             type: Date,
             required: [true, 'Please provide holiday date.']
           },
+          allowLeaveApply: {
+            type: Boolean,
+            default: false
+          },
           remarks: String
         }
       ]
