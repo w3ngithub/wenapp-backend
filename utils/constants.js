@@ -25,6 +25,7 @@ exports.STATUS_TYPES = [
 exports.LEAVE_CANCELLED = 'cancelled';
 exports.LEAVE_PENDING = 'pending';
 exports.LEAVE_APPROVED = 'approved';
+exports.LEAVE_REJECTED = 'rejected';
 
 exports.MONTHS = {
   January: 0,

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const Leave = require('../../models/leaves/leaveModel');
 const factory = require('../factoryController');
 const AppError = require('../../utils/appError');
@@ -12,7 +11,8 @@ const {
   HRWENEMAIL,
   LEAVE_CANCELLED,
   LEAVE_PENDING,
-  LEAVE_APPROVED
+  LEAVE_APPROVED,
+  LEAVE_REJECTED
 } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
@@ -70,7 +70,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
 // Update leave status of user for approve or cancel
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   const { leaveId, status } = req.params;
-  const { remarks, reason } = req.body;
+  const { remarks, reason, reapplyreason } = req.body;
 
   if (!leaveId || !status) {
     return next(new AppError('Missing leave ID or status in the route.', 400));
@@ -88,6 +88,12 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
     leaveStatus = 'approved';
   } else if (status === 'cancel') {
     leaveStatus = 'cancelled';
+  } else if (status === 'reject') {
+    leaveStatus = 'rejected';
+  } else if (status === 'pending') {
+    leaveStatus = 'pending';
+  } else if (status === 'user-cancel') {
+    leaveStatus = 'user cancelled';
   } else {
     return next(
       new AppError('Please specify exact leave status in the route.', 400)
@@ -97,28 +103,60 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   leave.remarks = remarks;
   leave.leaveStatus = leaveStatus;
 
-  if (reason) {
-    leave.cancelReason = reason;
+  if (reason && status !== 'pending') {
+    if (status === 'reject') {
+      leave.rejectReason = reason;
+    } else {
+      leave.cancelReason = reason || leave.cancelReason;
+    }
+  }
+
+  if (status === 'pending' && reapplyreason) {
+    leave.reapplyreason = reapplyreason;
   }
 
   await leave.save();
-
-  ActivityLogs.create({
-    status: status === 'cancel' ? 'deleted' : 'updated',
-    module: 'Leave',
-    activity:
-      req.user.name === leave.user.name
-        ? `${req.user.name} ${
-            status === 'approve' ? 'approved' : 'cancelled'
-          } Leave`
-        : `${req.user.name} ${
-            status === 'approve' ? 'approved' : 'cancelled'
-          } Leave of ${leave.user.name}`,
-    user: {
-      name: req.user.name,
-      photo: req.user.photoURL
-    }
-  });
+  if (status === 'pending') {
+    await ActivityLogs.create({
+      status: 'updated',
+      module: 'Leave',
+      activity: `${leave.user.name} reapplied Leave`,
+      user: {
+        name: req.user.name,
+        photo: req.user.photoURL
+      }
+    });
+  } else if (status === 'reject') {
+    await ActivityLogs.create({
+      status: 'updated',
+      module: 'Leave',
+      activity:
+        req.user.name === leave.user.name
+          ? `${req.user.name} rejected Leave`
+          : `${req.user.name} rejected Leave of ${leave.user.name}`,
+      user: {
+        name: req.user.name,
+        photo: req.user.photoURL
+      }
+    });
+  } else {
+    await ActivityLogs.create({
+      status: status === 'cancel' ? 'deleted' : 'updated',
+      module: 'Leave',
+      activity:
+        req.user.name === leave.user.name
+          ? `${req.user.name} ${
+              status === 'approve' ? 'approved' : 'cancelled'
+            } Leave`
+          : `${req.user.name} ${
+              status === 'approve' ? 'approved' : 'cancelled'
+            } Leave of ${leave.user.name}`,
+      user: {
+        name: req.user.name,
+        photo: req.user.photoURL
+      }
+    });
+  }
 
   res.status(200).json({
     status: 'success',
@@ -758,13 +796,13 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
 
       const emailContent = await Email.findOne({ module: 'leave-pending' });
 
-      const message = `<b><em>${user.name}</em> applied for leave on dates ${req.body.leaveDates}</b>`;
+      const message = `<b><em>${user.name}</em>  applied for leave on dates ${req.body.leaveDates}</b>`;
 
       new EmailNotification().sendEmail({
         email: [INFOWENEMAIL, HRWENEMAIL],
-        subject:
-          emailContent.title.replace(/@username/i, user.name) ||
-          `${user.name} applied for leave`,
+        subject: !req.body.reapply
+          ? emailContent.title.replace(/@username/i, user.name)
+          : `${user.name}  re-applied for leave`,
         message:
           emailContent.body
             .replace(/@username/i, user.name)
@@ -810,7 +848,29 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
           .replace(/@username/i, req.body.user.name)
           .replace(/@reason/i, req.body.leaveApproveReason || '')
       });
+    } else if (req.body.leaveStatus === LEAVE_REJECTED) {
+      console.log(req.body);
+      const emailContent = await Email.findOne({ module: 'leave-reject' });
+
+      new EmailNotification().sendEmail({
+        email: [req.body.user.email],
+        subject:
+          emailContent.title.replace(/@username/i, req.body.user.name) ||
+          `${req.body.user.name}  leaves rejected`,
+        message: emailContent.body
+          .replace(/@username/i, req.body.user.name)
+          .replace(/@reason/i, req.body.leaveCancelReason || '')
+          .replace(
+            /@date/i,
+            req.body.leaveDates
+              .toString()
+              .split(',')
+              .map((x) => `<p>${x.split('T')[0]}</p>`)
+              .join('')
+          )
+      });
     }
+
     res.status(200).json({
       status: 'success'
     });
