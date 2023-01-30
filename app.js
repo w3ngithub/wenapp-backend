@@ -131,7 +131,7 @@ app.use('/api/v1/projects/tags', projectTagRouter);
 app.use('/api/v1/projects/clients', clientRouter);
 app.use('/api/v1/projects', projectRouter);
 
-// app.use(authMiddleware.protect);
+app.use(authMiddleware.protect);
 
 app.use('/api/v1/userLeaves', userLeavesRouter);
 

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { quarterSchema } = require('./leaveQuarter');
 
 const UserLeaveSchema = new mongoose.Schema({
   user: {
@@ -38,20 +39,16 @@ const UserLeaveSchema = new mongoose.Schema({
         type: Number,
         default: 0
       },
-      quarter: {
-        type: mongoose.Schema.ObjectId,
-        ref: 'Leave_Quarter.quarters',
-        required: true
-      }
+      quarter: quarterSchema
     }
   ]
 });
 
 UserLeaveSchema.pre(/^find/, function (next) {
   this.populate({
-    path: 'user leaves.quarter',
+    path: 'user',
     select: ''
-  })
+  });
   next();
 });
 

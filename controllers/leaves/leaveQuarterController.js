@@ -1,4 +1,4 @@
-const LeaveQuarter = require('../../models/leaves/leaveQuarter');
+const { LeaveQuarter } = require('../../models/leaves/leaveQuarter');
 const factory = require('../factoryController');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 

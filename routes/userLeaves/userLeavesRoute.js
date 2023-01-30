@@ -3,9 +3,10 @@ const userLeavesController = require('../../controllers/userLeaves/userLeavesCon
 const router = express.Router();
 
 router
-  .route('/').get(userLeavesController.getUserLeave)
+  .route('/')
+  .get(userLeavesController.getUserLeave)
   .post(userLeavesController.createUserLeave);
 
-
+router.route('/:id').patch(userLeavesController.updateUserLeave);
 
 module.exports = router;
