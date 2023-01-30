@@ -58,7 +58,7 @@ exports.getAll = (Model) =>
 
 exports.createOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
-    const reqBody = { ...req.body };
+    const reqBody = { ...req.body, createdBy: req.user.id };
 
     const doc = await Model.create(reqBody);
 
@@ -67,40 +67,40 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
       newDoc = await User.findOne({ _id: doc.user });
     }
 
-    // if (LogModel) {
-    //   if (ModelToLog === 'Attendance') {
-    //     if (req.user.name !== newDoc.name) {
-    //       LogModel.create({
-    //         status: 'created',
-    //         module: ModelToLog,
-    //         activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
-    //           req.user.name,
-    //           ModelToLog,
-    //           newDoc.name || newDoc.title,
-    //           reqBody.punchOutTime
-    //         ),
-    //         user: {
-    //           name: req.user.name,
-    //           photo: req.user.photoURL
-    //         }
-    //       });
-    //     }
-    //   } else {
-    //     LogModel.create({
-    //       status: 'created',
-    //       module: ModelToLog,
-    //       activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
-    //         req.user.name,
-    //         ModelToLog,
-    //         newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
-    //       ),
-    //       user: {
-    //         name: req.user.name,
-    //         photo: req.user.photoURL
-    //       }
-    //     });
-    //   }
-    // }
+    if (LogModel) {
+      if (ModelToLog === 'Attendance') {
+        if (req.user.name !== newDoc.name) {
+          LogModel.create({
+            status: 'created',
+            module: ModelToLog,
+            activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+              req.user.name,
+              ModelToLog,
+              newDoc.name || newDoc.title,
+              reqBody.punchOutTime
+            ),
+            user: {
+              name: req.user.name,
+              photo: req.user.photoURL
+            }
+          });
+        }
+      } else {
+        LogModel.create({
+          status: 'created',
+          module: ModelToLog,
+          activity: CREATE_ACTIVITY_LOG_MESSAGE[ModelToLog](
+            req.user.name,
+            ModelToLog,
+            newDoc ? newDoc.name || newDoc.title : doc.name || doc.title
+          ),
+          user: {
+            name: req.user.name,
+            photo: req.user.photoURL
+          }
+        });
+      }
+    }
 
     res.status(201).json({
       status: 'success',
@@ -113,6 +113,7 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
     const reqBody = { ...req.body, updatedBy: req.user.id };
+    console.log(req.params.id);
     const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true
