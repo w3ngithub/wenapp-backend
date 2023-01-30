@@ -117,8 +117,8 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
 
   await leave.save();
   if (status === 'pending') {
-    ActivityLogs.create({
-      status: status === 'cancel' ? 'deleted' : 'updated',
+    await ActivityLogs.create({
+      status: 'updated',
       module: 'Leave',
       activity: `${leave.user.name} reapplied Leave`,
       user: {
@@ -126,8 +126,21 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
         photo: req.user.photoURL
       }
     });
+  } else if (status === 'reject') {
+    await ActivityLogs.create({
+      status: 'updated',
+      module: 'Leave',
+      activity:
+        req.user.name === leave.user.name
+          ? `${req.user.name} rejected Leave`
+          : `${req.user.name} rejected Leave of ${leave.user.name}`,
+      user: {
+        name: req.user.name,
+        photo: req.user.photoURL
+      }
+    });
   } else {
-    ActivityLogs.create({
+    await ActivityLogs.create({
       status: status === 'cancel' ? 'deleted' : 'updated',
       module: 'Leave',
       activity:

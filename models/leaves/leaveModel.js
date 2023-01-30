@@ -45,6 +45,9 @@ const leaveSchema = new mongoose.Schema(
     remarks: {
       type: String,
       trim: true
+    },
+    leaveDocument: {
+      type: String
     }
   },
   {
