@@ -12,9 +12,9 @@ router.get('/', leaveController.getAllLeaves);
 router.get('/today', leaveController.getTodayLeaves);
 router.get('/:id', leaveController.getLeave);
 router.get(
-  '/users/weekLeaves',
+  '/users/futureLeaves',
   getWeekDateMiddleware.getWeekDate,
-  leaveController.getWeekLeaves
+  leaveController.getFutureLeaves
 );
 router.get('/users/today/count', leaveController.getUsersCountOnLeaveToday);
 
