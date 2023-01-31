@@ -475,8 +475,8 @@ exports.getUsersOnLeaveToday = asyncError(async (req, res, next) => {
   });
 });
 
-// Get week range approved leaves
-exports.getWeekLeaves = asyncError(async (req, res, next) => {
+// Get future  approved/pending leaves
+exports.getFutureLeaves = asyncError(async (req, res, next) => {
   const { todayDate } = req;
 
   const newLeaves = await Leave.aggregate([
