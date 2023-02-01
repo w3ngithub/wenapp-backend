@@ -341,6 +341,7 @@ exports.updatePassword = asyncError(async (req, res, next) => {
   const emailContent = await Email.findOne({ module: 'user-update-password' });
   console.log('email', emailContent);
 
+  //send email
   await new EmailNotification().sendEmail({
     email: user.email,
     subject: emailContent.title || 'Password updated',
