@@ -338,6 +338,17 @@ exports.updatePassword = asyncError(async (req, res, next) => {
   user.passwordConfirm = req.body.passwordConfirm;
   await user.save();
 
+  const emailContent = await Email.findOne({ module: 'user-update-password' });
+  console.log('email', emailContent);
+
+  await new EmailNotification().sendEmail({
+    email: user.email,
+    subject: emailContent.title || 'Password updated',
+    message:
+      emailContent.body.replace(/@username/i, user.name) ||
+      'Your Password is updated Succesfully!'
+  });
+
   // Log user in, send JWT
   createSendToken(user, 200, req, res);
 });
