@@ -96,9 +96,9 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
 
     const Users = await User.find({ active: { $ne: false } });
 
-    // filter users with no yesterday punch
-    const yesterdayNoPunchUser = Users.filter((user) =>
-      userWithAttendance.includes(user._id.toString())
+    // filter users with no yesterday's punch
+    const yesterdayNoPunchUser = Users.filter(
+      (user) => !userWithAttendance.includes(user._id.toString())
     );
 
     yesterdayNoPunchUser.forEach(async (user) => {
@@ -111,11 +111,13 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
         }
       });
 
-      if (!leave || leave.length !== 0) {
+      if (leave && leave.length === 0) {
         await Notifications.create({
           showTo: user._id,
           module: 'Leave',
-          remarks: `You have not applied for Leave. Please apply`
+          remarks: `You have not applied for Leave for ${
+            yesterdayDate().toISOString().split('T')[0]
+          }. Please apply !`
         });
       }
     });
@@ -124,7 +126,7 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      data: holidays
+      data: 'success'
     }
   });
 });
