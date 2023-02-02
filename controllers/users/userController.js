@@ -8,7 +8,11 @@ const UserRole = require('../../models/users/userRoleModel');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const { LeaveQuarter } = require('../../models/leaves/leaveQuarter');
 const common = require('../../utils/common');
-const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
+const {
+  HRWENEMAIL,
+  INFOWENEMAIL,
+  POSITIONS
+} = require('../../utils/constants');
 const UserLeave = require('../../models/leaves/UserLeavesModel');
 
 // Compare two object and keep allowed fields to be updated
@@ -384,7 +388,12 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 
         const previousQuarterRemainingLeaves =
           doc.leaves[currentQuarterIndex - 1].remainingLeaves;
-        if (previousQuarterRemainingLeaves > 0) {
+
+        // when remaining leaves is left in previous quarter and is not intern
+        if (
+          previousQuarterRemainingLeaves > 0 &&
+          user.position.name !== POSITIONS.intern
+        ) {
           quarterRemainingLeaves =
             previousQuarterRemainingLeaves +
             doc.leaves[currentQuarterIndex].allocatedLeaves;
