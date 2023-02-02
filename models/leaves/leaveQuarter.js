@@ -13,7 +13,7 @@ const leaveQuarterSchema = new mongoose.Schema(
     fiscalYear: {
       type: Date,
       required: true,
-      default: common.todayDate()
+      default: common.getStartDateOfTheYear()
     },
     quarters: [quarterSchema]
   },

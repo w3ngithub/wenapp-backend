@@ -51,6 +51,12 @@ exports.todayDate = () => {
   return new Date(todayDate);
 };
 
+exports.getStartDateOfTheYear = () => {
+  const date = new Date(new Date().getFullYear(), 0, 2);
+  const date1 = new Date(date.setUTCHours(0, 0, 0, 0));
+
+  return new Date(date1.toISOString());
+};
 exports.yesterdayDate = () => {
   const todayDate = new Date();
 

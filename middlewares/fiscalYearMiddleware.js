@@ -1,5 +1,5 @@
 const asyncError = require('../utils/asyncError');
-const LeaveQuarter = require('../models/leaves/leaveQuarter');
+const { LeaveQuarter } = require('../models/leaves/leaveQuarter');
 
 /**
  * Get current fiscal Year start and end date
@@ -11,9 +11,11 @@ exports.getFiscalYear = asyncError(async (req, res, next) => {
 
   req.fiscalYear = {
     currentFiscalYearStartDate: new Date(
-      latestYearQuarter.firstQuarter.fromDate
+      latestYearQuarter.quarters[0].fromDate
     ),
-    currentFiscalYearEndDate: new Date(latestYearQuarter.fourthQuarter.toDate)
+    currentFiscalYearEndDate: new Date(
+      latestYearQuarter.quarters[latestYearQuarter.quarters.length - 1].toDate
+    )
   };
 
   next();

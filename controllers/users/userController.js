@@ -347,93 +347,100 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
 
 // Reset Allocated Leaves of all co-workers
 exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
-  // const { currentQuarter } = req.body;
+  const todayDate = common.todayDate();
+
   const quarters = await LeaveQuarter.find()
     .sort({
       createdAt: -1
     })
     .limit(1);
-  const todayDate = common.todayDate();
 
-  const currentQuarter = quarters[0].quarters.find(
-    (quarter) =>
-      new Date(quarter.fromDate) <= new Date(todayDate) &&
-      new Date(todayDate) <= new Date(quarter.toDate)
+  const isUserLeaveAlreadyCreated = await UserLeave.findOne(
+    {
+      fiscalYear: quarters[0].fiscalYear
+    },
+    ''
   );
 
-  const doc = await UserLeave.findByIdAndUpdate(req.params.id, reqBody, {
-    new: true,
-    runValidators: true
+  const allUsers = await User.find({ active: true });
+
+  if (isUserLeaveAlreadyCreated) {
+    const currentQuarter = quarters[0].quarters.find(
+      (quarter) =>
+        new Date(quarter.fromDate) <= new Date(todayDate) &&
+        new Date(todayDate) <= new Date(quarter.toDate)
+    );
+
+    await Promise.all(
+      allUsers.map(async (user) => {
+        let carriedOverLeaves = 0,
+          quarterRemainingLeaves = currentQuarter.leaves;
+
+        const doc = await UserLeave.findOne({ user: user._id });
+
+        const currentQuarterIndex = doc.leaves.findIndex((leave) =>
+          leave.quarter._id.equals(currentQuarter._id)
+        );
+
+        const previousQuarterRemainingLeaves =
+          doc.leaves[currentQuarterIndex - 1].remainingLeaves;
+        if (previousQuarterRemainingLeaves > 0) {
+          quarterRemainingLeaves =
+            previousQuarterRemainingLeaves +
+            doc.leaves[currentQuarterIndex].allocatedLeaves;
+          carriedOverLeaves = previousQuarterRemainingLeaves;
+        }
+
+        const currentQuarterLeaveDetails = {
+          ...doc.leaves[currentQuarterIndex],
+          remainingLeaves: quarterRemainingLeaves,
+          carriedOverLeaves
+        };
+
+        doc.leaves = doc.leaves.map((leave, index) =>
+          index === currentQuarterIndex ? currentQuarterLeaveDetails : leave
+        );
+
+        await doc.save();
+      })
+    );
+  } else {
+    const allQuarterDetails = quarters[0].quarters.map((quarter) => ({
+      approvedLeaves: {
+        sickLeaves: 0,
+        casualLeaves: 0
+      },
+      allocatedLeaves: quarter.leaves,
+      remainingLeaves: quarter.leaves,
+      carriedOverLeaves: 0,
+      leaveDeductionBalance: 0,
+      quarter: quarter
+    }));
+
+    allUsers.forEach(async (user) => {
+      const userLeave = new UserLeave({
+        user: user._id,
+        fiscalYear: quarters[0].fiscalYear,
+        leaves: allQuarterDetails
+      });
+      await userLeave.save();
+    });
+  }
+
+  ActivityLogs.create({
+    status: 'updated',
+    module: 'User',
+    activity: `${req.user.name} updated Allocated Leaves of all Co-workers`,
+    user: {
+      name: req.user.name,
+      photo: req.user.photoURL
+    }
   });
-
-  // let user = null;
-
-  // user = await User.updateMany({}, [
-  //   {
-  //     $set: {
-  //       'allocatedLeaves.firstQuarter': {
-  //         $switch: {
-  //           branches: [
-  //             {
-  //               case: { $eq: ['firstQuarter', currentQuarter] },
-  //               then: quarters[0][currentQuarter].leaves
-  //             }
-  //           ],
-  //           default: '$allocatedLeaves.firstQuarter'
-  //         }
-  //       },
-  //       'allocatedLeaves.secondQuarter': {
-  //         $switch: {
-  //           branches: [
-  //             {
-  //               case: { $eq: ['secondQuarter', currentQuarter] },
-  //               then: quarters[0][currentQuarter].leaves
-  //             }
-  //           ],
-  //           default: '$allocatedLeaves.secondQuarter'
-  //         }
-  //       },
-  //       'allocatedLeaves.thirdQuarter': {
-  //         $switch: {
-  //           branches: [
-  //             {
-  //               case: { $eq: ['thirdQuarter', currentQuarter] },
-  //               then: quarters[0][currentQuarter].leaves
-  //             }
-  //           ],
-  //           default: '$allocatedLeaves.thirdQuarter'
-  //         }
-  //       },
-  //       'allocatedLeaves.fourthQuarter': {
-  //         $switch: {
-  //           branches: [
-  //             {
-  //               case: { $eq: ['fourthQuarter', currentQuarter] },
-  //               then: quarters[0][currentQuarter].leaves
-  //             }
-  //           ],
-  //           default: '$allocatedLeaves.fourthQuarter'
-  //         }
-  //       }
-  //     }
-  //   }
-  // ]);
-
-  // ActivityLogs.create({
-  //   status: 'updated',
-  //   module: 'User',
-  //   activity: `${req.user.name} updated Allocated Leaves of all Co-workers`,
-  //   user: {
-  //     name: req.user.name,
-  //     photo: req.user.photoURL
-  //   }
-  // });
 
   res.status(200).json({
     status: 'success',
     data: {
-      data: currentQuarter,
-      data1: quarters
+      data: 'Reset Allocated Leaves Successfull'
     }
   });
 });
