@@ -10,4 +10,8 @@ router
   .delete(notificationsController.deleteNotification)
   .patch(notificationsController.updateNotification);
 
+router
+  .route('/apply-leave-notification')
+  .get(notificationsController.notifyToApplyLeave);
+
 module.exports = router;

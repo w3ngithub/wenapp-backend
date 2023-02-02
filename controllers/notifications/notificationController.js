@@ -1,6 +1,11 @@
 const Notifications = require('../../models/notification/notificationModel');
 const APIFeatures = require('../../utils/apiFeatures');
 const asyncError = require('../../utils/asyncError');
+const Holidays = require('../../models/resources/holidayModel');
+const { yesterdayDate } = require('../../utils/common');
+const Attendance = require('../../models/attendances/attendanceModel');
+const User = require('../../models/users/userModel');
+const Leave = require('../../models/leaves/leaveModel');
 
 exports.getAllNotifications = asyncError(async (req, res, next) => {
   const { role, userId } = req.query;
@@ -63,6 +68,65 @@ exports.updateNotification = asyncError(async (req, res, next) => {
     status: 'success',
     data: {
       data: updatedActivities
+    }
+  });
+});
+
+exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
+  const holidays = await Holidays.findOne().sort({ createdAt: -1 }).limit(1);
+
+  const holidayList = holidays.holidays.map(
+    (holiday) => holiday.date.toISOString().split('T')[0]
+  );
+
+  // check if yesterday was not weekend and holiday
+  if (
+    ![0, 6].includes(yesterdayDate().getDay()) &&
+    !holidayList.includes(yesterdayDate().toISOString().split('T')[0])
+  ) {
+    const attendance = await Attendance.aggregate([
+      {
+        $match: {
+          $and: [{ attendanceDate: { $eq: yesterdayDate() } }]
+        }
+      }
+    ]);
+
+    const userWithAttendance = attendance.map((att) => att.user.toString());
+
+    const Users = await User.find({ active: { $ne: false } });
+
+    // filter users with no yesterday's punch
+    const yesterdayNoPunchUser = Users.filter(
+      (user) => !userWithAttendance.includes(user._id.toString())
+    );
+
+    yesterdayNoPunchUser.forEach(async (user) => {
+      const leave = await Leave.find({
+        user: user._id,
+        leaveDates: {
+          $elemMatch: {
+            $eq: yesterdayDate()
+          }
+        }
+      });
+
+      if (leave && leave.length === 0) {
+        await Notifications.create({
+          showTo: user._id,
+          module: 'Leave',
+          remarks: `You have not applied for Leave for ${
+            yesterdayDate().toISOString().split('T')[0]
+          }. Please apply !`
+        });
+      }
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: 'success'
     }
   });
 });

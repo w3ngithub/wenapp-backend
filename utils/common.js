@@ -57,6 +57,14 @@ exports.getStartDateOfTheYear = () => {
 
   return new Date(date1.toISOString());
 };
+exports.yesterdayDate = () => {
+  const todayDate = new Date();
+
+  todayDate.setDate(todayDate.getDate() - 1);
+  const yesterdayDate = todayDate.toISOString().split('T')[0];
+
+  return new Date(yesterdayDate);
+};
 
 exports.createActivityLogMessage = (user, ModelToLog, name) =>
   `${user} created ${ModelToLog} (${name || ''})`;
