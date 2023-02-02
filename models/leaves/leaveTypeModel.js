@@ -9,6 +9,13 @@ const leaveTypeSchema = new mongoose.Schema({
   },
   leaveDays: {
     type: Number
+  },
+  gender: {
+    type: [String]
+  },
+  Probation: {
+    type: Boolean,
+    default: true
   }
 });
 
