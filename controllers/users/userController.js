@@ -415,8 +415,10 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
           carriedOverLeaves
         };
 
-        doc.leaves = doc.leaves.map((leave, index) =>
-          index === currentQuarterIndex ? currentQuarterLeaveDetails : leave
+        doc.leaves = quarters[0].quarters.map((quarter, index) =>
+          index === currentQuarterIndex
+            ? currentQuarterLeaveDetails
+            : doc.leaves[index]
         );
 
         await doc.save();
