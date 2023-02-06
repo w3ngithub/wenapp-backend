@@ -8,7 +8,11 @@ const UserRole = require('../../models/users/userRoleModel');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const { LeaveQuarter } = require('../../models/leaves/leaveQuarter');
 const common = require('../../utils/common');
-const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
+const {
+  HRWENEMAIL,
+  INFOWENEMAIL,
+  POSITIONS
+} = require('../../utils/constants');
 const UserLeave = require('../../models/leaves/UserLeavesModel');
 
 // Compare two object and keep allowed fields to be updated
@@ -362,19 +366,25 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
     ''
   );
 
+  const currentQuarter = quarters[0].quarters.find(
+    (quarter) =>
+      new Date(quarter.fromDate) <= new Date(todayDate) &&
+      new Date(todayDate) <= new Date(quarter.toDate)
+  );
+
+  const numberOfMonthsInAQuarter = common.getNumberOfMonthsInAQuarter(
+    currentQuarter.toDate,
+    currentQuarter.fromDate
+  );
+
   const allUsers = await User.find({ active: true });
 
   if (isUserLeaveAlreadyCreated) {
-    const currentQuarter = quarters[0].quarters.find(
-      (quarter) =>
-        new Date(quarter.fromDate) <= new Date(todayDate) &&
-        new Date(todayDate) <= new Date(quarter.toDate)
-    );
-
     await Promise.all(
       allUsers.map(async (user) => {
         let carriedOverLeaves = 0,
           quarterRemainingLeaves = currentQuarter.leaves;
+        const isOnProbation = POSITIONS.probation === user.status;
 
         const doc = await UserLeave.findOne({ user: user._id });
 
@@ -384,7 +394,12 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 
         const previousQuarterRemainingLeaves =
           doc.leaves[currentQuarterIndex - 1].remainingLeaves;
-        if (previousQuarterRemainingLeaves > 0) {
+
+        // when remaining leaves is left in previous quarter and is not intern
+        if (
+          previousQuarterRemainingLeaves > 0 &&
+          user.position.name !== POSITIONS.intern
+        ) {
           quarterRemainingLeaves =
             previousQuarterRemainingLeaves +
             doc.leaves[currentQuarterIndex].allocatedLeaves;
@@ -394,11 +409,16 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         const currentQuarterLeaveDetails = {
           ...doc.leaves[currentQuarterIndex],
           remainingLeaves: quarterRemainingLeaves,
+          allocatedLeaves: isOnProbation
+            ? numberOfMonthsInAQuarter
+            : doc.leaves[currentQuarterIndex].allocatedLeaves,
           carriedOverLeaves
         };
 
-        doc.leaves = doc.leaves.map((leave, index) =>
-          index === currentQuarterIndex ? currentQuarterLeaveDetails : leave
+        doc.leaves = quarters[0].quarters.map((quarter, index) =>
+          index === currentQuarterIndex
+            ? currentQuarterLeaveDetails
+            : doc.leaves[index]
         );
 
         await doc.save();
@@ -410,7 +430,9 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         sickLeaves: 0,
         casualLeaves: 0
       },
-      allocatedLeaves: quarter.leaves,
+      allocatedLeaves: isOnProbation
+        ? numberOfMonthsInAQuarter
+        : quarter.leaves,
       remainingLeaves: quarter.leaves,
       carriedOverLeaves: 0,
       leaveDeductionBalance: 0,

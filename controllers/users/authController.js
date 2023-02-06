@@ -12,6 +12,9 @@ const EmailNotification = require('../../utils/email');
 const factory = require('../factoryController');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
+const { LeaveQuarter } = require('../../models/leaves/leaveQuarter');
+const common = require('../../utils/common');
+const UserLeave = require('../../models/leaves/UserLeavesModel');
 
 // Create sign-in token
 const signToken = (id) =>
@@ -139,6 +142,8 @@ exports.inviteUser = asyncError(async (req, res, next) => {
  */
 exports.signup = asyncError(async (req, res, next) => {
   const hashedToken = hashToken(req.params.token);
+  const todayDate = common.todayDate();
+
   const { email } = req.body;
 
   const invitedUser = await Invite.findOne({
@@ -182,6 +187,48 @@ exports.signup = asyncError(async (req, res, next) => {
   });
 
   if (newUser) {
+    const quarters = await LeaveQuarter.find()
+      .sort({
+        createdAt: -1
+      })
+      .limit(1);
+    const currentQuarter = quarters[0].quarters.find(
+      (quarter) =>
+        new Date(quarter.fromDate) <= new Date(todayDate) &&
+        new Date(todayDate) <= new Date(quarter.toDate)
+    );
+
+    const allQuarterDetails = quarters[0].quarters.map((quarter) => ({
+      approvedLeaves: {
+        sickLeaves: 0,
+        casualLeaves: 0
+      },
+      allocatedLeaves:
+        quarter._id === currentQuarter._id
+          ? common.getNumberOfMonthsInAQuarter(
+              currentQuarter.toDate,
+              new Date()
+            )
+          : 0,
+      remainingLeaves:
+        quarter._id === currentQuarter._id
+          ? common.getNumberOfMonthsInAQuarter(
+              currentQuarter.toDate,
+              new Date()
+            )
+          : 0,
+      carriedOverLeaves: 0,
+      leaveDeductionBalance: 0,
+      quarter
+    }));
+
+    const userLeave = new UserLeave({
+      user: newUser._id,
+      fiscalYear: quarters[0].fiscalYear,
+      leaves: allQuarterDetails
+    });
+    await userLeave.save();
+
     await Invite.findByIdAndUpdate(invitedUser._id, { inviteTokenUsed: true });
 
     const emailContent = await Email.findOne({ module: 'user-signup' });
