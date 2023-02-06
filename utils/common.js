@@ -66,6 +66,14 @@ exports.yesterdayDate = () => {
   return new Date(yesterdayDate);
 };
 
+exports.getNumberOfMonthsInAQuarter = (toDate, fromDate) => {
+  return (
+    new Date(toDate).getMonth() -
+    new Date(fromDate).getMonth() +
+    12 * (new Date(toDate).getFullYear() - new Date(fromDate).getFullYear())
+  );
+};
+
 exports.createActivityLogMessage = (user, ModelToLog, name) =>
   `${user} created ${ModelToLog} (${name || ''})`;
 

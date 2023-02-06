@@ -366,19 +366,25 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
     ''
   );
 
+  const currentQuarter = quarters[0].quarters.find(
+    (quarter) =>
+      new Date(quarter.fromDate) <= new Date(todayDate) &&
+      new Date(todayDate) <= new Date(quarter.toDate)
+  );
+
+  const numberOfMonthsInAQuarter = common.getNumberOfMonthsInAQuarter(
+    currentQuarter.toDate,
+    currentQuarter.fromDate
+  );
+
   const allUsers = await User.find({ active: true });
 
   if (isUserLeaveAlreadyCreated) {
-    const currentQuarter = quarters[0].quarters.find(
-      (quarter) =>
-        new Date(quarter.fromDate) <= new Date(todayDate) &&
-        new Date(todayDate) <= new Date(quarter.toDate)
-    );
-
     await Promise.all(
       allUsers.map(async (user) => {
         let carriedOverLeaves = 0,
           quarterRemainingLeaves = currentQuarter.leaves;
+        const isOnProbation = POSITIONS.probation === user.status;
 
         const doc = await UserLeave.findOne({ user: user._id });
 
@@ -403,6 +409,9 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         const currentQuarterLeaveDetails = {
           ...doc.leaves[currentQuarterIndex],
           remainingLeaves: quarterRemainingLeaves,
+          allocatedLeaves: isOnProbation
+            ? numberOfMonthsInAQuarter
+            : doc.leaves[currentQuarterIndex].allocatedLeaves,
           carriedOverLeaves
         };
 
@@ -419,7 +428,9 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         sickLeaves: 0,
         casualLeaves: 0
       },
-      allocatedLeaves: quarter.leaves,
+      allocatedLeaves: isOnProbation
+        ? numberOfMonthsInAQuarter
+        : quarter.leaves,
       remainingLeaves: quarter.leaves,
       carriedOverLeaves: 0,
       leaveDeductionBalance: 0,

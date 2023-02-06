@@ -10,7 +10,8 @@ exports.LEAVETYPES = {
 };
 
 exports.POSITIONS = {
-  intern: 'Intern'
+  intern: 'Intern',
+  probation: 'Probation'
 };
 
 exports.INFOWENEMAIL = 'info@webexpertsnepal.com';
