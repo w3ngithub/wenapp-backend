@@ -382,8 +382,8 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
   if (isUserLeaveAlreadyCreated) {
     await Promise.all(
       allUsers.map(async (user) => {
-        let carriedOverLeaves = 0,
-          quarterRemainingLeaves = currentQuarter.leaves;
+        let carriedOverLeaves = 0;
+        let quarterRemainingLeaves = currentQuarter.leaves;
         const isOnProbation = POSITIONS.probation === user.status;
 
         const doc = await UserLeave.findOne({ user: user._id });
@@ -425,25 +425,27 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
       })
     );
   } else {
-    const allQuarterDetails = quarters[0].quarters.map((quarter) => ({
-      approvedLeaves: {
-        sickLeaves: 0,
-        casualLeaves: 0
-      },
-      allocatedLeaves: isOnProbation
-        ? numberOfMonthsInAQuarter
-        : quarter.leaves,
-      remainingLeaves: quarter.leaves,
-      carriedOverLeaves: 0,
-      leaveDeductionBalance: 0,
-      quarter: quarter
-    }));
-
     allUsers.forEach(async (user) => {
+      const isOnProbation = POSITIONS.probation === user.status;
+
       const userLeave = new UserLeave({
         user: user._id,
         fiscalYear: quarters[0].fiscalYear,
-        leaves: allQuarterDetails
+        leaves: quarters[0].quarters.map((quarter) => ({
+          approvedLeaves: {
+            sickLeaves: 0,
+            casualLeaves: 0
+          },
+          allocatedLeaves: isOnProbation
+            ? numberOfMonthsInAQuarter
+            : quarter.leaves,
+          remainingLeaves: isOnProbation
+            ? numberOfMonthsInAQuarter
+            : quarter.leaves,
+          carriedOverLeaves: 0,
+          leaveDeductionBalance: 0,
+          quarter: quarter
+        }))
       });
       await userLeave.save();
     });
