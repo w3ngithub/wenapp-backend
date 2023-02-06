@@ -2,7 +2,7 @@ const Notifications = require('../../models/notification/notificationModel');
 const APIFeatures = require('../../utils/apiFeatures');
 const asyncError = require('../../utils/asyncError');
 const Holidays = require('../../models/resources/holidayModel');
-const { yesterdayDate } = require('../../utils/common');
+const { yesterdayDate, todayDate } = require('../../utils/common');
 const Attendance = require('../../models/attendances/attendanceModel');
 const User = require('../../models/users/userModel');
 const Leave = require('../../models/leaves/leaveModel');
@@ -81,7 +81,7 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
 
   // check if yesterday was not weekend and holiday
   if (
-    ![0, 6].includes(yesterdayDate().getDay()) &&
+    // ![0, 6].includes(yesterdayDate().getDay()) &&
     !holidayList.includes(yesterdayDate().toISOString().split('T')[0])
   ) {
     const attendance = await Attendance.aggregate([
@@ -101,6 +101,10 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
       (user) => !userWithAttendance.includes(user._id.toString())
     );
 
+    const yesterdayPunchUser = Users.filter((user) =>
+      userWithAttendance.includes(user._id.toString())
+    );
+
     yesterdayNoPunchUser.forEach(async (user) => {
       const leave = await Leave.find({
         user: user._id,
@@ -111,7 +115,36 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
         }
       });
 
-      if (leave && leave.length === 0) {
+      const todayAttendance = await Attendance.find({
+        user: user._id,
+        attendanceDate: todayDate()
+      });
+
+      // send notification if yesterday not leaves taken and punched in today
+      if (
+        leave &&
+        leave.length === 0 &&
+        todayAttendance &&
+        todayAttendance.length !== 0
+      ) {
+        await Notifications.create({
+          showTo: user._id,
+          module: 'Leave',
+          remarks: `You have not applied for Leave for ${
+            yesterdayDate().toISOString().split('T')[0]
+          }. Please apply !`
+        });
+      }
+    });
+
+    yesterdayPunchUser.forEach(async (user) => {
+      const todayAttendance = await Attendance.find({
+        user: user._id,
+        attendanceDate: yesterdayDate()
+      });
+
+      // send notification if  and punched in today
+      if (todayAttendance && todayAttendance.length !== 0) {
         await Notifications.create({
           showTo: user._id,
           module: 'Leave',

@@ -15,10 +15,12 @@ const {
   LEAVE_REJECTED
 } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
+const { LEAVETYPES: leaveType } = require('../../utils/constants');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 const User = require('../../models/users/userModel');
 const EmailNotification = require('../../utils/email');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
+const UserLeave = require('../../models/leaves/UserLeavesModel');
 
 exports.getLeave = factory.getOne(Leave);
 exports.createLeave = factory.createOne(Leave, ActivityLogs, 'Leave');
@@ -71,6 +73,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   const { leaveId, status } = req.params;
   const { remarks, reason, reapplyreason } = req.body;
+  const { fiscalYear, currentQuarter } = req.fiscalYear;
 
   if (!leaveId || !status) {
     return next(new AppError('Missing leave ID or status in the route.', 400));
@@ -83,6 +86,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   }
 
   let leaveStatus;
+  let previousStatus = leave.leaveStatus;
 
   if (status === 'approve') {
     leaveStatus = 'approved';
@@ -116,6 +120,64 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   }
 
   await leave.save();
+
+  if (
+    [leaveType.casualLeave, leaveType.sickLeaves].includes(leave.leaveType.name)
+  ) {
+    const userLeave = await UserLeave.findOne({
+      fiscalYear: fiscalYear,
+      user: leave.user._id
+    });
+    if (status === 'approve') {
+      const updateLeave = userLeave.leaves.map((x) =>
+        x.quarter._id.toString() === currentQuarter._id.toString()
+          ? {
+              ...x,
+              approvedLeaves: {
+                sickLeaves:
+                  leaveType.sickLeaves === leave.leaveType.name
+                    ? x.approvedLeaves.sickLeaves + leave.leaveDates.length
+                    : x.approvedLeaves.sickLeaves,
+                casualLeaves:
+                  leaveType.casualLeave === leave.leaveType.name
+                    ? x.approvedLeaves.casualLeaves + leave.leaveDates.length
+                    : x.approvedLeaves.casualLeaves
+              },
+              remainingLeaves: x.remainingLeaves - leave.leaveDates.length
+            }
+          : x
+      );
+
+      userLeave.leaves = updateLeave;
+    }
+
+    if (status === 'cancel' && previousStatus === 'approved') {
+      const updateLeave = userLeave.leaves.map((x) =>
+        x.quarter._id.toString() === currentQuarter._id.toString()
+          ? {
+              ...x,
+              approvedLeaves: {
+                sickLeaves:
+                  leaveType.sickLeaves === leave.leaveType.name
+                    ? x.approvedLeaves.sickLeaves - leave.leaveDates.length
+                    : x.approvedLeaves.sickLeaves,
+                casualLeaves:
+                  leaveType.casualLeave === leave.leaveType.name
+                    ? x.approvedLeaves.casualLeaves - leave.leaveDates.length
+                    : x.approvedLeaves.casualLeaves
+              },
+              remainingLeaves: x.remainingLeaves + leave.leaveDates.length
+            }
+          : x
+      );
+      userLeave.leaves = updateLeave;
+    }
+
+    await userLeave.save();
+  }
+
+  // update userLeave of a user
+
   if (status === 'pending') {
     await ActivityLogs.create({
       status: 'updated',
