@@ -122,7 +122,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   await leave.save();
 
   if (
-    [leaveType.casualLeave, leaveType.sickLeaves].includes(leave.leaveType.name)
+    [leaveType.casualLeave, leaveType.sickLeave].includes(leave.leaveType.name)
   ) {
     const userLeave = await UserLeave.findOne({
       fiscalYear: fiscalYear,
@@ -135,7 +135,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
               ...x,
               approvedLeaves: {
                 sickLeaves:
-                  leaveType.sickLeaves === leave.leaveType.name
+                  leaveType.sickLeave === leave.leaveType.name
                     ? x.approvedLeaves.sickLeaves + leave.leaveDates.length
                     : x.approvedLeaves.sickLeaves,
                 casualLeaves:
