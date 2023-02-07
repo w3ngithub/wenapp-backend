@@ -69,3 +69,29 @@ exports.getUserLeave = asyncError(async (req, res, next) => {
     data: userLeaves
   });
 });
+
+const updateAllocatedLeave = asyncError(async (req, res) => {
+  const { quarterId, fiscalYear } = req.query;
+  const { id } = req.params;
+
+  const userLeave = await UserLeave.findOne({
+    _id: id,
+    fiscalYear: fiscalYear
+  });
+
+  const updateLeave = userLeave.leaves.map((x) =>
+    x.quarter._id.toString() === quarterId.toString()
+      ? {
+          ...x,
+          allocatedLeaves: req.body.allocatedLeaves
+        }
+      : x
+  );
+  userLeave.leaves = updateLeave;
+  await userLeave.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: userLeave
+  });
+});
