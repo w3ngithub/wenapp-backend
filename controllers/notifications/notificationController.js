@@ -6,6 +6,7 @@ const { yesterdayDate, todayDate } = require('../../utils/common');
 const Attendance = require('../../models/attendances/attendanceModel');
 const User = require('../../models/users/userModel');
 const Leave = require('../../models/leaves/leaveModel');
+const Configurations = require('../../models/configurations/configurationsModel');
 
 exports.getAllNotifications = asyncError(async (req, res, next) => {
   const { role, userId } = req.query;
@@ -74,6 +75,7 @@ exports.updateNotification = asyncError(async (req, res, next) => {
 
 exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
   const holidays = await Holidays.findOne().sort({ createdAt: -1 }).limit(1);
+  const configuratons = await Configurations.findOne();
 
   const holidayList = holidays.holidays.map(
     (holiday) => holiday.date.toISOString().split('T')[0]
@@ -152,8 +154,8 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
           .reduce((officeHour, hour) => officeHour + hour, 0) /
         (1000 * 3600);
 
-      // send notification if  and punched in today
-      if (totalOfficeHour && totalOfficeHour < 4.5) {
+      // send notification if yesterday's office hour is half of total office hours
+      if (totalOfficeHour && totalOfficeHour < configuratons.officeHour / 2) {
         await Notifications.create({
           showTo: user._id,
           module: 'Leave',
