@@ -95,7 +95,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'Unmarried'
     },
-    lastReviewDate: Date,
+    leaveadjustmentBalanceBalance: {
+      type: Number,
+      default: 0
+    },
+    lastReviewDate: [Date],
     exitDate: Date,
     panNumber: Number,
     citNumber: Number,

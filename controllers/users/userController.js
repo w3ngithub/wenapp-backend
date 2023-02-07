@@ -312,10 +312,13 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
       }
     },
     {
+      $addFields: { latestReviewDate: { $last: '$lastReviewDate' } }
+    },
+    {
       $set: {
         newSalaryReviewDate: {
           $dateAdd: {
-            startDate: '$lastReviewDate',
+            startDate: '$latestReviewDate',
             unit: 'year',
             amount: 1
           }
@@ -335,7 +338,7 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
         _id: 1,
         name: 1,
         newSalaryReviewDate: 1,
-        lastReviewDate: 1,
+        latestReviewDate: 1,
         photoURL: 1
       }
     }
