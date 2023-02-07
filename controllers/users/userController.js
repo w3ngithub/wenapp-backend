@@ -312,6 +312,9 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
       }
     },
     {
+      $unwind: '$lastReviewDate'
+    },
+    {
       $set: {
         newSalaryReviewDate: {
           $dateAdd: {

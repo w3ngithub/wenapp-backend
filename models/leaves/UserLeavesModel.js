@@ -35,10 +35,7 @@ const UserLeaveSchema = new mongoose.Schema({
         type: Number,
         default: 0
       },
-      leaveDeductionBalance: {
-        type: Number,
-        default: 0
-      },
+
       quarter: quarterSchema
     }
   ]

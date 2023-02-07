@@ -2,10 +2,11 @@ const Notifications = require('../../models/notification/notificationModel');
 const APIFeatures = require('../../utils/apiFeatures');
 const asyncError = require('../../utils/asyncError');
 const Holidays = require('../../models/resources/holidayModel');
-const { yesterdayDate } = require('../../utils/common');
+const { yesterdayDate, todayDate } = require('../../utils/common');
 const Attendance = require('../../models/attendances/attendanceModel');
 const User = require('../../models/users/userModel');
 const Leave = require('../../models/leaves/leaveModel');
+const Configurations = require('../../models/configurations/configurationsModel');
 
 exports.getAllNotifications = asyncError(async (req, res, next) => {
   const { role, userId } = req.query;
@@ -74,6 +75,7 @@ exports.updateNotification = asyncError(async (req, res, next) => {
 
 exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
   const holidays = await Holidays.findOne().sort({ createdAt: -1 }).limit(1);
+  const configuratons = await Configurations.findOne();
 
   const holidayList = holidays.holidays.map(
     (holiday) => holiday.date.toISOString().split('T')[0]
@@ -101,6 +103,10 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
       (user) => !userWithAttendance.includes(user._id.toString())
     );
 
+    const yesterdayPunchUser = Users.filter((user) =>
+      userWithAttendance.includes(user._id.toString())
+    );
+
     yesterdayNoPunchUser.forEach(async (user) => {
       const leave = await Leave.find({
         user: user._id,
@@ -111,13 +117,49 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
         }
       });
 
-      if (leave && leave.length === 0) {
+      const todayAttendance = await Attendance.find({
+        user: user._id,
+        attendanceDate: todayDate()
+      });
+
+      // send notification if yesterday not leaves taken and punched in today
+      if (
+        leave &&
+        leave.length === 0 &&
+        todayAttendance &&
+        todayAttendance.length !== 0
+      ) {
         await Notifications.create({
           showTo: user._id,
           module: 'Leave',
-          remarks: `You have not applied for Leave for ${
-            yesterdayDate().toISOString().split('T')[0]
-          }. Please apply !`
+          remarks: `You have not applied for Leave. Please apply !`
+        });
+      }
+    });
+
+    yesterdayPunchUser.forEach(async (user) => {
+      const yesterdayAttendance = await Attendance.find({
+        user: user._id,
+        attendanceDate: yesterdayDate()
+      }).sort({ punchInTime: -1 });
+
+      const totalOfficeHour =
+        yesterdayAttendance
+          .filter((att) => att.punchOutTime)
+          .map(
+            (att) =>
+              new Date(att.punchOutTime).getTime() -
+              new Date(att.punchInTime).getTime()
+          )
+          .reduce((officeHour, hour) => officeHour + hour, 0) /
+        (1000 * 3600);
+
+      // send notification if yesterday's office hour is half of total office hours
+      if (totalOfficeHour && totalOfficeHour < configuratons.officeHour / 2) {
+        await Notifications.create({
+          showTo: user._id,
+          module: 'Leave',
+          remarks: `You have not applied for Leave. Please apply !`
         });
       }
     });
