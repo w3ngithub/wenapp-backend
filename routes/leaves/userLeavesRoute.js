@@ -8,6 +8,10 @@ router
   .get(userLeavesController.getUserLeave)
   .post(userLeavesController.createUserLeave);
 
+router
+  .router('/allocaltedLeaves/:id')
+  .patch(userLeavesController.updateAllocatedLeave);
+
 router.route('/:id').patch(userLeavesController.updateUserLeave);
 
 module.exports = router;
