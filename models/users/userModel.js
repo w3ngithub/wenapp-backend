@@ -64,12 +64,6 @@ const userSchema = new mongoose.Schema(
       enum: ['Permanent', 'Probation'],
       default: 'Permanent'
     },
-    allocatedLeaves: {
-      firstQuarter: Number,
-      secondQuarter: Number,
-      thirdQuarter: Number,
-      fourthQuarter: Number
-    },
     active: {
       type: Boolean,
       default: true
@@ -95,7 +89,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'Unmarried'
     },
-    lastReviewDate: Date,
+    leaveadjustmentBalanceBalance: {
+      type: Number,
+      default: 0
+    },
+    lastReviewDate: [Date],
     exitDate: Date,
     panNumber: Number,
     citNumber: Number,

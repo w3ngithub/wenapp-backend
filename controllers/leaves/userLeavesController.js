@@ -40,7 +40,9 @@ exports.getUserLeave = asyncError(async (req, res, next) => {
         localField: 'user',
         foreignField: '_id',
         as: 'user',
-        pipeline: [{ $project: { _id: 1, name: 1 } }]
+        pipeline: [
+          { $project: { _id: 1, name: 1, leaveadjustmentBalanceBalance: 1 } }
+        ]
       }
     },
     {
