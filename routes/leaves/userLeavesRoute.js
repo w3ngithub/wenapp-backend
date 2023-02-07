@@ -9,7 +9,7 @@ router
   .post(userLeavesController.createUserLeave);
 
 router
-  .router('/allocatedLeaves/:id')
+  .route('/allocatedLeaves/:id')
   .patch(userLeavesController.updateAllocatedLeave);
 
 router.route('/:id').patch(userLeavesController.updateUserLeave);
