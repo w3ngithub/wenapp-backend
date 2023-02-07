@@ -12,8 +12,8 @@ exports.getFiscalYear = asyncError(async (req, res, next) => {
 
   const currentQuarter = latestYearQuarter.quarters.find(
     (quarter) =>
-      new Date(quarter.fromDate) <= new Date(todayDate) &&
-      new Date(todayDate) <= new Date(quarter.toDate)
+      new Date(quarter.fromDate) <= new Date(todayDate()) &&
+      new Date(todayDate()) <= new Date(quarter.toDate)
   );
 
   req.fiscalYear = {
