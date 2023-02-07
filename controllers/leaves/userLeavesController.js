@@ -71,12 +71,11 @@ exports.getUserLeave = asyncError(async (req, res, next) => {
 });
 
 exports.updateAllocatedLeave = asyncError(async (req, res) => {
-  const { quarterId, fiscalYear } = req.query;
+  const { quarterId } = req.query;
   const { id } = req.params;
 
   const userLeave = await UserLeave.findOne({
-    _id: id,
-    fiscalYear: fiscalYear
+    _id: id
   });
 
   const updateLeave = userLeave.leaves.map((x) =>
