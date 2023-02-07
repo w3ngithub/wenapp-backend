@@ -70,7 +70,7 @@ exports.getUserLeave = asyncError(async (req, res, next) => {
   });
 });
 
-const updateAllocatedLeave = asyncError(async (req, res) => {
+exports.updateAllocatedLeave = asyncError(async (req, res) => {
   const { quarterId, fiscalYear } = req.query;
   const { id } = req.params;
 
