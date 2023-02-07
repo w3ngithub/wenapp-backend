@@ -89,7 +89,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'Unmarried'
     },
-    leaveadjustmentBalanceBalance: {
+    leaveadjustmentBalance: {
       type: Number,
       default: 0
     },
