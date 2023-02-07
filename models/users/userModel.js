@@ -34,14 +34,14 @@ const userSchema = new mongoose.Schema(
     },
     passwordConfirm: {
       type: String,
-      required: [true, 'Please confirm your password.'],
-      validate: {
-        // This only works on CREATE and SAVE!!!
-        validator: function (el) {
-          return el === this.password;
-        },
-        message: 'Passwords are not same!'
-      }
+      required: [true, 'Please confirm your password.']
+      // validate: {
+      //   // This only works on CREATE and SAVE!!!
+      //   validator: function (el) {
+      //     return el === this.password;
+      //   },
+      //   message: 'Passwords are not same!'
+      // }
     },
     photoURL: {
       type: String,
@@ -115,17 +115,17 @@ const userSchema = new mongoose.Schema(
 );
 
 // Document Middleware
-userSchema.pre('save', async function (next) {
-  // Only run this function if password was actually modified
-  if (!this.isModified('password')) return next();
+// userSchema.pre('save', async function (next) {
+//   // Only run this function if password was actually modified
+//   if (!this.isModified('password')) return next();
 
-  // Hash the password with cost of 12
-  this.password = await bcrypt.hash(this.password, 12);
+//   // Hash the password with cost of 12
+//   this.password = await bcrypt.hash(this.password, 12);
 
-  // Delete passwordConfirm field
-  this.passwordConfirm = undefined;
-  next();
-});
+//   // Delete passwordConfirm field
+//   this.passwordConfirm = undefined;
+//   next();
+// });
 
 // Query Middleware : Select active users only
 userSchema.pre(/^find/, function (next) {
@@ -156,12 +156,12 @@ userSchema.methods.correctPassword = async function (
 };
 
 // Save password changed date on db
-userSchema.pre('save', function (next) {
-  if (!this.isModified('password') || this.isNew) return next();
+// userSchema.pre('save', function (next) {
+//   if (!this.isModified('password') || this.isNew) return next();
 
-  this.passwordChangedAt = Date.now() - 1000;
-  next();
-});
+//   this.passwordChangedAt = Date.now() - 1000;
+//   next();
+// });
 
 // Model Middleware
 userSchema.pre('insertMany', async (next, docs) => {
