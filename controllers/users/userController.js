@@ -371,7 +371,6 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
       new Date(quarter.fromDate) <= new Date(todayDate) &&
       new Date(todayDate) <= new Date(quarter.toDate)
   );
-
   const numberOfMonthsInAQuarter = common.getNumberOfMonthsInAQuarter(
     currentQuarter.toDate,
     currentQuarter.fromDate
@@ -398,6 +397,7 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         // when remaining leaves is left in previous quarter and is not intern
         if (
           previousQuarterRemainingLeaves > 0 &&
+          user.position &&
           user.position.name !== POSITIONS.intern
         ) {
           quarterRemainingLeaves =
