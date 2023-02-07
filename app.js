@@ -55,6 +55,7 @@ const authMiddleware = require('./middlewares/authMiddleware');
 const { checkTeamAccess } = require('./middlewares/authMiddleware');
 const { checkMaintenanceMode } = require('./middlewares/checkMaintenanceMode');
 const authController = require('./controllers/users/authController');
+const User = require('./models/users/userModel');
 
 // Initialized and start express application
 const app = express();
@@ -159,6 +160,16 @@ app.use('/api/v1/emails', emailSettingsRouter);
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+const updateSalaryReview = async () => {
+  const users = await User.find({});
+  users.forEach((user) => {
+    user.lastReviewDate = [user.lastReviewDate];
+    user.save();
+    console.log(user.lastReviewDate);
+  });
+};
+// updateSalaryReview();
 
 app.use(globalErrorHandler);
 
