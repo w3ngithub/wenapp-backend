@@ -64,12 +64,6 @@ const userSchema = new mongoose.Schema(
       enum: ['Permanent', 'Probation'],
       default: 'Permanent'
     },
-    allocatedLeaves: {
-      firstQuarter: Number,
-      secondQuarter: Number,
-      thirdQuarter: Number,
-      fourthQuarter: Number
-    },
     active: {
       type: Boolean,
       default: true
