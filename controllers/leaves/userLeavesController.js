@@ -82,7 +82,8 @@ exports.updateAllocatedLeave = asyncError(async (req, res) => {
     x.quarter._id.toString() === quarterId.toString()
       ? {
           ...x,
-          allocatedLeaves: req.body.allocatedLeaves
+          allocatedLeaves: req.body.allocatedLeaves,
+          remainingLeaves: req.body.allocatedLeaves + x.carriedOverLeaves
         }
       : x
   );
