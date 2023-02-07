@@ -81,7 +81,7 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
 
   // check if yesterday was not weekend and holiday
   if (
-    // ![0, 6].includes(yesterdayDate().getDay()) &&
+    ![0, 6].includes(yesterdayDate().getDay()) &&
     !holidayList.includes(yesterdayDate().toISOString().split('T')[0])
   ) {
     const attendance = await Attendance.aggregate([
@@ -130,27 +130,34 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
         await Notifications.create({
           showTo: user._id,
           module: 'Leave',
-          remarks: `You have not applied for Leave for ${
-            yesterdayDate().toISOString().split('T')[0]
-          }. Please apply !`
+          remarks: `You have not applied for Leave. Please apply !`
         });
       }
     });
 
     yesterdayPunchUser.forEach(async (user) => {
-      const todayAttendance = await Attendance.find({
+      const yesterdayAttendance = await Attendance.find({
         user: user._id,
         attendanceDate: yesterdayDate()
-      });
+      }).sort({ punchInTime: -1 });
+
+      const totalOfficeHour =
+        yesterdayAttendance
+          .filter((att) => att.punchOutTime)
+          .map(
+            (att) =>
+              new Date(att.punchOutTime).getTime() -
+              new Date(att.punchInTime).getTime()
+          )
+          .reduce((officeHour, hour) => officeHour + hour, 0) /
+        (1000 * 3600);
 
       // send notification if  and punched in today
-      if (todayAttendance && todayAttendance.length !== 0) {
+      if (totalOfficeHour && totalOfficeHour < 4.5) {
         await Notifications.create({
           showTo: user._id,
           module: 'Leave',
-          remarks: `You have not applied for Leave for ${
-            yesterdayDate().toISOString().split('T')[0]
-          }. Please apply !`
+          remarks: `You have not applied for Leave. Please apply !`
         });
       }
     });
