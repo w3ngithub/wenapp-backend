@@ -14,6 +14,7 @@ const {
   POSITIONS
 } = require('../../utils/constants');
 const UserLeave = require('../../models/leaves/UserLeavesModel');
+const Notifications = require('../../models/notification/notificationModel');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -425,6 +426,11 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         );
 
         await doc.save();
+        await Notifications.create({
+          showTo: user._id,
+          module: 'Leave',
+          remarks: `Your quarterly leave has been updated.`
+        });
       })
     );
   } else {
@@ -451,6 +457,11 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         }))
       });
       await userLeave.save();
+      await Notifications.create({
+        showTo: user._id,
+        module: 'Leave',
+        remarks: `Your quarterly leave has been updated.`
+      });
     });
   }
 
