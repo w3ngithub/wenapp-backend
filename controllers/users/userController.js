@@ -404,9 +404,10 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
           user.position &&
           user.position.name !== POSITIONS.intern
         ) {
-          quarterRemainingLeaves =
-            previousQuarterRemainingLeaves +
-            doc.leaves[currentQuarterIndex].allocatedLeaves;
+          quarterRemainingLeaves = isOnProbation
+            ? previousQuarterRemainingLeaves + numberOfMonthsInAQuarter
+            : previousQuarterRemainingLeaves +
+              doc.leaves[currentQuarterIndex].allocatedLeaves;
           carriedOverLeaves = previousQuarterRemainingLeaves;
         }
 
