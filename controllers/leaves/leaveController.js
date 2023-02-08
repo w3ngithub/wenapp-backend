@@ -158,7 +158,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
               ...x,
               approvedLeaves: {
                 sickLeaves:
-                  leaveType.sickLeaves === leave.leaveType.name
+                  leaveType.sickLeave === leave.leaveType.name
                     ? x.approvedLeaves.sickLeaves - leave.leaveDates.length
                     : x.approvedLeaves.sickLeaves,
                 casualLeaves:
