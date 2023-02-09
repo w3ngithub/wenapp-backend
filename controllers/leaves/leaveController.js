@@ -73,7 +73,7 @@ exports.getAllLeaves = asyncError(async (req, res, next) => {
 exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   const { leaveId, status } = req.params;
   const { remarks, reason, reapplyreason } = req.body;
-  const { fiscalYear, currentQuarter } = req.fiscalYear;
+  const { fiscalYear, quarters } = req.fiscalYear;
 
   if (!leaveId || !status) {
     return next(new AppError('Missing leave ID or status in the route.', 400));
@@ -128,51 +128,74 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
       fiscalYear: fiscalYear,
       user: leave.user._id
     });
-    if (status === 'approve') {
-      const updateLeave = userLeave.leaves.map((x) =>
-        x.quarter._id.toString() === currentQuarter._id.toString()
-          ? {
-              ...x,
-              approvedLeaves: {
-                sickLeaves:
-                  leaveType.sickLeave === leave.leaveType.name
-                    ? x.approvedLeaves.sickLeaves + leave.leaveDates.length
-                    : x.approvedLeaves.sickLeaves,
-                casualLeaves:
-                  leaveType.casualLeave === leave.leaveType.name
-                    ? x.approvedLeaves.casualLeaves + leave.leaveDates.length
-                    : x.approvedLeaves.casualLeaves
-              },
-              remainingLeaves: x.remainingLeaves - leave.leaveDates.length
-            }
-          : x
-      );
 
-      userLeave.leaves = updateLeave;
+    let userLeaveToUpdate = [...userLeave.leaves];
+
+    if (status === 'approve') {
+      // update userLeave for each leave day taken of specififc quarter
+      leave.leaveDates.forEach((l) => {
+        const leaveTakenQuarter = quarters.find(
+          (quarter) =>
+            new Date(quarter.fromDate) <= new Date(l) &&
+            new Date(l) <= new Date(quarter.toDate)
+        );
+
+        const updateLeave = userLeaveToUpdate.map((x) =>
+          x.quarter._id.toString() === leaveTakenQuarter._id.toString()
+            ? {
+                ...JSON.parse(JSON.stringify(x)),
+                approvedLeaves: {
+                  sickLeaves:
+                    leaveType.sickLeave === leave.leaveType.name
+                      ? x.approvedLeaves.sickLeaves + 1
+                      : x.approvedLeaves.sickLeaves,
+                  casualLeaves:
+                    leaveType.casualLeave === leave.leaveType.name
+                      ? x.approvedLeaves.casualLeaves + 1
+                      : x.approvedLeaves.casualLeaves
+                },
+                remainingLeaves: x.remainingLeaves - 1
+              }
+            : x
+        );
+
+        userLeaveToUpdate = [...updateLeave];
+      });
     }
 
     if (status === 'cancel' && previousStatus === 'approved') {
-      const updateLeave = userLeave.leaves.map((x) =>
-        x.quarter._id.toString() === currentQuarter._id.toString()
-          ? {
-              ...x,
-              approvedLeaves: {
-                sickLeaves:
-                  leaveType.sickLeave === leave.leaveType.name
-                    ? x.approvedLeaves.sickLeaves - leave.leaveDates.length
-                    : x.approvedLeaves.sickLeaves,
-                casualLeaves:
-                  leaveType.casualLeave === leave.leaveType.name
-                    ? x.approvedLeaves.casualLeaves - leave.leaveDates.length
-                    : x.approvedLeaves.casualLeaves
-              },
-              remainingLeaves: x.remainingLeaves + leave.leaveDates.length
-            }
-          : x
-      );
-      userLeave.leaves = updateLeave;
+      // update userLeave for each leave day taken of specififc quarter
+      leave.leaveDates.forEach((l) => {
+        const leaveTakenQuarter = quarters.find(
+          (quarter) =>
+            new Date(quarter.fromDate) <= new Date(l) &&
+            new Date(l) <= new Date(quarter.toDate)
+        );
+
+        const updateLeave = userLeaveToUpdate.map((x) =>
+          x.quarter._id.toString() === leaveTakenQuarter._id.toString()
+            ? {
+                ...JSON.parse(JSON.stringify(x)),
+                approvedLeaves: {
+                  sickLeaves:
+                    leaveType.sickLeave === leave.leaveType.name
+                      ? x.approvedLeaves.sickLeaves - 1
+                      : x.approvedLeaves.sickLeaves,
+                  casualLeaves:
+                    leaveType.casualLeave === leave.leaveType.name
+                      ? x.approvedLeaves.casualLeaves - 1
+                      : x.approvedLeaves.casualLeaves
+                },
+                remainingLeaves: x.remainingLeaves + 1
+              }
+            : x
+        );
+
+        userLeaveToUpdate = [...updateLeave];
+      });
     }
 
+    userLeave.leaves = userLeaveToUpdate;
     await userLeave.save();
   }
 

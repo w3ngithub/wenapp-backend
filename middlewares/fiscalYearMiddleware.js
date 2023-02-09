@@ -24,7 +24,8 @@ exports.getFiscalYear = asyncError(async (req, res, next) => {
       latestYearQuarter.quarters[latestYearQuarter.quarters.length - 1].toDate
     ),
     fiscalYear: latestYearQuarter.fiscalYear,
-    currentQuarter
+    currentQuarter,
+    quarters: latestYearQuarter.quarters
   };
 
   next();
