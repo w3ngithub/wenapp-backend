@@ -413,7 +413,10 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 
         const currentQuarterLeaveDetails = {
           ...doc.leaves[currentQuarterIndex],
-          remainingLeaves: quarterRemainingLeaves,
+          remainingLeaves:
+            quarterRemainingLeaves -
+            (doc.leaves[currentQuarterIndex].approvedLeaves.sickLeaves +
+              doc.leaves[currentQuarterIndex].approvedLeaves.casualLeaves),
           allocatedLeaves: isOnProbation
             ? numberOfMonthsInAQuarter
             : doc.leaves[currentQuarterIndex].allocatedLeaves,
