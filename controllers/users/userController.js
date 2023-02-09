@@ -389,7 +389,10 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         let quarterRemainingLeaves = currentQuarter.leaves;
         const isOnProbation = POSITIONS.probation === user.status;
 
-        const doc = await UserLeave.findOne({ user: user._id });
+        const doc = await UserLeave.findOne({
+          user: user._id,
+          fiscalYear: quarters[0].fiscalYear
+        });
 
         const currentQuarterIndex = doc.leaves.findIndex((leave) =>
           leave.quarter._id.equals(currentQuarter._id)
@@ -413,7 +416,10 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 
         const currentQuarterLeaveDetails = {
           ...doc.leaves[currentQuarterIndex],
-          remainingLeaves: quarterRemainingLeaves,
+          remainingLeaves:
+            quarterRemainingLeaves -
+            (doc.leaves[currentQuarterIndex].approvedLeaves.sickLeaves +
+              doc.leaves[currentQuarterIndex].approvedLeaves.casualLeaves),
           allocatedLeaves: isOnProbation
             ? numberOfMonthsInAQuarter
             : doc.leaves[currentQuarterIndex].allocatedLeaves,

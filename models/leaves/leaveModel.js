@@ -92,37 +92,42 @@ leaveSchema.post('save', async (doc) => {
         createdAt: -1
       });
 
-      const currentQuarter = latestYearQuarter.quarters.find(
-        (quarter) =>
-          new Date(quarter.fromDate) <= new Date(todayDate()) &&
-          new Date(todayDate()) <= new Date(quarter.toDate)
-      );
-
       const userLeave = await UserLeave.findOne({
         fiscalYear: latestYearQuarter.fiscalYear,
         user: doc.user
       });
-      const updateLeave = userLeave.leaves.map((x) =>
-        x.quarter._id.toString() === currentQuarter._id.toString()
-          ? {
-              ...x,
-              approvedLeaves: {
-                sickLeaves:
-                  leaveType.sickLeave === leaveTypeDoc.name
-                    ? x.approvedLeaves.sickLeaves + doc.leaveDates.length
-                    : x.approvedLeaves.sickLeaves,
-                casualLeaves:
-                  leaveType.casualLeave === leaveTypeDoc.name
-                    ? x.approvedLeaves.casualLeaves + doc.leaveDates.length
-                    : x.approvedLeaves.casualLeaves
-              },
-              remainingLeaves: x.remainingLeaves - doc.leaveDates.length
-            }
-          : x
-      );
 
-      userLeave.leaves = updateLeave;
+      let userLeaveToUpdate = [...userLeave.leaves];
 
+      doc.leaveDates.forEach(async (leave) => {
+        const leaveTakenQuarter = latestYearQuarter.quarters.find(
+          (quarter) =>
+            new Date(quarter.fromDate) <= new Date(leave) &&
+            new Date(leave) <= new Date(quarter.toDate)
+        );
+
+        const updateLeave = userLeaveToUpdate.map((x) =>
+          x.quarter._id.toString() === leaveTakenQuarter._id.toString()
+            ? {
+                ...JSON.parse(JSON.stringify(x)),
+                approvedLeaves: {
+                  sickLeaves:
+                    leaveType.sickLeave === leaveTypeDoc.name
+                      ? x.approvedLeaves.sickLeaves + 1
+                      : x.approvedLeaves.sickLeaves,
+                  casualLeaves:
+                    leaveType.casualLeave === leaveTypeDoc.name
+                      ? x.approvedLeaves.casualLeaves + 1
+                      : x.approvedLeaves.casualLeaves
+                },
+                remainingLeaves: x.remainingLeaves - 1
+              }
+            : x
+        );
+
+        userLeaveToUpdate = [...updateLeave];
+      });
+      userLeave.leaves = userLeaveToUpdate;
       await userLeave.save();
     }
   }
