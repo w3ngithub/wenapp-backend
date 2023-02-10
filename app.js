@@ -343,11 +343,11 @@ const updateUserLeaves = async () => {
       i = i + 1;
     }
 
-    console.log(JSON.stringify(userLeave));
+    await userLeave.save();
   });
 };
 
-updateUserLeaves();
+// updateUserLeaves();
 
 app.use(globalErrorHandler);
 
