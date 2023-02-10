@@ -57,6 +57,10 @@ const { checkMaintenanceMode } = require('./middlewares/checkMaintenanceMode');
 const authController = require('./controllers/users/authController');
 const User = require('./models/users/userModel');
 const { LeaveQuarter } = require('./models/leaves/leaveQuarter');
+const UserLeave = require('./models/leaves/UserLeavesModel');
+const Leave = require('./models/leaves/leaveModel');
+const LeaveTypes = require('./models/leaves/leaveTypeModel');
+const { LEAVETYPES, POSITIONS } = require('./utils/constants');
 
 // Initialized and start express application
 const app = express();
@@ -175,7 +179,172 @@ const updateSalaryReview = async () => {
 
 const updateUserLeaves = async () => {
   const leaveQuarter = await LeaveQuarter.findOne();
-  console.log(leaveQuarter);
+
+  const users = await User.find({
+    $or: [
+      {
+        active: false,
+        exitDate: { $gte: leaveQuarter.quarters[0].fromDate }
+      },
+      {
+        active: true
+      }
+    ]
+  });
+
+  const qu = ['firstQuarter', 'secondQuarter', 'thirdQuarter', 'fourthQuarter'];
+
+  const LeaveTypeSick = await LeaveTypes.findOne({
+    $or: [
+      {
+        name: {
+          $regex: LEAVETYPES.sickLeave,
+          $options: 'i'
+        }
+      }
+    ]
+  });
+  const LeaveTypeCasual = await LeaveTypes.findOne({
+    $or: [
+      {
+        name: {
+          $regex: LEAVETYPES.casualLeave,
+          $options: 'i'
+        }
+      }
+    ]
+  });
+  users.forEach(async (user) => {
+    const positionName = user.position ? user.position.name : POSITIONS.intern;
+    const userLeave = new UserLeave({});
+    userLeave.user = user._id;
+    userLeave.fiscalYear = leaveQuarter.fiscalYear;
+    userLeave.leaves = [];
+
+    const quarters = leaveQuarter.quarters;
+    let i = 0;
+    for (const quarter of quarters) {
+      const userApprovedSickLeaves = await Leave.aggregate([
+        {
+          $match: {
+            user: user._id,
+            leaveStatus: 'approved',
+            $or: [{ leaveType: LeaveTypeSick._id }]
+          }
+        },
+        {
+          $unwind: '$leaveDates'
+        },
+        {
+          $match: {
+            $and: [
+              { leaveDates: { $gte: new Date(quarter.fromDate) } },
+              { leaveDates: { $lte: new Date(quarter.toDate) } }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'leave_types',
+            localField: 'leaveType',
+            foreignField: '_id',
+            as: 'leaveType'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            leavesTaken: {
+              $sum: {
+                $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
+              }
+            }
+          }
+        }
+      ]);
+
+      const userApprovedCausalLeaves = await Leave.aggregate([
+        {
+          $match: {
+            user: user._id,
+            leaveStatus: 'approved',
+            $or: [
+              {
+                leaveType: LeaveTypeCasual._id
+              }
+            ]
+          }
+        },
+        {
+          $unwind: '$leaveDates'
+        },
+        {
+          $match: {
+            $and: [
+              { leaveDates: { $gte: new Date(quarter.fromDate) } },
+              { leaveDates: { $lte: new Date(quarter.toDate) } }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'leave_types',
+            localField: 'leaveType',
+            foreignField: '_id',
+            as: 'leaveType'
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            leavesTaken: {
+              $sum: {
+                $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
+              }
+            }
+          }
+        }
+      ]);
+
+      const carriedOverLeaves =
+        i === 0 || positionName === POSITIONS.intern
+          ? 0
+          : userLeave.leaves[i - 1].remainingLeaves > 0
+          ? userLeave.leaves[i - 1].remainingLeaves
+          : 0;
+      const sickLeaves =
+        userApprovedSickLeaves.length === 0
+          ? 0
+          : userApprovedSickLeaves[0].leavesTaken;
+
+      const casualLeaves =
+        userApprovedCausalLeaves.length === 0
+          ? 0
+          : userApprovedCausalLeaves[0].leavesTaken;
+
+      userLeave.leaves.push({
+        allocatedLeaves: user.allocatedLeaves[qu[i]] || 0,
+
+        remainingLeaves:
+          i === 0 || positionName === POSITIONS.intern
+            ? (user.allocatedLeaves[qu[i]] || 0) - (casualLeaves + sickLeaves)
+            : (user.allocatedLeaves[qu[i]] || 0) +
+              carriedOverLeaves -
+              (casualLeaves + sickLeaves),
+
+        approvedLeaves: {
+          sickLeaves,
+          casualLeaves
+        },
+        carriedOverLeaves,
+        quarter
+      });
+
+      i = i + 1;
+    }
+
+    console.log(JSON.stringify(userLeave));
+  });
 };
 
 updateUserLeaves();
