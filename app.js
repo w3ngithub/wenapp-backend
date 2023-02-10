@@ -56,6 +56,7 @@ const { checkTeamAccess } = require('./middlewares/authMiddleware');
 const { checkMaintenanceMode } = require('./middlewares/checkMaintenanceMode');
 const authController = require('./controllers/users/authController');
 const User = require('./models/users/userModel');
+const { LeaveQuarter } = require('./models/leaves/leaveQuarter');
 
 // Initialized and start express application
 const app = express();
@@ -171,6 +172,13 @@ const updateSalaryReview = async () => {
   });
 };
 // updateSalaryReview();
+
+const updateUserLeaves = async () => {
+  const leaveQuarter = await LeaveQuarter.findOne();
+  console.log(leaveQuarter);
+};
+
+updateUserLeaves();
 
 app.use(globalErrorHandler);
 
