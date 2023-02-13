@@ -45,7 +45,8 @@ exports.getUserLeave = asyncError(async (req, res, next) => {
             $project: {
               _id: 1,
               name: 1,
-              leaveadjustmentBalance: 1
+              leaveadjustmentBalance: 1,
+              exitDate: 1
             }
           }
         ]
