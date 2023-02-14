@@ -170,7 +170,9 @@ const updateSalaryReview = async () => {
   const users = await User.find({});
   users.forEach((user) => {
     user.lastReviewDate =
-      user.lastReviewDate.length === 0 ? [new Date()] : user.lastReviewDate;
+      !user.lastReviewDate || user.lastReviewDate.length === 0
+        ? []
+        : user.lastReviewDate;
     user.save();
     console.log(user.lastReviewDate);
   });

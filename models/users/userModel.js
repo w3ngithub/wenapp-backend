@@ -33,8 +33,8 @@ const userSchema = new mongoose.Schema(
       select: false
     },
     passwordConfirm: {
-      type: String,
-      required: [true, 'Please confirm your password.']
+      type: String
+      // required: [true, 'Please confirm your password.']
       // validate: {
       //   // This only works on CREATE and SAVE!!!
       //   validator: function (el) {
@@ -75,21 +75,21 @@ const userSchema = new mongoose.Schema(
       default: true
     },
     dob: {
-      type: Date,
-      required: [true, 'Please provide your date of birth.']
+      type: Date
+      // required: [true, 'Please provide your date of birth.']
     },
     gender: {
       type: String,
       default: 'Male'
     },
     primaryPhone: {
-      type: Number,
-      required: [true, 'Please provide your primary phone number.']
+      type: Number
+      // required: [true, 'Please provide your primary phone number.']
     },
     secondaryPhone: Number,
     joinDate: {
-      type: Date,
-      required: [true, 'Please provide your join date.']
+      type: Date
+      // required: [true, 'Please provide your join date.']
     },
     maritalStatus: {
       type: String,
