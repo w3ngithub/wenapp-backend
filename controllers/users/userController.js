@@ -300,7 +300,7 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   const presentDate = new Date();
 
-  const { user, days = 90 } = req.query;
+  const { user, days } = req.query;
 
   const conditions = [
     {
@@ -329,35 +329,34 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
     {
       $match: { $and: conditions }
     },
-    // {
-    //   $addFields: {
-    //     pastReviewDate: { $arrayElemAt: ['$lastReviewDate', -1] }
-    //   }
-    // },
-    // { $unwind: '$lastReviewDate' },
-    // {
-    //   $set: {
-    //     newSalaryReviewDate: {
-    //       $dateAdd: {
-    //         startDate: '$pastReviewDate',
-    //         unit: 'year',
-    //         amount: 1
-    //       }
-    //     }
-    //   }
-    // },
-    // {
-    //   $match: {
-    //     newSalaryReviewDate
-    //   }
-    // },
+    {
+      $addFields: {
+        pastReviewDate: { $arrayElemAt: ['$lastReviewDate', -1] }
+      }
+    },
+    {
+      $set: {
+        newSalaryReviewDate: {
+          $dateAdd: {
+            startDate: '$pastReviewDate',
+            unit: 'year',
+            amount: 1
+          }
+        }
+      }
+    },
+    {
+      $match: {
+        newSalaryReviewDate
+      }
+    },
     {
       $project: {
-        // _id: 1,
-        // name: 1,
-        // newSalaryReviewDate: 1,
-        lastReviewDate: 1
-        // photoURL: 1
+        _id: 1,
+        name: 1,
+        newSalaryReviewDate: 1,
+        lastReviewDate: 1,
+        photoURL: 1
       }
     }
   ]);
