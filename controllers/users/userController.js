@@ -9,6 +9,7 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
+const { default: mongoose } = require('mongoose');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -299,42 +300,69 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   const presentDate = new Date();
 
+  const { user, days = 90 } = req.query;
+
+  const conditions = [
+    {
+      active: { $eq: true }
+    }
+  ];
+
+  if (user) {
+    conditions.push({ _id: mongoose.Types.ObjectId(user) });
+  }
+
+  const newSalaryReviewDate =
+    days && !Number.isNaN(+days)
+      ? {
+          $gte: presentDate,
+          $lte: new Date(
+            presentDate.getTime() + parseInt(days, 10) * 24 * 60 * 60 * 1000
+          )
+        }
+      : {
+          $gte: presentDate
+        };
+
   // get Users with salary review time before 3 months
   const users = await User.aggregate([
     {
-      $match: {
-        active: { $eq: true }
-      }
+      $match: { $and: conditions }
     },
-    {
-      $set: {
-        newSalaryReviewDate: {
-          $dateAdd: {
-            startDate: '$lastReviewDate',
-            unit: 'year',
-            amount: 1
-          }
-        }
-      }
-    },
-    {
-      $match: {
-        newSalaryReviewDate: {
-          $gte: presentDate,
-          $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
-        }
-      }
-    },
+    // {
+    //   $addFields: {
+    //     pastReviewDate: { $arrayElemAt: ['$lastReviewDate', -1] }
+    //   }
+    // },
+    // { $unwind: '$lastReviewDate' },
+    // {
+    //   $set: {
+    //     newSalaryReviewDate: {
+    //       $dateAdd: {
+    //         startDate: '$pastReviewDate',
+    //         unit: 'year',
+    //         amount: 1
+    //       }
+    //     }
+    //   }
+    // },
+    // {
+    //   $match: {
+    //     newSalaryReviewDate
+    //   }
+    // },
     {
       $project: {
-        _id: 1,
-        name: 1,
-        newSalaryReviewDate: 1,
-        lastReviewDate: 1,
-        photoURL: 1
+        // _id: 1,
+        // name: 1,
+        // newSalaryReviewDate: 1,
+        lastReviewDate: 1
+        // photoURL: 1
       }
     }
   ]);
+
+  console.log(users);
 
   res.status(200).json({
     status: 'success',
