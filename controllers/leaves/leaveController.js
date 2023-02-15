@@ -163,7 +163,10 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
       });
     }
 
-    if (status === 'cancel' && previousStatus === 'approved') {
+    if (
+      status === 'cancel' &&
+      ['approved', 'user cancelled'].includes(previousStatus)
+    ) {
       // update userLeave for each leave day taken of specififc quarter
       leave.leaveDates.forEach((l) => {
         const leaveTakenQuarter = quarters.find(
