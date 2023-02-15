@@ -11,10 +11,14 @@ const common = require('../../utils/common');
 const {
   HRWENEMAIL,
   INFOWENEMAIL,
-  POSITIONS
+  POSITIONS,
+  LEAVE_APPROVED,
+  LEAVETYPES
 } = require('../../utils/constants');
 const UserLeave = require('../../models/leaves/UserLeavesModel');
 const Notifications = require('../../models/notification/notificationModel');
+const Leave = require('../../models/leaves/leaveModel');
+const LeaveType = require('../../models/leaves/leaveTypeModel');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -353,6 +357,123 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   });
 });
 
+const getLeavesOfNewFiscalYear = async (quarter) => {
+  const leaveTypes = await LeaveType.find({
+    $or: [{ name: LEAVETYPES.casualLeave }, { name: LEAVETYPES.sickLeave }]
+  });
+
+  return Leave.aggregate([
+    {
+      $unwind: '$leaveDates'
+    },
+    {
+      $match: {
+        leaveDates: {
+          $gte: new Date(quarter.fromDate)
+        },
+        leaveStatus: LEAVE_APPROVED,
+        $or: [
+          { leaveType: { $eq: leaveTypes[0]._id } },
+          { leaveType: { $eq: leaveTypes[1]._id } }
+        ]
+      }
+    },
+    {
+      $lookup: {
+        from: 'leave_types',
+        localField: 'leaveType',
+        foreignField: '_id',
+        as: 'leaveType'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $set: {
+        leaveType: {
+          $arrayElemAt: ['$leaveType', 0]
+        },
+        user: {
+          $arrayElemAt: ['$user', 0]
+        }
+      }
+    },
+    {
+      $group: {
+        _id: '$user._id',
+        casualLeaves: {
+          $sum: {
+            $switch: {
+              branches: [
+                {
+                  case: {
+                    $and: [
+                      { $eq: ['$halfDay', ''] },
+                      {
+                        $eq: ['$leaveType.name', LEAVETYPES.casualLeave]
+                      }
+                    ]
+                  },
+                  then: 1
+                },
+                {
+                  case: {
+                    $and: [
+                      { $ne: ['$halfDay', ''] },
+                      {
+                        $eq: ['$leaveType.name', LEAVETYPES.casualLeave]
+                      }
+                    ]
+                  },
+                  then: 0.5
+                }
+              ],
+              default: 0
+            }
+          }
+        },
+        sickLeaves: {
+          $sum: {
+            $switch: {
+              branches: [
+                {
+                  case: {
+                    $and: [
+                      { $eq: ['$halfDay', ''] },
+                      {
+                        $eq: ['$leaveType.name', LEAVETYPES.sickLeave]
+                      }
+                    ]
+                  },
+                  then: 1
+                },
+                {
+                  case: {
+                    $and: [
+                      { $ne: ['$halfDay', ''] },
+                      {
+                        $eq: ['$leaveType.name', LEAVETYPES.sickLeave]
+                      }
+                    ]
+                  },
+                  then: 0.5
+                }
+              ],
+              default: 0
+            }
+          }
+        }
+      }
+    }
+  ]);
+};
+
 // Reset Allocated Leaves of all co-workers
 exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
   const todayDate = common.todayDate();
@@ -381,7 +502,6 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
   );
 
   const allUsers = await User.find({ active: true });
-
   if (isUserLeaveAlreadyCreated) {
     await Promise.all(
       allUsers.map(async (user) => {
@@ -441,23 +561,32 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
       })
     );
   } else {
+    const leaves = await getLeavesOfNewFiscalYear(currentQuarter);
+
     allUsers.forEach(async (user) => {
       const isOnProbation = POSITIONS.probation === user.status;
+      const userLeaves = leaves.find(
+        (leave) => leave._id.toString() === user._id.toString()
+      );
+      const sickLeaves =
+        userLeaves && userLeaves.sickLeaves ? userLeaves.sickLeaves : 0;
+      const casualLeaves =
+        userLeaves && userLeaves.casualLeaves ? userLeaves.casualLeaves : 0;
 
       const userLeave = new UserLeave({
         user: user._id,
         fiscalYear: quarters[0].fiscalYear,
         leaves: quarters[0].quarters.map((quarter) => ({
           approvedLeaves: {
-            sickLeaves: 0,
-            casualLeaves: 0
+            sickLeaves,
+            casualLeaves
           },
           allocatedLeaves: isOnProbation
             ? numberOfMonthsInAQuarter
             : quarter.leaves,
           remainingLeaves: isOnProbation
             ? numberOfMonthsInAQuarter
-            : quarter.leaves,
+            : quarter.leaves - sickLeaves - casualLeaves,
           carriedOverLeaves: 0,
           leaveDeductionBalance: 0,
           quarter: quarter
