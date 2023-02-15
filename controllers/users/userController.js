@@ -359,7 +359,7 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
 
 const getLeavesOfNewFiscalYear = async (quarter) => {
   const leaveTypes = await LeaveType.find({
-    $or: [{ name: LEAVETYPES.casualLeave }, { name: LEAVETYPES.sickLeave }]
+    name: { $in: [LEAVETYPES.casualLeave, LEAVETYPES.sickLeave] }
   });
 
   return Leave.aggregate([
@@ -409,64 +409,20 @@ const getLeavesOfNewFiscalYear = async (quarter) => {
         _id: '$user._id',
         casualLeaves: {
           $sum: {
-            $switch: {
-              branches: [
-                {
-                  case: {
-                    $and: [
-                      { $eq: ['$halfDay', ''] },
-                      {
-                        $eq: ['$leaveType.name', LEAVETYPES.casualLeave]
-                      }
-                    ]
-                  },
-                  then: 1
-                },
-                {
-                  case: {
-                    $and: [
-                      { $ne: ['$halfDay', ''] },
-                      {
-                        $eq: ['$leaveType.name', LEAVETYPES.casualLeave]
-                      }
-                    ]
-                  },
-                  then: 0.5
-                }
-              ],
-              default: 0
-            }
+            $cond: [
+              { $eq: ['$leaveType.name', LEAVETYPES.casualLeave] },
+              { $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5] },
+              0
+            ]
           }
         },
         sickLeaves: {
           $sum: {
-            $switch: {
-              branches: [
-                {
-                  case: {
-                    $and: [
-                      { $eq: ['$halfDay', ''] },
-                      {
-                        $eq: ['$leaveType.name', LEAVETYPES.sickLeave]
-                      }
-                    ]
-                  },
-                  then: 1
-                },
-                {
-                  case: {
-                    $and: [
-                      { $ne: ['$halfDay', ''] },
-                      {
-                        $eq: ['$leaveType.name', LEAVETYPES.sickLeave]
-                      }
-                    ]
-                  },
-                  then: 0.5
-                }
-              ],
-              default: 0
-            }
+            $cond: [
+              { $eq: ['$leaveType.name', LEAVETYPES.sickLeave] },
+              { $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5] },
+              0
+            ]
           }
         }
       }
