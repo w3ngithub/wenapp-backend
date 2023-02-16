@@ -12,7 +12,8 @@ const {
   LEAVE_CANCELLED,
   LEAVE_PENDING,
   LEAVE_APPROVED,
-  LEAVE_REJECTED
+  LEAVE_REJECTED,
+  USER_CANCELLED
 } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const { LEAVETYPES: leaveType } = require('../../utils/constants');
@@ -896,6 +897,27 @@ exports.sendLeaveApplyEmailNotifications = asyncError(
                 .map((x) => `<p>${x.split('T')[0]}</p>`)
                 .join('')
             ) || message
+      });
+    } else if (req.body.leaveStatus === USER_CANCELLED) {
+      const emailContent = await Email.findOne({ module: 'user-leave-cancel' });
+
+      new EmailNotification().sendEmail({
+        email: [INFOWENEMAIL, HRWENEMAIL],
+        subject:
+          emailContent.title.replace(/@username/i, req.body.user.name) ||
+          `${req.body.user.name} cancelled leave `,
+        message:
+          emailContent.body
+            .replace(/@username/i, req.body.user.name)
+            .replace(/@reason/i, req.body.userCancelReason || '')
+            .replace(
+              /@date/i,
+              req.body.leaveDates
+                .toString()
+                .split(',')
+                .map((x) => `<p>${x.split('T')[0]}</p>`)
+                .join('')
+            ) || 'Leave Cancelled'
       });
     } else if (req.body.leaveStatus === LEAVE_CANCELLED) {
       const emailContent = await Email.findOne({ module: 'leave-cancel' });

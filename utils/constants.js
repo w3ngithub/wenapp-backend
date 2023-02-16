@@ -27,6 +27,7 @@ exports.LEAVE_CANCELLED = 'cancelled';
 exports.LEAVE_PENDING = 'pending';
 exports.LEAVE_APPROVED = 'approved';
 exports.LEAVE_REJECTED = 'rejected';
+exports.USER_CANCELLED = 'user cancelled';
 
 exports.MONTHS = {
   January: 0,
