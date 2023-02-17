@@ -7,6 +7,9 @@ const {
   CREATE_ACTIVITY_LOG_MESSAGE
 } = require('../utils/constants');
 const User = require('../models/users/userModel');
+const UserLeave = require('../models/leaves/UserLeavesModel');
+const { LeaveQuarter } = require('../models/leaves/leaveQuarter');
+const { todayDate } = require('../utils/common');
 
 exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
@@ -112,8 +115,13 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 
 exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
+    let prevDoc = null;
+
+    if (ModelToLog === 'User') {
+      prevDoc = await Model.findById(req.params.id);
+    }
+
     const reqBody = { ...req.body, updatedBy: req.user.id };
-    console.log(req.params.id);
     const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true
@@ -123,6 +131,32 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
       return next(new AppError('No document found with that ID', 404));
     }
     let newDoc = null;
+
+    if (ModelToLog === 'User' && req.body.status === 'Permanent') {
+      if (prevDoc.status === 'Probation' && doc.status === 'Permanent') {
+        const latestYearQuarter = await LeaveQuarter.findOne().sort({
+          createdAt: -1
+        });
+
+        const userLeaveDoc = await UserLeave.findOne({
+          user: doc._id,
+          fiscalYear: latestYearQuarter.fiscalYear
+        });
+
+        const currentQuarter = latestYearQuarter.quarters.find(
+          (quarter) =>
+            new Date(quarter.fromDate) <= new Date(todayDate()) &&
+            new Date(todayDate()) <= new Date(quarter.toDate)
+        );
+
+        const updatedLeaves = userLeaveDoc.leaves.filter(
+          (leave) =>
+            leave.quarter._id.toString() === currentQuarter._id.toString()
+        );
+        console.log(updatedLeaves);
+      }
+    }
+
     if (ModelToLog === 'Attendance') {
       newDoc = await User.findOne({ _id: doc.user });
     }
