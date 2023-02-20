@@ -9,6 +9,7 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
+const { default: mongoose } = require('mongoose');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -299,18 +300,45 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   const presentDate = new Date();
 
+  const { user, days } = req.query;
+
+  const conditions = [
+    {
+      active: { $eq: true }
+    }
+  ];
+
+  if (user) {
+    conditions.push({ _id: mongoose.Types.ObjectId(user) });
+  }
+
+  const newSalaryReviewDate =
+    days && !Number.isNaN(+days)
+      ? {
+          $gte: presentDate,
+          $lte: new Date(
+            presentDate.getTime() + parseInt(days, 10) * 24 * 60 * 60 * 1000
+          )
+        }
+      : {
+          $gte: presentDate
+        };
+
   // get Users with salary review time before 3 months
   const users = await User.aggregate([
     {
-      $match: {
-        active: { $eq: true }
+      $match: { $and: conditions }
+    },
+    {
+      $addFields: {
+        pastReviewDate: { $arrayElemAt: ['$lastReviewDate', -1] }
       }
     },
     {
       $set: {
         newSalaryReviewDate: {
           $dateAdd: {
-            startDate: '$lastReviewDate',
+            startDate: '$pastReviewDate',
             unit: 'year',
             amount: 1
           }
@@ -319,10 +347,7 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
     },
     {
       $match: {
-        newSalaryReviewDate: {
-          $gte: presentDate,
-          $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
-        }
+        newSalaryReviewDate
       }
     },
     {
@@ -335,6 +360,8 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
       }
     }
   ]);
+
+  console.log(users);
 
   res.status(200).json({
     status: 'success',
