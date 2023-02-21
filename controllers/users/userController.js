@@ -361,8 +361,6 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
     }
   ]);
 
-  console.log(users);
-
   res.status(200).json({
     status: 'success',
     data: {
