@@ -286,6 +286,7 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
     {
       $group: {
         _id: '$leaveType',
+        leaveDates: { $push: '$leaveDates' },
         leavesTaken: {
           $sum: {
             $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
