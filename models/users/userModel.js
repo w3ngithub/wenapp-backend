@@ -62,7 +62,7 @@ const userSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['Permanent', 'Probation'],
-      default: 'Permanent'
+      default: 'Probation'
     },
     active: {
       type: Boolean,
