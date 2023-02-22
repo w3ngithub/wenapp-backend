@@ -134,6 +134,10 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
 
     if (ModelToLog === 'User' && req.body.status === 'Permanent') {
       if (prevDoc.status === 'Probation' && doc.status === 'Permanent') {
+        // update status change Date of user
+        doc.statusChangeDate = new Date();
+        await doc.save();
+
         const latestYearQuarter = await LeaveQuarter.findOne().sort({
           createdAt: -1
         });
