@@ -444,27 +444,15 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
   const newLeaves = await Leave.aggregate([
     {
       $match: {
-        leaveStatus: 'approved',
+        leaveDates: {
+          $elemMatch: {
+            $gte: todayDate,
+            $lte: afterOneWeekDate
+          }
+        },
         $or: [
           {
-            $and: [
-              {
-                'leaveDates.0': { $lt: todayDate }
-              },
-              { 'leaveDates.1': { $gt: afterOneWeekDate } }
-            ]
-          },
-
-          {
-            $or: [
-              { 'leaveDates.0': { $gte: todayDate, $lte: afterOneWeekDate } },
-              {
-                'leaveDates.1': { $gte: todayDate, $lte: afterOneWeekDate }
-              }
-            ]
-          },
-          {
-            'leaveDates.0': { $gte: todayDate, $lte: afterOneWeekDate }
+            leaveStatus: 'approved'
           }
         ]
       }
@@ -492,7 +480,8 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
         user: '$user.name',
         leaveDates: '$leaveDates',
         halfDay: '$halfDay',
-        leaveType: '$leaveType.name'
+        leaveType: '$leaveType.name',
+        leaveStatus: '$leaveStatus'
       }
     }
   ]);
