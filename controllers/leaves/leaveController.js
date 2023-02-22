@@ -87,7 +87,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   }
 
   let leaveStatus;
-  let previousStatus = leave.leaveStatus;
+  const previousStatus = leave.leaveStatus;
 
   if (status === 'approve') {
     leaveStatus = 'approved';

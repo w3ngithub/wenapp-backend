@@ -4,14 +4,15 @@ const NoticeType = require('../../models/notices/noticeTypeModel');
 
 const registerNotificationHandlers = (io, socket) => {
   // gets total count of not viewed notification of individual user
-  socket.on('get-notification-count', async ({ _id, key }) => {
+  socket.on('get-notification-count', async ({ _id, key, joinDate }) => {
     const notViewNotification = await Notifications.find({
       showTo: {
         $in: [_id, key]
       },
       viewedBy: {
         $nin: [_id]
-      }
+      },
+      createdAt: { $gte: joinDate }
     }).count();
 
     socket.emit('send-notViewed-notification-count', notViewNotification);

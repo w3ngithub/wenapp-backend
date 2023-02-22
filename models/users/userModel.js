@@ -93,7 +93,7 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    lastReviewDate: [Date],
+    lastReviewDate: { type: [Date], default: [] },
     exitDate: Date,
     panNumber: Number,
     citNumber: Number,

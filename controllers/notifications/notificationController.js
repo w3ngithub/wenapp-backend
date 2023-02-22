@@ -9,13 +9,14 @@ const Leave = require('../../models/leaves/leaveModel');
 const Configurations = require('../../models/configurations/configurationsModel');
 
 exports.getAllNotifications = asyncError(async (req, res, next) => {
-  const { role, userId } = req.query;
+  const { role, userId, joinDate } = req.query;
 
   const features = new APIFeatures(
     Notifications.find({
       showTo: {
         $in: [role, userId]
-      }
+      },
+      createdAt: { $gte: joinDate }
     }),
     req.query
   )
@@ -31,7 +32,8 @@ exports.getAllNotifications = asyncError(async (req, res, next) => {
       ...features.formattedQuery,
       showTo: {
         $in: [role, userId]
-      }
+      },
+      createdAt: { $gte: joinDate }
     })
   ]);
   res.status(200).json({

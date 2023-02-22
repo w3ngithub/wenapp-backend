@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const User = require('../../models/users/userModel');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
@@ -309,11 +310,38 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   const presentDate = new Date();
 
+  const { user, days } = req.query;
+
+  const conditions = [
+    {
+      active: { $eq: true }
+    }
+  ];
+
+  if (user) {
+    conditions.push({ _id: mongoose.Types.ObjectId(user) });
+  }
+
+  const newSalaryReviewDate =
+    days && !Number.isNaN(+days)
+      ? {
+          $gte: presentDate,
+          $lte: new Date(
+            presentDate.getTime() + parseInt(days, 10) * 24 * 60 * 60 * 1000
+          )
+        }
+      : {
+          $gte: presentDate
+        };
+
   // get Users with salary review time before 3 months
   const users = await User.aggregate([
     {
-      $match: {
-        active: { $eq: true }
+      $match: { $and: conditions }
+    },
+    {
+      $addFields: {
+        pastReviewDate: { $arrayElemAt: ['$lastReviewDate', -1] }
       }
     },
     {
@@ -323,7 +351,7 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
       $set: {
         newSalaryReviewDate: {
           $dateAdd: {
-            startDate: '$lastReviewDate',
+            startDate: '$pastReviewDate',
             unit: 'year',
             amount: 1
           }
@@ -332,10 +360,7 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
     },
     {
       $match: {
-        newSalaryReviewDate: {
-          $gte: presentDate,
-          $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
-        }
+        newSalaryReviewDate
       }
     },
     {
