@@ -4,12 +4,14 @@ const APIFeatures = require('../utils/apiFeatures');
 const {
   DELETE_ACTIVITY_LOG_MESSAGE,
   UPDATE_ACTIVITY_LOG_MESSAGE,
-  CREATE_ACTIVITY_LOG_MESSAGE
+  CREATE_ACTIVITY_LOG_MESSAGE,
+  LEAVETYPES
 } = require('../utils/constants');
 const User = require('../models/users/userModel');
 const UserLeave = require('../models/leaves/UserLeavesModel');
+const LeaveTypes = require('../models/leaves/leaveTypeModel');
 const { LeaveQuarter } = require('../models/leaves/leaveQuarter');
-const { todayDate } = require('../utils/common');
+const { todayDate, getNumberOfMonthsInAQuarter } = require('../utils/common');
 
 exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
@@ -159,11 +161,64 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
             new Date(todayDate()) <= new Date(quarter.toDate)
         );
 
-        const updatedLeaves = userLeaveDoc.leaves.filter(
-          (leave) =>
-            leave.quarter._id.toString() === currentQuarter._id.toString()
+        const currentQuarterAllocatedLeaves =
+          currentQuarter.leaves -
+          getNumberOfMonthsInAQuarter(todayDate(), currentQuarter.fromDate);
+
+        userLeaveDoc.leaves = userLeaveDoc.leaves.map((leave) =>
+          leave.quarter._id.toString() === currentQuarter._id.toString()
+            ? {
+                ...leave,
+                allocatedLeaves: currentQuarterAllocatedLeaves,
+                remainingLeaves: currentQuarterAllocatedLeaves,
+                approvedLeaves: {
+                  sickLeaves: 0,
+                  casualLeaves: 0
+                },
+                carriedOverLeaves: 0
+              }
+            : leave
         );
-        console.log(updatedLeaves);
+
+        const leaveTypes = await LeaveTypes.find();
+
+        const sickLeave = leaveTypes.find(
+          (type) => type.name === LEAVETYPES.casualLeave
+        );
+        const causalLeave = leaveTypes.find(
+          (type) => type.name === LEAVETYPES.sickLeave
+        );
+
+        const indexOfCurrentQuarter = latestYearQuarter.quarters.findIndex(
+          (quarter) =>
+            new Date(quarter.fromDate) <= new Date(todayDate()) &&
+            new Date(todayDate()) <= new Date(quarter.toDate)
+        );
+
+        const futureQuartersLeaves = latestYearQuarter.quarters
+          .slice(indexOfCurrentQuarter + 1)
+          .reduce((acc, q) => acc + q, 0);
+
+        const updatedYearAllocatedLeave =
+          futureQuartersLeaves + currentQuarterAllocatedLeaves;
+
+        const totalSickCausalLeave =
+          sickLeave.leaveDays + causalLeave.leaveDays;
+
+        const leaveNotEntitled =
+          totalSickCausalLeave - updatedYearAllocatedLeave;
+
+        userLeaveDoc.yearSickAllocatedLeaves =
+          leaveNotEntitled > sickLeave.leaveDays
+            ? 0
+            : sickLeave.leaveDays - leaveNotEntitled;
+
+        userLeaveDoc.yearCausalAllocatedLeaves =
+          leaveNotEntitled > sickLeave.leaveDays
+            ? causalLeave.leaveDays - (leaveNotEntitled - sickLeave.leaveDays)
+            : sickLeave.leaveDays;
+
+        await userLeaveDoc.save();
       }
     }
 
