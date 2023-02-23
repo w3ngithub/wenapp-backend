@@ -60,7 +60,9 @@ exports.getUserLeave = asyncError(async (req, res, next) => {
         _id: 1,
         user: 1,
         fiscalYear: 1,
-        leaves: quarter
+        leaves: quarter,
+        yearSickAllocatedLeaves: 1,
+        yearCausalAllocatedLeaves: 1
       }
     }
   ]);

@@ -11,6 +11,8 @@ const UserLeaveSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  yearSickAllocatedLeaves: Number,
+  yearCausalAllocatedLeaves: Number,
   leaves: [
     {
       allocatedLeaves: {

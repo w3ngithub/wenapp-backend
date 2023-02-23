@@ -541,6 +541,15 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
   } else {
     const leaves = await getLeavesOfNewFiscalYear(currentQuarter);
 
+    const leaveTypes = await LeaveType.find();
+
+    const sickLeave = leaveTypes.find(
+      (type) => type.name === LEAVETYPES.casualLeave
+    );
+    const causalLeave = leaveTypes.find(
+      (type) => type.name === LEAVETYPES.sickLeave
+    );
+
     allUsers.forEach(async (user) => {
       const isOnProbation = POSITIONS.probation === user.status;
       const userLeaves = leaves.find(
@@ -554,6 +563,9 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
       const userLeave = new UserLeave({
         user: user._id,
         fiscalYear: quarters[0].fiscalYear,
+        yearSickAllocatedLeaves: sickLeave.leaveDays,
+        yearCausalAllocatedLeaves: causalLeave.leaveDays,
+
         leaves: quarters[0].quarters.map((quarter) => ({
           approvedLeaves: {
             sickLeaves,
