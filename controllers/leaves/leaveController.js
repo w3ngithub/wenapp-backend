@@ -439,15 +439,14 @@ exports.getUsersOnLeaveToday = asyncError(async (req, res, next) => {
 
 // Get week range approved leaves
 exports.getWeekLeaves = asyncError(async (req, res, next) => {
-  const { todayDate, afterOneWeekDate } = req;
+  const { todayDate } = req;
 
   const newLeaves = await Leave.aggregate([
     {
       $match: {
         leaveDates: {
           $elemMatch: {
-            $gte: todayDate,
-            $lte: afterOneWeekDate
+            $gte: todayDate
           }
         },
         $or: [
@@ -659,11 +658,23 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
     {
       $match: {
         leaveStatus: 'approved',
-        leaveDates: {
-          $elemMatch: {
-            $eq: todayDate
+        $or: [
+          {
+            leaveDates: {
+              $elemMatch: {
+                $eq: todayDate
+              }
+            }
+          },
+          {
+            'leaveDates.0': {
+              $lte: todayDate
+            },
+            'leaveDates.1': {
+              $gte: todayDate
+            }
           }
-        }
+        ]
       }
     },
     {
