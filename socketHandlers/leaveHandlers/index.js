@@ -17,23 +17,7 @@ const registerLeaveHandlers = (io, socket) => {
       {
         $match: {
           leaveStatus: 'approved',
-          $or: [
-            {
-              leaveDates: {
-                $elemMatch: {
-                  $eq: todayDate
-                }
-              }
-            },
-            {
-              'leaveDates.0': {
-                $lte: todayDate
-              },
-              'leaveDates.1': {
-                $gte: todayDate
-              }
-            }
-          ]
+          leaveDates: todayDate
         }
       },
       {

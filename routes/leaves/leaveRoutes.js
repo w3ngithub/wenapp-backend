@@ -41,13 +41,8 @@ router.get(
   leaveController.getFiscalYearLeaves
 );
 
-router.get(
-  '/users/leavedays',
-  authMiddleware.restrictTo('admin', 'hr', 'manager', 'finance', 'lead'),
-  sickCasualLeaveTypeMiddleware.getSickCasualLeave,
-  leaveController.calculateLeaveDaysOfUsers
-);
 router.get('/users/today', leaveController.getUsersOnLeaveToday);
+
 router.patch(
   '/:leaveId/status/:status',
   fiscalYearMiddleware.getFiscalYear,
@@ -60,13 +55,6 @@ router.get(
   authMiddleware.setUserIdForNestedRoutes,
   fiscalYearMiddleware.getFiscalYear,
   leaveController.calculateLeaveDays
-);
-
-router.get(
-  '/:userId/quarterleavedays',
-  authMiddleware.setUserIdForNestedRoutes,
-  sickCasualLeaveTypeMiddleware.getSickCasualLeave,
-  leaveController.calculateLeaveDaysofQuarter
 );
 
 router.post(
