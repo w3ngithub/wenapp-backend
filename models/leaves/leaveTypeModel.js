@@ -17,7 +17,7 @@ const leaveTypeSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  IsSpecial: {
+  isSpecial: {
     type: Boolean,
     default: false
   }
