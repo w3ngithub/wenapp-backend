@@ -605,6 +605,7 @@ exports.getFutureLeaves = asyncError(async (req, res, next) => {
         as: 'user'
       }
     },
+    { $unwind: '$leaveDates' },
     {
       $project: {
         _id: '$user._id',
@@ -612,7 +613,8 @@ exports.getFutureLeaves = asyncError(async (req, res, next) => {
         leaveDates: '$leaveDates',
         halfDay: '$halfDay',
         leaveType: '$leaveType.name',
-        leaveStatus: '$leaveStatus'
+        leaveStatus: '$leaveStatus',
+        isSpecial: '$leaveType.isSpecial'
       }
     }
   ]);
