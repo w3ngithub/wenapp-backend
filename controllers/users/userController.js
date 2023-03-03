@@ -20,6 +20,7 @@ const UserLeave = require('../../models/leaves/UserLeavesModel');
 const Notifications = require('../../models/notification/notificationModel');
 const Leave = require('../../models/leaves/leaveModel');
 const LeaveType = require('../../models/leaves/leaveTypeModel');
+const { USERS_KEY } = require('../../utils/crypto');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -610,6 +611,6 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 });
 
 exports.getUser = factory.getOne(User);
-exports.getAllUsers = factory.getAll(User);
+exports.getAllUsers = factory.getAll(User, USERS_KEY);
 exports.updateUser = factory.updateOne(User, ActivityLogs, 'User');
 exports.deleteUser = factory.deleteOne(User);

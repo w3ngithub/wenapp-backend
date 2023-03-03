@@ -11,7 +11,7 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 const EmailNotification = require('../../utils/email');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
-const { encrypt } = require('../../utils/crypto');
+const { encrypt, LATE_ARRIVAL_KEY } = require('../../utils/crypto');
 
 exports.getAttendance = factory.getOne(Attendance);
 exports.getAllAttendances = factory.getAll(Attendance);
@@ -431,7 +431,7 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      attendances: encrypt(attendances)
+      attendances: encrypt(attendances, LATE_ARRIVAL_KEY)
     }
   });
 });
