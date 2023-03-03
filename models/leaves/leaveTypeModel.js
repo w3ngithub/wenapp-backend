@@ -16,6 +16,10 @@ const leaveTypeSchema = new mongoose.Schema({
   Probation: {
     type: Boolean,
     default: true
+  },
+  isSpecial: {
+    type: Boolean,
+    default: false
   }
 });
 

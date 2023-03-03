@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const User = require('../../models/users/userModel');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
@@ -309,21 +310,45 @@ exports.getBirthMonthUser = asyncError(async (req, res, next) => {
 exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
   const presentDate = new Date();
 
+  const { user, days } = req.query;
+
+  const conditions = [
+    {
+      active: { $eq: true }
+    }
+  ];
+
+  if (user) {
+    conditions.push({ _id: mongoose.Types.ObjectId(user) });
+  }
+
+  const newSalaryReviewDate =
+    days && !Number.isNaN(+days)
+      ? {
+          $gte: presentDate,
+          $lte: new Date(
+            presentDate.getTime() + parseInt(days, 10) * 24 * 60 * 60 * 1000
+          )
+        }
+      : {
+          $gte: presentDate
+        };
+
   // get Users with salary review time before 3 months
   const users = await User.aggregate([
     {
-      $match: {
-        active: { $eq: true }
-      }
+      $match: { $and: conditions }
     },
     {
-      $unwind: '$lastReviewDate'
+      $addFields: {
+        pastReviewDate: { $arrayElemAt: ['$lastReviewDate', -1] }
+      }
     },
     {
       $set: {
         newSalaryReviewDate: {
           $dateAdd: {
-            startDate: '$lastReviewDate',
+            startDate: '$pastReviewDate',
             unit: 'year',
             amount: 1
           }
@@ -332,10 +357,7 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
     },
     {
       $match: {
-        newSalaryReviewDate: {
-          $gte: presentDate,
-          $lte: new Date(presentDate.getTime() + 90 * 24 * 60 * 60 * 1000)
-        }
+        newSalaryReviewDate
       }
     },
     {
@@ -519,6 +541,15 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
   } else {
     const leaves = await getLeavesOfNewFiscalYear(currentQuarter);
 
+    const leaveTypes = await LeaveType.find();
+
+    const sickLeave = leaveTypes.find(
+      (type) => type.name === LEAVETYPES.casualLeave
+    );
+    const causalLeave = leaveTypes.find(
+      (type) => type.name === LEAVETYPES.sickLeave
+    );
+
     allUsers.forEach(async (user) => {
       const isOnProbation = POSITIONS.probation === user.status;
       const userLeaves = leaves.find(
@@ -532,6 +563,9 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
       const userLeave = new UserLeave({
         user: user._id,
         fiscalYear: quarters[0].fiscalYear,
+        yearSickAllocatedLeaves: sickLeave.leaveDays,
+        yearCausalAllocatedLeaves: causalLeave.leaveDays,
+
         leaves: quarters[0].quarters.map((quarter) => ({
           approvedLeaves: {
             sickLeaves,

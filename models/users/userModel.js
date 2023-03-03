@@ -62,7 +62,10 @@ const userSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['Permanent', 'Probation'],
-      default: 'Permanent'
+      default: 'Probation'
+    },
+    statusChangeDate: {
+      type: Date
     },
     active: {
       type: Boolean,
@@ -93,7 +96,7 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-    lastReviewDate: [Date],
+    lastReviewDate: { type: [Date], default: [] },
     exitDate: Date,
     panNumber: Number,
     citNumber: Number,

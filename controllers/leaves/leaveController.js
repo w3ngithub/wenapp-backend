@@ -6,7 +6,6 @@ const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
 const Email = require('../../models/email/emailSettingModel');
 const {
-  POSITIONS,
   INFOWENEMAIL,
   HRWENEMAIL,
   LEAVE_CANCELLED,
@@ -17,7 +16,6 @@ const {
 } = require('../../utils/constants');
 const APIFeatures = require('../../utils/apiFeatures');
 const { LEAVETYPES: leaveType } = require('../../utils/constants');
-const LeaveQuarter = require('../../models/leaves/leaveQuarter');
 const User = require('../../models/users/userModel');
 const EmailNotification = require('../../utils/email');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
@@ -87,7 +85,7 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
   }
 
   let leaveStatus;
-  let previousStatus = leave.leaveStatus;
+  const previousStatus = leave.leaveStatus;
 
   if (status === 'approve') {
     leaveStatus = 'approved';
@@ -285,227 +283,16 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
     },
     {
       $group: {
-        _id: '$leaveType',
+        _id: '$leaveType.name',
         leavesTaken: {
           $sum: {
             $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
           }
         }
       }
-    }
+    },
+    { $unwind: '$_id' }
   ]);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      data: leaveCounts
-    }
-  });
-});
-
-// Calculate  applied leave days of a user of a quarter
-exports.calculateLeaveDaysofQuarter = asyncError(async (req, res, next) => {
-  const { leaveTypes } = req;
-  const latestYearQuarter = await LeaveQuarter.findOne().sort({
-    createdAt: -1
-  });
-
-  const userId = mongoose.Types.ObjectId(req.params.userId);
-
-  const user = await User.findById(userId);
-
-  const { firstQuarter, secondQuarter, thirdQuarter, fourthQuarter } =
-    latestYearQuarter;
-
-  const currentDate = new Date();
-  let currentQuarterIndex = 0;
-  if (
-    currentDate >= new Date(firstQuarter.fromDate) &&
-    currentDate <= new Date(firstQuarter.toDate)
-  ) {
-    currentQuarterIndex = 1;
-  } else if (
-    currentDate >= new Date(secondQuarter.fromDate) &&
-    currentDate <= new Date(secondQuarter.toDate)
-  ) {
-    currentQuarterIndex = 2;
-  } else if (
-    currentDate >= new Date(thirdQuarter.fromDate) &&
-    currentDate <= new Date(thirdQuarter.toDate)
-  ) {
-    currentQuarterIndex = 3;
-  } else {
-    currentQuarterIndex = 4;
-  }
-
-  const tillNowQuarter = [
-    firstQuarter,
-    secondQuarter,
-    thirdQuarter,
-    fourthQuarter
-  ];
-
-  tillNowQuarter.length = currentQuarterIndex;
-
-  const quarterLeaves = await Promise.all(
-    tillNowQuarter.map((q) => {
-      const { fromDate, toDate } = q;
-      return Leave.aggregate([
-        {
-          $match: {
-            user: userId,
-            leaveStatus: 'approved',
-            $or: [
-              {
-                leaveType: leaveTypes[0]._id
-              },
-              { leaveType: leaveTypes[1]._id }
-            ]
-          }
-        },
-        {
-          $unwind: '$leaveDates'
-        },
-        {
-          $match: {
-            $and: [
-              { leaveDates: { $gte: new Date(fromDate) } },
-              { leaveDates: { $lte: new Date(toDate) } }
-            ]
-          }
-        },
-        {
-          $lookup: {
-            from: 'leave_types',
-            localField: 'leaveType',
-            foreignField: '_id',
-            as: 'leaveType'
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            leavesTaken: {
-              $sum: {
-                $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
-              }
-            }
-          }
-        }
-      ]);
-    })
-  );
-  const { allocatedLeaves } = user;
-  const allocatedLeavesOfUser = allocatedLeaves || {};
-  const totalQuarter = [
-    allocatedLeavesOfUser.firstQuarter,
-    allocatedLeavesOfUser.secondQuarter,
-    allocatedLeavesOfUser.thirdQuarter,
-    allocatedLeavesOfUser.fourthQuarter
-  ];
-
-  totalQuarter.length = currentQuarterIndex;
-
-  let remainingLeaves = 0;
-  if (user.position.name !== POSITIONS.intern) {
-    totalQuarter.forEach((q, i) => {
-      if (remainingLeaves < 0) {
-        remainingLeaves = 0;
-      }
-      if (quarterLeaves[i][0] && quarterLeaves[i][0].leavesTaken) {
-        remainingLeaves += q - quarterLeaves[i][0].leavesTaken;
-      } else {
-        remainingLeaves += q;
-      }
-    });
-  }
-
-  const { leavesTaken } = quarterLeaves[quarterLeaves.length - 1][0] || {
-    leavesTaken: 0
-  };
-
-  if (user.position.name === POSITIONS.intern) {
-    remainingLeaves = totalQuarter[totalQuarter.length - 1] - leavesTaken;
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      remainingLeaves,
-      leavesTaken
-    }
-  });
-});
-
-// Calculate remaining and applied leave days of all users
-exports.calculateLeaveDaysOfUsers = asyncError(async (req, res, next) => {
-  const { quarter } = req.query;
-  const { leaveTypes } = req;
-
-  const latestYearQuarter = await LeaveQuarter.findOne().sort({
-    createdAt: -1
-  });
-
-  const { firstQuarter, secondQuarter, thirdQuarter, fourthQuarter } =
-    latestYearQuarter;
-
-  const tillNowQuarter = [
-    firstQuarter,
-    secondQuarter,
-    thirdQuarter,
-    fourthQuarter
-  ];
-
-  tillNowQuarter.length = quarter;
-
-  const leaveCounts = await Promise.all(
-    tillNowQuarter.map((q) => {
-      const { fromDate, toDate } = q;
-      return Leave.aggregate([
-        {
-          $unwind: '$leaveDates'
-        },
-        {
-          $match: {
-            leaveStatus: 'approved',
-            $and: [
-              { leaveDates: { $gte: new Date(fromDate) } },
-              { leaveDates: { $lte: new Date(toDate) } }
-            ],
-            $or: [
-              {
-                leaveType: leaveTypes[0]._id
-              },
-              { leaveType: leaveTypes[1]._id }
-            ]
-          }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'user',
-            foreignField: '_id',
-            as: 'user'
-          }
-        },
-        {
-          $group: {
-            _id: {
-              name: '$user.name',
-              _id: '$user._id',
-              position: '$user.position',
-              allocatedLeaves: '$user.allocatedLeaves'
-            },
-            leavesTaken: {
-              $sum: {
-                $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
-              }
-            }
-          }
-        }
-      ]);
-    })
-  );
 
   res.status(200).json({
     status: 'success',
@@ -604,6 +391,7 @@ exports.getFutureLeaves = asyncError(async (req, res, next) => {
         as: 'user'
       }
     },
+    { $unwind: '$leaveDates' },
     {
       $project: {
         _id: '$user._id',
@@ -611,7 +399,8 @@ exports.getFutureLeaves = asyncError(async (req, res, next) => {
         leaveDates: '$leaveDates',
         halfDay: '$halfDay',
         leaveType: '$leaveType.name',
-        leaveStatus: '$leaveStatus'
+        leaveStatus: '$leaveStatus',
+        isSpecial: '$leaveType.isSpecial'
       }
     }
   ]);
@@ -623,35 +412,14 @@ exports.getFutureLeaves = asyncError(async (req, res, next) => {
     }
   });
 });
+
 exports.getTodayLeaves = asyncError(async (req, res, next) => {
   const todayDate = common.todayDate();
   const newLeaves = await Leave.aggregate([
     {
       $match: {
         leaveStatus: 'approved',
-        $or: [
-          {
-            leaveDates: todayDate
-          },
-          {
-            'leaveDates.0': {
-              $eq: todayDate
-            }
-          },
-          {
-            'leaveDates.1': {
-              $eq: todayDate
-            }
-          },
-          {
-            'leaveDates.0': {
-              $lt: todayDate
-            },
-            'leaveDates.1': {
-              $gt: todayDate
-            }
-          }
-        ]
+        leaveDates: todayDate
       }
     },
     {
@@ -789,11 +557,7 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
     {
       $match: {
         leaveStatus: 'approved',
-        leaveDates: {
-          $elemMatch: {
-            $eq: todayDate
-          }
-        }
+        leaveDates: todayDate
       }
     },
     {
@@ -850,6 +614,7 @@ exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
           id: '$_id',
           user: '$user.name',
           leaveType: '$leaveType.name',
+          isSpecial: '$leaveType.isSpecial',
           leaveStatus: '$leaveStatus',
           reason: '$reason',
           halfDay: '$halfDay'

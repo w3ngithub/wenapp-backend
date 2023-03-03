@@ -4,9 +4,14 @@ const APIFeatures = require('../utils/apiFeatures');
 const {
   DELETE_ACTIVITY_LOG_MESSAGE,
   UPDATE_ACTIVITY_LOG_MESSAGE,
-  CREATE_ACTIVITY_LOG_MESSAGE
+  CREATE_ACTIVITY_LOG_MESSAGE,
+  LEAVETYPES
 } = require('../utils/constants');
 const User = require('../models/users/userModel');
+const UserLeave = require('../models/leaves/UserLeavesModel');
+const LeaveTypes = require('../models/leaves/leaveTypeModel');
+const { LeaveQuarter } = require('../models/leaves/leaveQuarter');
+const { todayDate, getNumberOfMonthsInAQuarter } = require('../utils/common');
 
 exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
@@ -112,8 +117,13 @@ exports.createOne = (Model, LogModel, ModelToLog) =>
 
 exports.updateOne = (Model, LogModel, ModelToLog) =>
   asyncError(async (req, res, next) => {
+    let prevDoc = null;
+
+    if (ModelToLog === 'User') {
+      prevDoc = await Model.findById(req.params.id);
+    }
+
     const reqBody = { ...req.body, updatedBy: req.user.id };
-    console.log(req.params.id);
     const doc = await Model.findByIdAndUpdate(req.params.id, reqBody, {
       new: true,
       runValidators: true
@@ -123,6 +133,95 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
       return next(new AppError('No document found with that ID', 404));
     }
     let newDoc = null;
+
+    if (ModelToLog === 'User' && req.body.status === 'Permanent') {
+      if (prevDoc.status === 'Probation' && doc.status === 'Permanent') {
+        // update status change Date of user
+        await Model.findByIdAndUpdate(
+          req.params.id,
+          { statusChangeDate: todayDate() },
+          {
+            new: true,
+            runValidators: true
+          }
+        );
+
+        const latestYearQuarter = await LeaveQuarter.findOne().sort({
+          createdAt: -1
+        });
+
+        const userLeaveDoc = await UserLeave.findOne({
+          user: doc._id,
+          fiscalYear: latestYearQuarter.fiscalYear
+        });
+
+        const currentQuarter = latestYearQuarter.quarters.find(
+          (quarter) =>
+            new Date(quarter.fromDate) <= new Date(todayDate()) &&
+            new Date(todayDate()) <= new Date(quarter.toDate)
+        );
+
+        const currentQuarterAllocatedLeaves =
+          currentQuarter.leaves -
+          getNumberOfMonthsInAQuarter(todayDate(), currentQuarter.fromDate);
+
+        userLeaveDoc.leaves = userLeaveDoc.leaves.map((leave) =>
+          leave.quarter._id.toString() === currentQuarter._id.toString()
+            ? {
+                ...leave,
+                allocatedLeaves: currentQuarterAllocatedLeaves,
+                remainingLeaves: currentQuarterAllocatedLeaves,
+                approvedLeaves: {
+                  sickLeaves: 0,
+                  casualLeaves: 0
+                },
+                carriedOverLeaves: 0
+              }
+            : leave
+        );
+
+        const leaveTypes = await LeaveTypes.find();
+
+        const sickLeave = leaveTypes.find(
+          (type) => type.name === LEAVETYPES.casualLeave
+        );
+        const causalLeave = leaveTypes.find(
+          (type) => type.name === LEAVETYPES.sickLeave
+        );
+
+        const indexOfCurrentQuarter = latestYearQuarter.quarters.findIndex(
+          (quarter) =>
+            new Date(quarter.fromDate) <= new Date(todayDate()) &&
+            new Date(todayDate()) <= new Date(quarter.toDate)
+        );
+
+        const futureQuartersLeaves = latestYearQuarter.quarters
+          .slice(indexOfCurrentQuarter + 1)
+          .reduce((acc, q) => acc + q, 0);
+
+        const updatedYearAllocatedLeave =
+          futureQuartersLeaves + currentQuarterAllocatedLeaves;
+
+        const totalSickCausalLeave =
+          sickLeave.leaveDays + causalLeave.leaveDays;
+
+        const leaveNotEntitled =
+          totalSickCausalLeave - updatedYearAllocatedLeave;
+
+        userLeaveDoc.yearSickAllocatedLeaves =
+          leaveNotEntitled > sickLeave.leaveDays
+            ? 0
+            : sickLeave.leaveDays - leaveNotEntitled;
+
+        userLeaveDoc.yearCausalAllocatedLeaves =
+          leaveNotEntitled > sickLeave.leaveDays
+            ? causalLeave.leaveDays - (leaveNotEntitled - sickLeave.leaveDays)
+            : sickLeave.leaveDays;
+
+        await userLeaveDoc.save();
+      }
+    }
+
     if (ModelToLog === 'Attendance') {
       newDoc = await User.findOne({ _id: doc.user });
     }

@@ -13,14 +13,23 @@ const registerLeaveHandlers = (io, socket) => {
   socket.on('dashboard-leave', async () => {
     const todayDate = common.todayDate();
 
-    const leaves = await Leave.find({
-      leaveStatus: 'approved',
-      leaveDates: {
-        $elemMatch: {
-          $eq: todayDate
+    let leaves = await Leave.aggregate([
+      {
+        $match: {
+          leaveStatus: 'approved',
+          leaveDates: todayDate
         }
+      },
+      {
+        $count: 'count'
       }
-    }).count();
+    ]);
+
+    if (leaves.length === 0) {
+      leaves = 0;
+    } else {
+      leaves = leaves[0].count;
+    }
 
     const pendingLeaveCount = await Leave.find({
       leaveStatus: { $eq: 'pending' }

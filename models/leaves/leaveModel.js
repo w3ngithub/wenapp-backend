@@ -70,7 +70,7 @@ leaveSchema.pre(/^find/, function (next) {
     select: '-role -position name email'
   }).populate({
     path: 'leaveType',
-    select: 'name'
+    select: 'name isSpecial'
   });
   next();
 });
