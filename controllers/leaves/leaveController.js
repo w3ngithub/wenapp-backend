@@ -614,6 +614,7 @@ exports.getFiscalYearLeaves = asyncError(async (req, res, next) => {
           id: '$_id',
           user: '$user.name',
           leaveType: '$leaveType.name',
+          isSpecial: '$leaveType.isSpecial',
           leaveStatus: '$leaveStatus',
           reason: '$reason',
           halfDay: '$halfDay'
