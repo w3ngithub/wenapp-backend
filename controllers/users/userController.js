@@ -20,7 +20,7 @@ const UserLeave = require('../../models/leaves/UserLeavesModel');
 const Notifications = require('../../models/notification/notificationModel');
 const Leave = require('../../models/leaves/leaveModel');
 const LeaveType = require('../../models/leaves/leaveTypeModel');
-const { USERS_KEY } = require('../../utils/crypto');
+const { USERS_KEY, encrypt, SALARY_REVIEW_KEY } = require('../../utils/crypto');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -366,17 +366,19 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
         _id: 1,
         name: 1,
         newSalaryReviewDate: 1,
-        lastReviewDate: 1,
-        photoURL: 1
+        lastReviewDate: 1
       }
     }
   ]);
 
   res.status(200).json({
     status: 'success',
-    data: {
-      users: users
-    }
+    data: encrypt(
+      {
+        users: users
+      },
+      SALARY_REVIEW_KEY
+    )
   });
 });
 
