@@ -1,6 +1,7 @@
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const APIFeatures = require('../../utils/apiFeatures');
 const asyncError = require('../../utils/asyncError');
+const { encrypt, ACTIVITY_LOGS_KEY } = require('../../utils/crypto');
 const factory = require('../factoryController');
 
 exports.getAllActivityLogs = asyncError(async (req, res, next) => {
@@ -24,10 +25,13 @@ exports.getAllActivityLogs = asyncError(async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       results: doc.length,
-      data: {
-        data: doc,
-        count
-      }
+      data: encrypt(
+        {
+          data: doc,
+          count
+        },
+        ACTIVITY_LOGS_KEY
+      )
     });
   } else {
     const [doc, count] = await Promise.all([
@@ -37,10 +41,13 @@ exports.getAllActivityLogs = asyncError(async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       results: doc.length,
-      data: {
-        data: doc,
-        count
-      }
+      data: encrypt(
+        {
+          data: doc,
+          count
+        },
+        ACTIVITY_LOGS_KEY
+      )
     });
   }
 });
