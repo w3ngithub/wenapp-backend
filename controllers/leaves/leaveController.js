@@ -528,7 +528,15 @@ exports.getTodayLeaves = asyncError(async (req, res, next) => {
         from: 'users',
         localField: 'user',
         foreignField: '_id',
-        as: 'user'
+        as: 'user',
+        pipeline: [
+          {
+            $project: {
+              _id: 0,
+              name: 1
+            }
+          }
+        ]
       }
     },
     {
@@ -537,6 +545,14 @@ exports.getTodayLeaves = asyncError(async (req, res, next) => {
         localField: 'leaveType',
         foreignField: '_id',
         as: 'leaveType'
+      }
+    },
+    {
+      $project: {
+        user: 1,
+        leaveType: 1,
+        leaveDates: 1,
+        halfDay: 1
       }
     }
   ]);
