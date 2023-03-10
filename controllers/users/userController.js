@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const User = require('../../models/users/userModel');
 const asyncError = require('../../utils/asyncError');
 const AppError = require('../../utils/appError');
@@ -7,9 +8,9 @@ const Email = require('../../models/email/emailSettingModel');
 const UserRole = require('../../models/users/userRoleModel');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const LeaveQuarter = require('../../models/leaves/leaveQuarter');
+const { USERS_KEY, encrypt, SALARY_REVIEW_KEY } = require('../../utils/crypto');
 
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
-const { default: mongoose } = require('mongoose');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -355,19 +356,19 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
         _id: 1,
         name: 1,
         newSalaryReviewDate: 1,
-        lastReviewDate: 1,
-        photoURL: 1
+        lastReviewDate: 1
       }
     }
   ]);
 
-  console.log(users);
-
   res.status(200).json({
     status: 'success',
-    data: {
-      users: users
-    }
+    data: encrypt(
+      {
+        users: users
+      },
+      SALARY_REVIEW_KEY
+    )
   });
 });
 
@@ -451,6 +452,6 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 });
 
 exports.getUser = factory.getOne(User);
-exports.getAllUsers = factory.getAll(User);
+exports.getAllUsers = factory.getAll(User, USERS_KEY);
 exports.updateUser = factory.updateOne(User, ActivityLogs, 'User');
 exports.deleteUser = factory.deleteOne(User);

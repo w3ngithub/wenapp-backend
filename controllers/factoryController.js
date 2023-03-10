@@ -7,6 +7,7 @@ const {
   CREATE_ACTIVITY_LOG_MESSAGE
 } = require('../utils/constants');
 const User = require('../models/users/userModel');
+const { encrypt } = require('../utils/crypto');
 
 exports.getOne = (Model, popOptions) =>
   asyncError(async (req, res, next) => {
@@ -32,7 +33,7 @@ exports.getOne = (Model, popOptions) =>
     });
   });
 
-exports.getAll = (Model) =>
+exports.getAll = (Model, secretKey) =>
   asyncError(async (req, res, next) => {
     const features = new APIFeatures(Model.find({}), req.query)
       .filter()
@@ -49,10 +50,18 @@ exports.getAll = (Model) =>
     res.status(200).json({
       status: 'success',
       results: doc.length,
-      data: {
-        data: doc,
-        count
-      }
+      data: secretKey
+        ? encrypt(
+            {
+              data: doc,
+              count
+            },
+            secretKey
+          )
+        : {
+            data: doc,
+            count
+          }
     });
   });
 

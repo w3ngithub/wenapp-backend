@@ -439,32 +439,19 @@ exports.getUsersOnLeaveToday = asyncError(async (req, res, next) => {
 
 // Get week range approved leaves
 exports.getWeekLeaves = asyncError(async (req, res, next) => {
-  const { todayDate, afterOneWeekDate } = req;
+  const { todayDate } = req;
 
   const newLeaves = await Leave.aggregate([
     {
       $match: {
-        leaveStatus: 'approved',
+        leaveDates: {
+          $elemMatch: {
+            $gte: todayDate
+          }
+        },
         $or: [
           {
-            $and: [
-              {
-                'leaveDates.0': { $lt: todayDate }
-              },
-              { 'leaveDates.1': { $gt: afterOneWeekDate } }
-            ]
-          },
-
-          {
-            $or: [
-              { 'leaveDates.0': { $gte: todayDate, $lte: afterOneWeekDate } },
-              {
-                'leaveDates.1': { $gte: todayDate, $lte: afterOneWeekDate }
-              }
-            ]
-          },
-          {
-            'leaveDates.0': { $gte: todayDate, $lte: afterOneWeekDate }
+            leaveStatus: 'approved'
           }
         ]
       }
@@ -492,7 +479,8 @@ exports.getWeekLeaves = asyncError(async (req, res, next) => {
         user: '$user.name',
         leaveDates: '$leaveDates',
         halfDay: '$halfDay',
-        leaveType: '$leaveType.name'
+        leaveType: '$leaveType.name',
+        leaveStatus: '$leaveStatus'
       }
     }
   ]);
@@ -540,7 +528,15 @@ exports.getTodayLeaves = asyncError(async (req, res, next) => {
         from: 'users',
         localField: 'user',
         foreignField: '_id',
-        as: 'user'
+        as: 'user',
+        pipeline: [
+          {
+            $project: {
+              _id: 0,
+              name: 1
+            }
+          }
+        ]
       }
     },
     {
@@ -549,6 +545,14 @@ exports.getTodayLeaves = asyncError(async (req, res, next) => {
         localField: 'leaveType',
         foreignField: '_id',
         as: 'leaveType'
+      }
+    },
+    {
+      $project: {
+        user: 1,
+        leaveType: 1,
+        leaveDates: 1,
+        halfDay: 1
       }
     }
   ]);
@@ -670,11 +674,23 @@ exports.getUsersCountOnLeaveToday = asyncError(async (req, res, next) => {
     {
       $match: {
         leaveStatus: 'approved',
-        leaveDates: {
-          $elemMatch: {
-            $eq: todayDate
+        $or: [
+          {
+            leaveDates: {
+              $elemMatch: {
+                $eq: todayDate
+              }
+            }
+          },
+          {
+            'leaveDates.0': {
+              $lte: todayDate
+            },
+            'leaveDates.1': {
+              $gte: todayDate
+            }
           }
-        }
+        ]
       }
     },
     {
