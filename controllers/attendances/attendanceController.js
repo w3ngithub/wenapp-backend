@@ -57,7 +57,19 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
 
 // office hour calculate
 exports.calculateTotalUserOfficeHour = asyncError(async (req, res, next) => {
-  const { fromDate, toDate, user } = req.query;
+  const { fromDate, toDate, user, officehour } = req.query;
+
+  const totalhourCondition = {};
+
+  if (officehour) {
+    let officeHourQuery = JSON.stringify(req.query.officehour).replace(
+      /\b(gte|gt|lte|lt|eq)\b/g,
+      (match) => `$${match}`
+    );
+    officeHourQuery = JSON.parse(officeHourQuery);
+    const op = Object.keys(officeHourQuery)[0];
+    totalhourCondition[op] = ['$officehour', Number(officeHourQuery[op])];
+  }
 
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
@@ -65,35 +77,78 @@ exports.calculateTotalUserOfficeHour = asyncError(async (req, res, next) => {
     { user: mongoose.Types.ObjectId(user) }
   ];
 
-  const totalHours = await Attendance.aggregate([
-    {
-      $match: {
-        $and: matchConditions
-      }
-    },
-    {
-      $addFields: {
-        punchTimeDifference: {
-          $ifNull: [
-            {
-              $dateDiff: {
-                startDate: '$punchInTime',
-                endDate: '$punchOutTime',
-                unit: 'millisecond'
-              }
-            },
-            0
-          ]
+  const totalHourQuery = !officehour
+    ? [
+        {
+          $match: {
+            $and: matchConditions
+          }
+        },
+        {
+          $addFields: {
+            punchTimeDifference: {
+              $ifNull: [
+                {
+                  $dateDiff: {
+                    startDate: '$punchInTime',
+                    endDate: '$punchOutTime',
+                    unit: 'millisecond'
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalhours: { $sum: '$punchTimeDifference' }
+          }
         }
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalhours: { $sum: '$punchTimeDifference' }
-      }
-    }
-  ]);
+      ]
+    : [
+        {
+          $match: {
+            $and: matchConditions
+          }
+        },
+        {
+          $addFields: {
+            punchTimeDifference: {
+              $ifNull: [
+                {
+                  $dateDiff: {
+                    startDate: '$punchInTime',
+                    endDate: '$punchOutTime',
+                    unit: 'millisecond'
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: '$attendanceDate',
+            officehour: { $sum: '$punchTimeDifference' }
+          }
+        },
+        {
+          $match: {
+            $expr: totalhourCondition
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalhours: { $sum: '$officehour' }
+          }
+        }
+      ];
+
+  const totalHours = await Attendance.aggregate(totalHourQuery);
 
   res.status(200).json({
     status: 'success',
