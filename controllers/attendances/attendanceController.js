@@ -369,9 +369,12 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      attendances
-    }
+    data: encrypt(
+      {
+        attendances
+      },
+      ATTENDANCE_KEY
+    )
   });
 });
 
