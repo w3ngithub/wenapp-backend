@@ -11,10 +11,14 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 const EmailNotification = require('../../utils/email');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
-const { encrypt, LATE_ARRIVAL_KEY } = require('../../utils/crypto');
+const {
+  encrypt,
+  LATE_ARRIVAL_KEY,
+  ATTENDANCE_KEY
+} = require('../../utils/crypto');
 
 exports.getAttendance = factory.getOne(Attendance);
-exports.getAllAttendances = factory.getAll(Attendance);
+exports.getAllAttendances = factory.getAll(Attendance, ATTENDANCE_KEY);
 exports.createAttendance = factory.createOne(
   Attendance,
   ActivityLogs,
@@ -365,9 +369,12 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      attendances
-    }
+    data: encrypt(
+      {
+        attendances
+      },
+      ATTENDANCE_KEY
+    )
   });
 });
 

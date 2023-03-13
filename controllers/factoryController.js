@@ -9,7 +9,7 @@ const {
 const User = require('../models/users/userModel');
 const { encrypt } = require('../utils/crypto');
 
-exports.getOne = (Model, popOptions) =>
+exports.getOne = (Model, popOptions, secretKey) =>
   asyncError(async (req, res, next) => {
     let query = Model.findById(req.params.id);
     if (popOptions) query = query.populate(popOptions);
@@ -27,9 +27,16 @@ exports.getOne = (Model, popOptions) =>
 
     res.status(200).json({
       status: 'success',
-      data: {
-        data: doc
-      }
+      data: secretKey
+        ? encrypt(
+            {
+              data: doc
+            },
+            secretKey
+          )
+        : {
+            data: doc
+          }
     });
   });
 
