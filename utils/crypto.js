@@ -31,6 +31,11 @@ const NOTICE_TYPE_KEY = 'noticetypekey123456789';
 const BLOG_CATEGORY_KEY = 'blogcategorykey123456789';
 const EMAIL_KEY = 'emailkey123456789';
 
+const WEEKLY_REPORT_KEY = 'weeklyreportkey123456789';
+const WORK_LOG_REPORT_KEY = 'worklogreportkey123456789';
+
+const ATTENDANCE_KEY = 'attendancekey123456789';
+
 module.exports = {
   encrypt,
   LATE_ARRIVAL_KEY,
@@ -51,5 +56,8 @@ module.exports = {
   LOG_TYPE_KEY,
   NOTICE_TYPE_KEY,
   BLOG_CATEGORY_KEY,
-  EMAIL_KEY
+  EMAIL_KEY,
+  WEEKLY_REPORT_KEY,
+  WORK_LOG_REPORT_KEY,
+  ATTENDANCE_KEY
 };
