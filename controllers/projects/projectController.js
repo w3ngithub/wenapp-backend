@@ -11,7 +11,7 @@ const Email = require('../../models/email/emailSettingModel');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const { PROJECT_KEY } = require('../../utils/crypto');
 
-exports.getProject = factory.getOne(Project, { path: 'timeLogs' });
+exports.getProject = factory.getOne(Project, { path: 'timeLogs' }, PROJECT_KEY);
 exports.getAllProjects = factory.getAll(Project, PROJECT_KEY);
 exports.createProject = factory.createOne(Project, ActivityLogs, 'Project');
 exports.updateProject = factory.updateOne(Project, ActivityLogs, 'Project');
