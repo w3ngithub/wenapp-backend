@@ -7,6 +7,11 @@ const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
 const APIFeatures = require('../../utils/apiFeatures');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
+const {
+  WEEKLY_REPORT_KEY,
+  encrypt,
+  WORK_LOG_REPORT_KEY
+} = require('../../utils/crypto');
 
 exports.getTimeLog = factory.getOne(TimeLog);
 exports.getAllTimeLogs = factory.getAll(TimeLog);
@@ -508,9 +513,12 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      report
-    }
+    data: encrypt(
+      {
+        report
+      },
+      WEEKLY_REPORT_KEY
+    )
   });
 });
 
@@ -652,8 +660,11 @@ exports.getWorklogReport = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      report
-    }
+    data: encrypt(
+      {
+        report
+      },
+      WORK_LOG_REPORT_KEY
+    )
   });
 });
