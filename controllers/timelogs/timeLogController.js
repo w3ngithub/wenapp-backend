@@ -28,145 +28,252 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     isreport = true;
     delete req.query.isreport;
   }
-  if (
-    TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
-      mongoose.Schema.Types.ObjectId &&
-    req.query.sort.includes('user')
-  ) {
-    const ApiInstance = new APIFeatures(TimeLog.find({}), req.query)
-      .filter()
-      .search()
-      .paginate();
-    const newfeatures = ApiInstance.formattedQuery;
-    const paginatedfeature = ApiInstance.paginateObject;
+  const ApiInstance = new APIFeatures(TimeLog.find({}), req.query)
+    .filter()
+    .search()
+    .paginate();
+  const newfeatures = ApiInstance.formattedQuery;
+  const paginatedfeature = ApiInstance.paginateObject;
 
-    const newFilter = {};
+  // if (
+  //   TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
+  //     mongoose.Schema.Types.ObjectId &&
+  //   req.query.sort.includes('user')
+  // ) {
+  //   const newFilter = {};
 
-    Object.keys(newfeatures).forEach((data) => {
-      if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
-        newFilter[data] = new mongoose.Types.ObjectId(newfeatures[data]);
-      } else {
-        newFilter[data] = newfeatures[data];
-      }
-    });
+  //   Object.keys(newfeatures).forEach((data) => {
+  //     if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
+  //       newFilter[data] = new mongoose.Types.ObjectId(newfeatures[data]);
+  //     } else {
+  //       newFilter[data] = newfeatures[data];
+  //     }
+  //   });
 
-    const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+  //   const orderSort = req.query.sort[0] === '-' ? -1 : 1;
 
-    let aggregateArray = [
-      {
-        $match: newFilter
-      },
-      {
-        $lookup: {
-          from: 'users',
-          let: { user_id: '$user' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
-            {
-              $project: {
-                name: 1
-              }
+  //   let aggregateArray = [
+  //     {
+  //       $match: newFilter
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: 'users',
+  //         let: { user_id: '$user' },
+  //         pipeline: [
+  //           { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+  //           {
+  //             $project: {
+  //               name: 1
+  //             }
+  //           }
+  //         ],
+  //         as: 'user'
+  //       }
+  //     },
+  //     {
+  //       $unwind: '$user'
+  //     },
+  //     {
+  //       $sort: { 'user.name': orderSort }
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: 'projects',
+  //         let: { project_id: '$project' },
+  //         pipeline: [
+  //           { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+  //           { $project: { name: 1, slug: 1 } }
+  //         ],
+  //         as: 'projects'
+  //       }
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: 'timelog_types',
+  //         let: { logtype_id: '$logType' },
+  //         pipeline: [
+  //           { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+  //           { $project: { name: 1 } }
+  //         ],
+  //         as: 'logTypes'
+  //       }
+  //     },
+  //     {
+  //       $set: {
+  //         project: { $arrayElemAt: ['$projects', 0] },
+  //         logType: { $arrayElemAt: ['$logTypes', 0] }
+  //       }
+  //     }
+  //   ];
+
+  //   if (!isreport) {
+  //     aggregateArray = [
+  //       ...aggregateArray,
+  //       {
+  //         $match: {
+  //           $expr: {
+  //             $cond: {
+  //               if: { $eq: ['$logType.name', 'Ot'] },
+  //               then: { $ne: ['$oTStatus', 'pending'] },
+  //               else: {}
+  //             }
+  //           }
+  //         }
+  //       }
+  //     ];
+  //   }
+
+  //   const [sortedData, totalCount] = await Promise.all([
+  //     TimeLog.aggregate([
+  //       ...aggregateArray,
+  //       { $skip: paginatedfeature.skip },
+  //       { $limit: paginatedfeature.limit },
+
+  //       {
+  //         $unset: ['logTypes', 'projects']
+  //       }
+  //     ]),
+  //     TimeLog.countDocuments(newfeatures)
+  //   ]);
+
+  //   return res.status(200).json({
+  //     status: 'success',
+  //     results: sortedData.length,
+  //     data: encrypt(
+  //       {
+  //         data: sortedData,
+  //         count: totalCount
+  //       },
+  //       LOG_KEY
+  //     )
+  //   });
+  // }
+
+  const newFilter = {};
+
+  Object.keys(newfeatures).forEach((data) => {
+    if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
+      newFilter[data] = new mongoose.Types.ObjectId(newfeatures[data]);
+    } else {
+      newFilter[data] = newfeatures[data];
+    }
+  });
+
+  const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+  const sortField =
+    req.query.sort[0] === '-' ? req.query.sort.slice(1) : req.query.sort;
+  let sortObject = {};
+
+  if (sortField === 'user') {
+    sortObject = { 'user.name': orderSort };
+  } else {
+    sortObject = {
+      [sortField]: orderSort
+    };
+  }
+
+  let aggregateArray = [
+    {
+      $match: newFilter
+    },
+    {
+      $lookup: {
+        from: 'users',
+        let: { user_id: '$user' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+          {
+            $project: {
+              name: 1
             }
-          ],
-          as: 'user'
-        }
-      },
-      {
-        $unwind: '$user'
-      },
-      {
-        $sort: { 'user.name': orderSort }
-      },
-      {
-        $lookup: {
-          from: 'projects',
-          let: { project_id: '$project' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
-            { $project: { name: 1, slug: 1 } }
-          ],
-          as: 'projects'
-        }
-      },
-      {
-        $lookup: {
-          from: 'timelog_types',
-          let: { logtype_id: '$logType' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
-            { $project: { name: 1 } }
-          ],
-          as: 'logTypes'
-        }
-      },
-      {
-        $set: {
-          project: { $arrayElemAt: ['$projects', 0] },
-          logType: { $arrayElemAt: ['$logTypes', 0] }
-        }
+          }
+        ],
+        as: 'user'
       }
-    ];
+    },
+    {
+      $unwind: '$user'
+    },
+    {
+      $lookup: {
+        from: 'projects',
+        let: { project_id: '$project' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+          { $project: { name: 1, slug: 1 } }
+        ],
+        as: 'projects'
+      }
+    },
+    {
+      $lookup: {
+        from: 'timelog_types',
+        let: { logtype_id: '$logType' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+          { $project: { name: 1 } }
+        ],
+        as: 'logTypes'
+      }
+    },
+    {
+      $set: {
+        project: { $arrayElemAt: ['$projects', 0] },
+        logType: { $arrayElemAt: ['$logTypes', 0] }
+      }
+    }
+  ];
 
-    if (!isreport) {
-      aggregateArray = [
-        ...aggregateArray,
-        {
-          $match: {
-            $expr: {
-              $cond: {
-                if: { $eq: ['$logType.name', 'Ot'] },
-                then: { $ne: ['$oTStatus', 'pending'] }
-              }
+  if (!isreport) {
+    aggregateArray = [
+      ...aggregateArray,
+      {
+        $match: {
+          $expr: {
+            $cond: {
+              if: { $eq: ['$logType.name', 'Ot'] },
+              then: { $ne: ['$oTStatus', 'pending'] },
+              else: {}
             }
           }
         }
-      ];
-    }
-
-    const [sortedData, totalCount] = await Promise.all([
-      TimeLog.aggregate([
-        ...aggregateArray,
-        { $skip: paginatedfeature.skip },
-        { $limit: paginatedfeature.limit },
-
-        {
-          $unset: ['logTypes', 'projects']
-        }
-      ]),
-      TimeLog.countDocuments(newfeatures)
-    ]);
-
-    return res.status(200).json({
-      status: 'success',
-      results: sortedData.length,
-      data: encrypt(
-        {
-          data: sortedData,
-          count: totalCount
-        },
-        LOG_KEY
-      )
-    });
+      }
+    ];
+  } else {
+    aggregateArray = [
+      ...aggregateArray,
+      {
+        $match: { $eq: ['$logType.name', 'Ot'] }
+      }
+    ];
   }
-  const features = new APIFeatures(TimeLog.find({}), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate()
-    .search();
 
-  const [doc, count] = await Promise.all([
-    features.query,
-    TimeLog.countDocuments(features.formattedQuery)
+  const [sortedData, totalCount] = await Promise.all([
+    TimeLog.aggregate([
+      ...aggregateArray,
+      {
+        $sort: {
+          ...sortObject
+        }
+      },
+      { $skip: paginatedfeature.skip },
+      { $limit: paginatedfeature.limit },
+
+      {
+        $unset: ['logTypes', 'projects']
+      }
+    ]),
+    TimeLog.countDocuments(newfeatures)
   ]);
 
   res.status(200).json({
     status: 'success',
-    results: doc.length,
+    results: sortedData.length,
     data: encrypt(
       {
-        data: doc,
-        count
+        data: sortedData,
+        count: sortedData.length
       },
       LOG_KEY
     )
@@ -191,123 +298,228 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     .limitFields()
     .paginate();
 
-  if (
-    TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
-      mongoose.Schema.Types.ObjectId &&
-    req.query.sort.includes('project')
-  ) {
-    const paginatedfeature = features.paginateObject;
+  // if (
+  //   TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
+  //     mongoose.Schema.Types.ObjectId &&
+  //   req.query.sort.includes('project')
+  // ) {
+  //   const paginatedfeature = features.paginateObject;
 
-    const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+  //   const orderSort = req.query.sort[0] === '-' ? -1 : 1;
 
-    const [sortedData, totalCount] = await Promise.all([
-      TimeLog.aggregate([
-        {
-          $match: {
-            $and: [
-              { logDate: { $gte: firstDayOfWeek } },
-              { logDate: { $lte: lastDayOfWeek } },
-              { user: { $eq: mongoose.Types.ObjectId(req.query.user) } }
-            ]
-          }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            let: { user_id: '$user' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
-              {
-                $project: {
-                  name: 1
-                }
-              }
-            ],
-            as: 'user'
-          }
-        },
-        {
-          $unwind: '$user'
-        },
-        {
-          $lookup: {
-            from: 'projects',
-            let: { project_id: '$project' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
-              {
-                $project: {
-                  name: 1,
-                  slug: 1,
-                  lowerName: { $toLower: '$name' }
-                }
-              }
-            ],
-            as: 'project'
-          }
-        },
-        {
-          $unwind: '$project'
-        },
-        {
-          $sort: {
-            'project.lowerName': orderSort
-          }
-        },
-        {
-          $lookup: {
-            from: 'timelog_types',
-            let: { logtype_id: '$logType' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
-              { $project: { name: 1 } }
-            ],
-            as: 'logTypes'
-          }
-        },
-        {
-          $set: {
-            logType: { $arrayElemAt: ['$logTypes', 0] }
-          }
-        },
-        {
-          $match: {
-            $expr: {
-              $cond: {
-                if: { $eq: ['$logType.name', 'Ot'] },
-                then: { oTStatus: { $ne: 'pending' } }
-              }
-            }
-          }
-        },
-        { $skip: paginatedfeature.skip },
-        { $limit: paginatedfeature.limit },
+  //   const [sortedData, totalCount] = await Promise.all([
+  //     TimeLog.aggregate([
+  //       {
+  //         $match: {
+  //           $and: [
+  //             { logDate: { $gte: firstDayOfWeek } },
+  //             { logDate: { $lte: lastDayOfWeek } },
+  //             { user: { $eq: mongoose.Types.ObjectId(req.query.user) } }
+  //           ]
+  //         }
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: 'users',
+  //           let: { user_id: '$user' },
+  //           pipeline: [
+  //             { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+  //             {
+  //               $project: {
+  //                 name: 1
+  //               }
+  //             }
+  //           ],
+  //           as: 'user'
+  //         }
+  //       },
+  //       {
+  //         $unwind: '$user'
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: 'projects',
+  //           let: { project_id: '$project' },
+  //           pipeline: [
+  //             { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+  //             {
+  //               $project: {
+  //                 name: 1,
+  //                 slug: 1,
+  //                 lowerName: { $toLower: '$name' }
+  //               }
+  //             }
+  //           ],
+  //           as: 'project'
+  //         }
+  //       },
+  //       {
+  //         $set: {
+  //           project: { $arrayElemAt: ['$project', 0] }
+  //         }
+  //       },
+  //       {
+  //         $sort: {
+  //           'project.lowerName': orderSort
+  //         }
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: 'timelog_types',
+  //           let: { logtype_id: '$logType' },
+  //           pipeline: [
+  //             { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+  //             { $project: { name: 1 } }
+  //           ],
+  //           as: 'logTypes'
+  //         }
+  //       },
+  //       {
+  //         $set: {
+  //           logType: { $arrayElemAt: ['$logTypes', 0] }
+  //         }
+  //       },
+  //       {
+  //         $match: {
+  //           $expr: {
+  //             $cond: {
+  //               if: { $eq: ['$logType.name', 'OT'] },
+  //               then: { $ne: ['$oTStatus', 'pending'] },
+  //               else: {}
+  //             }
+  //           }
+  //         }
+  //       },
+  //       { $skip: paginatedfeature.skip },
+  //       { $limit: paginatedfeature.limit },
 
-        {
-          $unset: ['logTypes', 'projects', 'project.lowerName']
-        }
-      ]),
-      TimeLog.countDocuments({
-        ...features.formattedQuery,
-        logDate: { $gte: firstDayOfWeek }
-      })
-    ]);
+  //       {
+  //         $unset: ['logTypes', 'projects', 'project.lowerName']
+  //       }
+  //     ]),
+  //     TimeLog.countDocuments({
+  //       ...features.formattedQuery,
+  //       logDate: { $gte: firstDayOfWeek }
+  //     })
+  //   ]);
 
-    return res.status(200).json({
-      status: 'success',
-      results: sortedData.length,
-      data: encrypt(
-        {
-          data: sortedData,
-          count: totalCount
-        },
-        LOG_KEY
-      )
-    });
+  //   return res.status(200).json({
+  //     status: 'success',
+  //     results: sortedData.length,
+  //     data: encrypt(
+  //       {
+  //         data: sortedData,
+  //         count: totalCount
+  //       },
+  //       LOG_KEY
+  //     )
+  //   });
+  // }
+
+  const paginatedfeature = features.paginateObject;
+
+  const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+  const sortField =
+    req.query.sort[0] === '-' ? req.query.sort.slice(1) : req.query.sort;
+
+  let sortObject = {};
+
+  if (sortField === 'project') {
+    sortObject = { 'project.lowerName': orderSort };
+  } else {
+    sortObject = { [sortField]: orderSort };
   }
 
-  const [doc, count] = await Promise.all([
-    features.query,
+  const [sortedData, totalCount] = await Promise.all([
+    TimeLog.aggregate([
+      {
+        $match: {
+          $and: [
+            { logDate: { $gte: firstDayOfWeek } },
+            { logDate: { $lte: lastDayOfWeek } },
+            { user: { $eq: mongoose.Types.ObjectId(req.query.user) } }
+          ]
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          let: { user_id: '$user' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+            {
+              $project: {
+                name: 1
+              }
+            }
+          ],
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $lookup: {
+          from: 'projects',
+          let: { project_id: '$project' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+            {
+              $project: {
+                name: 1,
+                slug: 1,
+                lowerName: { $toLower: '$name' }
+              }
+            }
+          ],
+          as: 'project'
+        }
+      },
+      {
+        $set: {
+          project: { $arrayElemAt: ['$project', 0] }
+        }
+      },
+      {
+        $lookup: {
+          from: 'timelog_types',
+          let: { logtype_id: '$logType' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+            { $project: { name: 1 } }
+          ],
+          as: 'logTypes'
+        }
+      },
+      {
+        $set: {
+          logType: { $arrayElemAt: ['$logTypes', 0] }
+        }
+      },
+      {
+        $match: {
+          $expr: {
+            $cond: {
+              if: { $eq: ['$logType.name', 'Ot'] },
+              then: { $ne: ['$oTStatus', 'pending'] },
+              else: {}
+            }
+          }
+        }
+      },
+      {
+        $sort: {
+          ...sortObject
+        }
+      },
+      { $skip: paginatedfeature.skip },
+      { $limit: paginatedfeature.limit },
+
+      {
+        $unset: ['logTypes', 'projects', 'project.lowerName']
+      }
+    ]),
     TimeLog.countDocuments({
       ...features.formattedQuery,
       logDate: { $gte: firstDayOfWeek }
@@ -316,11 +528,11 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    results: doc.length,
+    results: sortedData.length,
     data: encrypt(
       {
-        data: doc,
-        count
+        data: sortedData,
+        count: sortedData.length
       },
       LOG_KEY
     )
