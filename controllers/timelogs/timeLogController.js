@@ -268,7 +268,7 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
             $expr: {
               $cond: {
                 if: { $eq: ['$logType.name', 'Ot'] },
-                then: { $ne: ['$oTStatus', 'pending'] }
+                then: { oTStatus: { $ne: 'pending' } }
               }
             }
           }
