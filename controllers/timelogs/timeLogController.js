@@ -23,6 +23,11 @@ exports.deleteTimeLog = factory.deleteOne(TimeLog, ActivityLogs, 'TimeLog');
 //get all the timelogs with sorting
 
 exports.getAllTimeLogs = asyncError(async (req, res, next) => {
+  let isreport = false;
+  if (req.query.isreport) {
+    isreport = true;
+    delete req.query.isreport;
+  }
   if (
     TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
       mongoose.Schema.Types.ObjectId &&
@@ -44,64 +49,86 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
         newFilter[data] = newfeatures[data];
       }
     });
+
     const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+
+    let aggregateArray = [
+      {
+        $match: newFilter
+      },
+      {
+        $lookup: {
+          from: 'users',
+          let: { user_id: '$user' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+            {
+              $project: {
+                name: 1
+              }
+            }
+          ],
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $sort: { 'user.name': orderSort }
+      },
+      {
+        $lookup: {
+          from: 'projects',
+          let: { project_id: '$project' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+            { $project: { name: 1, slug: 1 } }
+          ],
+          as: 'projects'
+        }
+      },
+      {
+        $lookup: {
+          from: 'timelog_types',
+          let: { logtype_id: '$logType' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+            { $project: { name: 1 } }
+          ],
+          as: 'logTypes'
+        }
+      },
+      {
+        $set: {
+          project: { $arrayElemAt: ['$projects', 0] },
+          logType: { $arrayElemAt: ['$logTypes', 0] }
+        }
+      }
+    ];
+
+    if (!isreport) {
+      aggregateArray = [
+        ...aggregateArray,
+        {
+          $match: {
+            $expr: {
+              $cond: {
+                if: { $eq: ['$logType.name', 'Ot'] },
+                then: { $ne: ['$oTStatus', 'pending'] }
+              }
+            }
+          }
+        }
+      ];
+    }
 
     const [sortedData, totalCount] = await Promise.all([
       TimeLog.aggregate([
-        {
-          $match: newFilter
-        },
-        {
-          $lookup: {
-            from: 'users',
-            let: { user_id: '$user' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
-              {
-                $project: {
-                  name: 1
-                }
-              }
-            ],
-            as: 'user'
-          }
-        },
-        {
-          $unwind: '$user'
-        },
-        {
-          $sort: { 'user.name': orderSort }
-        },
-        {
-          $lookup: {
-            from: 'projects',
-            let: { project_id: '$project' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
-              { $project: { name: 1, slug: 1 } }
-            ],
-            as: 'projects'
-          }
-        },
-        {
-          $lookup: {
-            from: 'timelog_types',
-            let: { logtype_id: '$logType' },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
-              { $project: { name: 1 } }
-            ],
-            as: 'logTypes'
-          }
-        },
+        ...aggregateArray,
         { $skip: paginatedfeature.skip },
         { $limit: paginatedfeature.limit },
-        {
-          $set: {
-            project: { $arrayElemAt: ['$projects', 0] },
-            logType: { $arrayElemAt: ['$logTypes', 0] }
-          }
-        },
+
         {
           $unset: ['logTypes', 'projects']
         }
@@ -238,13 +265,24 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
             as: 'logTypes'
           }
         },
-        { $skip: paginatedfeature.skip },
-        { $limit: paginatedfeature.limit },
         {
           $set: {
             logType: { $arrayElemAt: ['$logTypes', 0] }
           }
         },
+        {
+          $match: {
+            $expr: {
+              $cond: {
+                if: { $eq: ['$logType.name', 'Ot'] },
+                then: { $ne: ['$oTStatus', 'pending'] }
+              }
+            }
+          }
+        },
+        { $skip: paginatedfeature.skip },
+        { $limit: paginatedfeature.limit },
+
         {
           $unset: ['logTypes', 'projects', 'project.lowerName']
         }
