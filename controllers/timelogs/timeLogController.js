@@ -244,7 +244,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     aggregateArray = [
       ...aggregateArray,
       {
-        $match: { $eq: ['$logType.name', 'Ot'] }
+        $match: { 'logType.name': { $eq: 'Ot' } }
       }
     ];
   }
