@@ -10,11 +10,12 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const {
   WEEKLY_REPORT_KEY,
   encrypt,
-  WORK_LOG_REPORT_KEY
+  WORK_LOG_REPORT_KEY,
+  LOG_KEY
 } = require('../../utils/crypto');
 
 exports.getTimeLog = factory.getOne(TimeLog);
-exports.getAllTimeLogs = factory.getAll(TimeLog);
+// exports.getAllTimeLogs = factory.getAll(TimeLog);
 exports.createTimeLog = factory.createOne(TimeLog);
 exports.updateTimeLog = factory.updateOne(TimeLog);
 exports.deleteTimeLog = factory.deleteOne(TimeLog, ActivityLogs, 'TimeLog');
@@ -138,10 +139,13 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     return res.status(200).json({
       status: 'success',
       results: sortedData.length,
-      data: {
-        data: sortedData,
-        count: totalCount
-      }
+      data: encrypt(
+        {
+          data: sortedData,
+          count: totalCount
+        },
+        LOG_KEY
+      )
     });
   }
   const features = new APIFeatures(TimeLog.find({}), req.query)
@@ -159,10 +163,13 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: doc.length,
-    data: {
-      data: doc,
-      count
-    }
+    data: encrypt(
+      {
+        data: doc,
+        count
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -289,10 +296,13 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     return res.status(200).json({
       status: 'success',
       results: sortedData.length,
-      data: {
-        data: sortedData,
-        count: totalCount
-      }
+      data: encrypt(
+        {
+          data: sortedData,
+          count: totalCount
+        },
+        LOG_KEY
+      )
     });
   }
 
@@ -307,10 +317,13 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: doc.length,
-    data: {
-      data: doc,
-      count
-    }
+    data: encrypt(
+      {
+        data: doc,
+        count
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -404,9 +417,12 @@ exports.getUserWeeklyTimeSpent = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      weeklySummary: userTimeSummary
-    }
+    data: encrypt(
+      {
+        weeklySummary: userTimeSummary
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -439,9 +455,12 @@ exports.getWeeklyTimeSpentProject = asyncError(async (req, res, next) => {
   ]);
   res.status(200).json({
     status: 'success',
-    data: {
-      weeklySummary: timeSpendWeekly
-    }
+    data: encrypt(
+      {
+        weeklySummary: timeSpendWeekly
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -471,9 +490,12 @@ exports.getUserTodayTimeSpent = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      timeSpentToday
-    }
+    data: encrypt(
+      {
+        timeSpentToday
+      },
+      LOG_KEY
+    )
   });
 });
 
