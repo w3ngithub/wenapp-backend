@@ -45,6 +45,10 @@ const timeLogSchema = new mongoose.Schema(
     oTStatus: {
       type: String,
       enum: ['pending', 'approved']
+    },
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
     }
   },
   {
