@@ -40,6 +40,10 @@ const timeLogSchema = new mongoose.Schema(
       trim: true,
       required: [true, 'Please provide remarks.'],
       minlength: [10, 'Remarks must have more or equal then 50 characters']
+    },
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
     }
   },
   {
