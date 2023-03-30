@@ -68,6 +68,27 @@ timeLogSchema.post('findOneAndUpdate', async function (next) {
   docToUpdate.save();
 });
 
+timeLogSchema.pre('findOneAndUpdate', async function (next) {
+  const docToUpdate = await this.model.findOne(this.getQuery());
+  const projectId = docToUpdate.project
+    ? docToUpdate.project._id
+    : process.env.OTHER_PROJECT_ID;
+
+  const logTime = docToUpdate.project ? docToUpdate.totalHours : 0;
+
+  if (
+    docToUpdate.project &&
+    mongoose.Types.ObjectId(this._update.project).toString() !==
+      projectId.toString()
+  ) {
+    const project = await Project.findById(projectId);
+    project.totalTimeSpent -= logTime;
+    project.save();
+  }
+
+  next();
+});
+
 // Calculate total time spent for project before deletoin of log from db
 timeLogSchema.pre('findOneAndDelete', async function (next) {
   const docToUpdate = await this.model.findOne(this.getQuery());
