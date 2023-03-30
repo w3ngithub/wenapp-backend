@@ -149,7 +149,10 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
         $unset: ['logTypes', 'projects']
       }
     ]),
-    TimeLog.countDocuments(newfeatures)
+    TimeLog.aggregate([
+      ...aggregateArray,
+      { $group: { _id: null, count: { $sum: 1 } } }
+    ])
   ]);
 
   res.status(200).json({
@@ -158,7 +161,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     data: encrypt(
       {
         data: sortedData,
-        count: sortedData.length
+        count: totalCount[0].count
       },
       LOG_KEY
     )
@@ -169,19 +172,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
 exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
   const { firstDayOfWeek, lastDayOfWeek } = common.dateInThisWeek();
 
-  const features = new APIFeatures(
-    TimeLog.find({
-      $and: [
-        { logDate: { $gte: firstDayOfWeek } },
-        { logDate: { $lte: lastDayOfWeek } }
-      ]
-    }),
-    req.query
-  )
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
+  const features = new APIFeatures(TimeLog.find(), req.query).paginate();
 
   const paginatedfeature = features.paginateObject;
 
@@ -197,84 +188,88 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     sortObject = { [sortField]: orderSort };
   }
 
-  const [sortedData, totalCount] = await Promise.all([
-    TimeLog.aggregate([
-      {
-        $match: {
-          $and: [
-            { logDate: { $gte: firstDayOfWeek } },
-            { logDate: { $lte: lastDayOfWeek } },
-            { user: { $eq: mongoose.Types.ObjectId(req.query.user) } }
-          ]
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          let: { user_id: '$user' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
-            {
-              $project: {
-                name: 1
-              }
-            }
-          ],
-          as: 'user'
-        }
-      },
-      {
-        $unwind: '$user'
-      },
-      {
-        $lookup: {
-          from: 'projects',
-          let: { project_id: '$project' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
-            {
-              $project: {
-                name: 1,
-                slug: 1,
-                lowerName: { $toLower: '$name' }
-              }
-            }
-          ],
-          as: 'project'
-        }
-      },
-      {
-        $set: {
-          project: { $arrayElemAt: ['$project', 0] }
-        }
-      },
-      {
-        $lookup: {
-          from: 'timelog_types',
-          let: { logtype_id: '$logType' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
-            { $project: { name: 1 } }
-          ],
-          as: 'logTypes'
-        }
-      },
-      {
-        $set: {
-          logType: { $arrayElemAt: ['$logTypes', 0] }
-        }
-      },
-      {
-        $match: {
-          $expr: {
-            $cond: {
-              if: { $eq: ['$logType.name', 'Ot'] },
-              then: { $ne: ['$oTStatus', 'pending'] },
-              else: {}
+  const aggregateArray = [
+    {
+      $match: {
+        $and: [
+          { logDate: { $gte: firstDayOfWeek } },
+          { logDate: { $lte: lastDayOfWeek } },
+          { user: { $eq: mongoose.Types.ObjectId(req.query.user) } }
+        ]
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        let: { user_id: '$user' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$$user_id', '$_id'] } } },
+          {
+            $project: {
+              name: 1
             }
           }
+        ],
+        as: 'user'
+      }
+    },
+    {
+      $unwind: '$user'
+    },
+    {
+      $lookup: {
+        from: 'projects',
+        let: { project_id: '$project' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
+          {
+            $project: {
+              name: 1,
+              slug: 1,
+              lowerName: { $toLower: '$name' }
+            }
+          }
+        ],
+        as: 'project'
+      }
+    },
+    {
+      $set: {
+        project: { $arrayElemAt: ['$project', 0] }
+      }
+    },
+    {
+      $lookup: {
+        from: 'timelog_types',
+        let: { logtype_id: '$logType' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
+          { $project: { name: 1 } }
+        ],
+        as: 'logTypes'
+      }
+    },
+    {
+      $set: {
+        logType: { $arrayElemAt: ['$logTypes', 0] }
+      }
+    },
+    {
+      $match: {
+        $expr: {
+          $cond: {
+            if: { $eq: ['$logType.name', 'Ot'] },
+            then: { $ne: ['$oTStatus', 'pending'] },
+            else: {}
+          }
         }
-      },
+      }
+    }
+  ];
+
+  const [sortedData, totalCount] = await Promise.all([
+    TimeLog.aggregate([
+      ...aggregateArray,
       {
         $sort: {
           ...sortObject
@@ -287,10 +282,10 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
         $unset: ['logTypes', 'projects', 'project.lowerName']
       }
     ]),
-    TimeLog.countDocuments({
-      ...features.formattedQuery,
-      logDate: { $gte: firstDayOfWeek }
-    })
+    TimeLog.aggregate([
+      ...aggregateArray,
+      { $group: { _id: null, count: { $sum: 1 } } }
+    ])
   ]);
 
   res.status(200).json({
@@ -299,7 +294,7 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     data: encrypt(
       {
         data: sortedData,
-        count: sortedData.length
+        count: totalCount[0].count
       },
       LOG_KEY
     )
