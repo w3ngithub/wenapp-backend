@@ -298,8 +298,22 @@ exports.checkTimeLogDays = (req, res, next) => {
 
   const allowedTimeLogDays = process.env.ALLOWED_TIMELOG_DAYS;
 
+  const allowedTImeLogsOnMonday = 3;
+
   if (!['admin', 'manager'].includes(req.user.roleKey)) {
-    if (!(today - logDay <= allowedTimeLogDays)) {
+    // allow log before 3 days on monday
+    if (new Date().getDay() === 1) {
+      if (!(today - logDay <= allowedTImeLogsOnMonday)) {
+        return next(
+          new AppError(
+            `You are not allowed to add/edit time log after ${allowedTImeLogsOnMonday} Days`,
+            400
+          )
+        );
+      }
+    }
+
+    if (!(today - logDay <= allowedTimeLogDays) && new Date().getDay() !== 1) {
       return next(
         new AppError(
           `You are not allowed to add/edit time log after ${allowedTimeLogDays} Days`,

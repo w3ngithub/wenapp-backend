@@ -282,6 +282,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             punchOutLocation: '$punchOutLocation',
             punchInIp: '$punchInIp',
             punchOutIp: '$punchOutIp',
+            isLateArrival: '$isLateArrival',
             punchTimeDifference: {
               $dateDiff: {
                 startDate: '$punchInTime',
