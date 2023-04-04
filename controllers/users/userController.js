@@ -141,9 +141,13 @@ exports.importUsers = asyncError(async (req, res, next) => {
       ? new Date(tranformDate(user.joinDate))
       : new Date(),
     maritalStatus: user.maritalStatus,
-    role:
-      userRoles.find((role) => role.key === user.role)._id ||
-      userRoles.find((role) => role.key === 'subscriber')._id
+    role: userRoles.find(
+      (role) => role.key.toLowerCase() === user.role.toLowerCase()
+    )
+      ? userRoles.find(
+          (role) => role.key.toLowerCase() === user.role.toLowerCase()
+        )._id
+      : userRoles.find((role) => role.key.toLowerCase() === 'subscriber')._id
   }));
   await User.insertMany([...users], { lean: true });
 
