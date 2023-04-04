@@ -44,6 +44,17 @@ const timeLogSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.ObjectId,
       ref: 'User'
+    },
+    isOt: {
+      type: Boolean,
+      default: false
+    },
+    otStatus: {
+      type: String,
+      enum: ['P', 'A', 'R']
+    },
+    otRejectReason: {
+      type: String
     }
   },
   {
