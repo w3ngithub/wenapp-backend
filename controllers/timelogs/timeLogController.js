@@ -426,6 +426,78 @@ exports.getWeeklyTimeSpentProject = asyncError(async (req, res, next) => {
   });
 });
 
+// Get weekly time summary of timelogs
+exports.getWeeklyOtherTimeLog = asyncError(async (req, res) => {
+  const projectId = mongoose.Types.ObjectId(process.env.OTHER_PROJECT_ID);
+
+  const { firstDayOfWeek, lastDayOfWeek } = common.dateInThisWeek();
+
+  const OtherProjectTimeSummary = await TimeLog.aggregate([
+    {
+      $match: {
+        project: projectId,
+        $and: [
+          { logDate: { $gte: firstDayOfWeek } },
+          { logDate: { $lte: lastDayOfWeek } }
+        ]
+      }
+    },
+
+    {
+      $group: {
+        _id: null,
+        timeSpentThisWeek: { $sum: '$totalHours' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: encrypt(
+      {
+        weeklySummary: OtherProjectTimeSummary
+      },
+      LOG_KEY
+    )
+  });
+});
+
+//today time spent on other project
+exports.getTodayOtherTimeLog = asyncError(async (req, res) => {
+  const projectId = mongoose.Types.ObjectId(process.env.OTHER_PROJECT_ID);
+
+  const { todayDate, tomorrowDate } = common.todayTomorrowDate();
+
+  const timeSpentToday = await TimeLog.aggregate([
+    {
+      $match: {
+        project: projectId,
+        $and: [
+          { logDate: { $gte: todayDate } },
+          { logDate: { $lt: tomorrowDate } }
+        ]
+      }
+    },
+
+    {
+      $group: {
+        _id: null,
+        timeSpentToday: { $sum: '$totalHours' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: encrypt(
+      {
+        timeSpentToday
+      },
+      LOG_KEY
+    )
+  });
+});
+
 // Get user total time spent on a day for projects
 exports.getUserTodayTimeSpent = asyncError(async (req, res, next) => {
   const userId = mongoose.Types.ObjectId(req.user.id);
