@@ -25,8 +25,7 @@ exports.deleteTimeLog = factory.deleteOne(TimeLog, ActivityLogs, 'TimeLog');
 exports.getAllTimeLogs = asyncError(async (req, res, next) => {
   if (
     TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
-      mongoose.Schema.Types.ObjectId &&
-    req.query.sort.includes('user')
+    mongoose.Schema.Types.ObjectId
   ) {
     const ApiInstance = new APIFeatures(TimeLog.find({}), req.query)
       .filter()
@@ -47,7 +46,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     const orderSort = req.query.sort[0] === '-' ? -1 : 1;
     const sortField = req.query.sort.replace('-', '');
 
-    const sortObject = { [`${sortField}.name`]: orderSort };
+    const sortObject = { $sort: { [`${sortField}.name`]: orderSort } };
 
     const [sortedData, totalCount] = await Promise.all([
       TimeLog.aggregate([
@@ -73,7 +72,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
           $unwind: '$user'
         },
         {
-          $sort: sortObject
+          ...sortObject
         },
         {
           $lookup: {
