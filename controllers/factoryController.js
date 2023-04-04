@@ -222,7 +222,12 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
             ? causalLeave.leaveDays - (leaveNotEntitled - sickLeave.leaveDays)
             : sickLeave.leaveDays;
 
-        console.log({ leaveNotEntitled, userLeaveDoc });
+        console.log({
+          leaveNotEntitled,
+          userLeaveDoc,
+          totalSickCausalLeave,
+          updatedYearAllocatedLeave
+        });
 
         await userLeaveDoc.save();
       }
