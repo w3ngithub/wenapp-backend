@@ -39,6 +39,13 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     Object.keys(newfeatures).forEach((data) => {
       if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
         newFilter[data] = new mongoose.Types.ObjectId(newfeatures[data]);
+      } else if (data === 'isOt') {
+        newFilter[data] = !!newfeatures[data];
+      } else if (data === 'logDate') {
+        newFilter[data] = {
+          $gte: new Date(newfeatures[data].$gte),
+          $lte: new Date(newfeatures[data].$lte)
+        };
       } else {
         newFilter[data] = newfeatures[data];
       }
@@ -47,6 +54,8 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     const sortField = req.query.sort.replace('-', '');
 
     const sortObject = { $sort: { [`${sortField}.name`]: orderSort } };
+
+    console.log(newFilter);
 
     const [sortedData, totalCount] = await Promise.all([
       TimeLog.aggregate([
