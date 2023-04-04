@@ -226,7 +226,9 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
           leaveNotEntitled,
           userLeaveDoc,
           totalSickCausalLeave,
-          updatedYearAllocatedLeave
+          updatedYearAllocatedLeave,
+          futureQuartersLeaves,
+          currentQuarterAllocatedLeaves
         });
 
         await userLeaveDoc.save();
