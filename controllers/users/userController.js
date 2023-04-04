@@ -124,7 +124,7 @@ exports.importUsers = asyncError(async (req, res, next) => {
     name: user.name,
     username: user.username,
     email: user.email,
-    // password: user.password,
+    password: 'test',
     photoUrl: null,
     status: 'Permanent',
     allocatedLeaves: {
@@ -136,7 +136,7 @@ exports.importUsers = asyncError(async (req, res, next) => {
     active: user.active === 'TRUE',
     dob: user.dob ? new Date(tranformDate(user.dob)) : new Date(),
     gender: user.gender,
-    primaryPhone: user.primaryphone || 123456,
+    primaryPhone: +user.primaryphone || 123456,
     joinDate: user.joindate
       ? new Date(tranformDate(user.joindate))
       : new Date(),
