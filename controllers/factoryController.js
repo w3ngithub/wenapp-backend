@@ -201,7 +201,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
 
         const futureQuartersLeaves = latestYearQuarter.quarters
           .slice(indexOfCurrentQuarter + 1)
-          .reduce((acc, q) => acc + q, 0);
+          .reduce((acc, q) => (q.leaves ? acc + q.leaves : 0), 0);
 
         const updatedYearAllocatedLeave =
           futureQuartersLeaves + currentQuarterAllocatedLeaves;
