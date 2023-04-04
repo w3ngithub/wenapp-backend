@@ -120,35 +120,48 @@ exports.importUsers = asyncError(async (req, res, next) => {
     return `${date[0]}${date[1]}${date[2]}${date[3]}-${date[4]}${date[5]}-${date[6]}${date[7]}`;
   };
 
-  const users = req.body.map((user) => ({
-    name: user.name,
-    username: user.username,
-    email: user.email,
-    password: user.password,
-    photoUrl: null,
-    status: 'Permanent',
-    allocatedLeaves: {
-      firstQuarter: 4,
-      secondQuarter: 4,
-      thirdQuarter: 4,
-      fourthQuarter: 3
-    },
-    active: user.active === 'TRUE',
-    dob: user.dob ? new Date(tranformDate(user.dob)) : new Date(),
-    gender: user.gender,
-    primaryPhone: user.primaryPhone || 123456,
-    joinDate: user.joinDate
-      ? new Date(tranformDate(user.joinDate))
-      : new Date(),
-    maritalStatus: user.maritalStatus,
-    role: userRoles.find(
-      (role) => role.key.toLowerCase() === user.role.toLowerCase()
-    )
-      ? userRoles.find(
-          (role) => role.key.toLowerCase() === user.role.toLowerCase()
-        )._id
-      : userRoles.find((role) => role.key.toLowerCase() === 'subscriber')._id
-  }));
+  const users = req.body
+    .map((user) => {
+      let key;
+      const keys = Object.keys(user);
+      let n = keys.length;
+      const newobj = {};
+      while (n--) {
+        key = keys[n];
+        newobj[key.toLowerCase()] = user[key];
+      }
+      return newobj;
+    })
+    .map((user) => ({
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      // password: user.password,
+      photoUrl: null,
+      status: 'Permanent',
+      allocatedLeaves: {
+        firstQuarter: 4,
+        secondQuarter: 4,
+        thirdQuarter: 4,
+        fourthQuarter: 3
+      },
+      active: user.active === 'TRUE',
+      dob: user.dob ? new Date(tranformDate(user.dob)) : new Date(),
+      gender: user.gender,
+      primaryPhone: user.primaryphone || 123456,
+      joinDate: user.joindate
+        ? new Date(tranformDate(user.joindate))
+        : new Date(),
+      maritalStatus: user.maritalstatus,
+      role: userRoles.find(
+        (role) => role.key.toLowerCase() === user.role.toLowerCase()
+      )
+        ? userRoles.find(
+            (role) => role.key.toLowerCase() === user.role.toLowerCase()
+          )._id
+        : userRoles.find((role) => role.key.toLowerCase() === 'subscriber')._id
+    }));
+
   await User.insertMany([...users], { lean: true });
 
   res.status(200).json({
