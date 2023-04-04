@@ -91,7 +91,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
               { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
               { $project: { name: 1 } }
             ],
-            as: 'logTypes'
+            as: 'logType'
           }
         },
         {
@@ -102,7 +102,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
         {
           $set: {
             project: { $arrayElemAt: ['$project', 0] },
-            logType: { $arrayElemAt: ['$logTypes', 0] }
+            logType: { $arrayElemAt: ['$logType', 0] }
           }
         },
         {
