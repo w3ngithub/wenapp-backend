@@ -71,9 +71,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
         {
           $unwind: '$user'
         },
-        {
-          ...sortObject
-        },
+
         {
           $lookup: {
             from: 'projects',
@@ -82,7 +80,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
               { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
               { $project: { name: 1, slug: 1 } }
             ],
-            as: 'projects'
+            as: 'project'
           }
         },
         {
@@ -96,11 +94,14 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
             as: 'logTypes'
           }
         },
+        {
+          ...sortObject
+        },
         { $skip: paginatedfeature.skip },
         { $limit: paginatedfeature.limit },
         {
           $set: {
-            project: { $arrayElemAt: ['$projects', 0] },
+            project: { $arrayElemAt: ['$project', 0] },
             logType: { $arrayElemAt: ['$logTypes', 0] }
           }
         },
