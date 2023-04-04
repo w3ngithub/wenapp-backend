@@ -113,9 +113,6 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
             project: { $arrayElemAt: ['$project', 0] },
             logType: { $arrayElemAt: ['$logType', 0] }
           }
-        },
-        {
-          $unset: ['logTypes', 'projects']
         }
       ]),
       TimeLog.countDocuments(newfeatures)
