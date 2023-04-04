@@ -210,7 +210,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
           sickLeave.leaveDays + causalLeave.leaveDays;
 
         const leaveNotEntitled =
-          totalSickCausalLeave - updatedYearAllocatedLeave;
+          totalSickCausalLeave - (updatedYearAllocatedLeave || 0);
 
         userLeaveDoc.yearSickAllocatedLeaves =
           leaveNotEntitled > sickLeave.leaveDays
@@ -221,6 +221,8 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
           leaveNotEntitled > sickLeave.leaveDays
             ? causalLeave.leaveDays - (leaveNotEntitled - sickLeave.leaveDays)
             : sickLeave.leaveDays;
+
+        console.log({ leaveNotEntitled, userLeaveDoc });
 
         await userLeaveDoc.save();
       }
