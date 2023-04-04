@@ -183,10 +183,14 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
         const leaveTypes = await LeaveTypes.find();
 
         const sickLeave = leaveTypes.find(
-          (type) => type.name === LEAVETYPES.casualLeave
+          (type) =>
+            type.name.toString().toLowerCase() ===
+            LEAVETYPES.casualLeave.toString().toLowerCase()
         );
         const causalLeave = leaveTypes.find(
-          (type) => type.name === LEAVETYPES.sickLeave
+          (type) =>
+            type.name.toString().toLowerCase() ===
+            LEAVETYPES.sickLeave.toString().toLowerCase()
         );
 
         const indexOfCurrentQuarter = latestYearQuarter.quarters.findIndex(
