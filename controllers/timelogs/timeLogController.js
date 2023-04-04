@@ -55,8 +55,6 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
 
     const sortObject = { $sort: { [`${sortField}.name`]: orderSort } };
 
-    console.log(newFilter);
-
     const [sortedData, totalCount] = await Promise.all([
       TimeLog.aggregate([
         {
