@@ -124,7 +124,7 @@ exports.importUsers = asyncError(async (req, res, next) => {
     name: user.name,
     username: user.username,
     email: user.email,
-    password: user.password,
+    password: 'test',
     photoUrl: null,
     status: 'Permanent',
     allocatedLeaves: {
@@ -136,15 +136,20 @@ exports.importUsers = asyncError(async (req, res, next) => {
     active: user.active === 'TRUE',
     dob: user.dob ? new Date(tranformDate(user.dob)) : new Date(),
     gender: user.gender,
-    primaryPhone: user.primaryPhone || 123456,
-    joinDate: user.joinDate
-      ? new Date(tranformDate(user.joinDate))
+    primaryPhone: +user.primaryphone || 123456,
+    joinDate: user.joindate
+      ? new Date(tranformDate(user.joindate))
       : new Date(),
-    maritalStatus: user.maritalStatus,
-    role:
-      userRoles.find((role) => role.key === user.role)._id ||
-      userRoles.find((role) => role.key === 'subscriber')._id
+    maritalStatus: user.maritalstatus,
+    role: userRoles.find(
+      (role) => role.key.toLowerCase() === user.role.toLowerCase()
+    )
+      ? userRoles.find(
+          (role) => role.key.toLowerCase() === user.role.toLowerCase()
+        )._id
+      : userRoles.find((role) => role.key.toLowerCase() === 'subscriber')._id
   }));
+
   await User.insertMany([...users], { lean: true });
 
   res.status(200).json({
