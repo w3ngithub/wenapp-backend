@@ -15,6 +15,7 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const { LeaveQuarter } = require('../../models/leaves/leaveQuarter');
 const common = require('../../utils/common');
 const UserLeave = require('../../models/leaves/UserLeavesModel');
+const { USER_INVITE_KEY } = require('../../utils/crypto');
 
 // Create sign-in token
 const signToken = (id) =>
@@ -409,4 +410,4 @@ exports.logout = (req, res) => {
   res.status(200).json({ status: 'success' });
 };
 
-exports.getAllInvitedUsers = factory.getAll(Invite);
+exports.getAllInvitedUsers = factory.getAll(Invite, USER_INVITE_KEY);

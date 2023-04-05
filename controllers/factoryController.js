@@ -12,8 +12,9 @@ const UserLeave = require('../models/leaves/UserLeavesModel');
 const LeaveTypes = require('../models/leaves/leaveTypeModel');
 const { LeaveQuarter } = require('../models/leaves/leaveQuarter');
 const { todayDate, getNumberOfMonthsInAQuarter } = require('../utils/common');
+const { encrypt } = require('../utils/crypto');
 
-exports.getOne = (Model, popOptions) =>
+exports.getOne = (Model, popOptions, secretKey) =>
   asyncError(async (req, res, next) => {
     let query = Model.findById(req.params.id);
     if (popOptions) query = query.populate(popOptions);
@@ -31,13 +32,20 @@ exports.getOne = (Model, popOptions) =>
 
     res.status(200).json({
       status: 'success',
-      data: {
-        data: doc
-      }
+      data: secretKey
+        ? encrypt(
+            {
+              data: doc
+            },
+            secretKey
+          )
+        : {
+            data: doc
+          }
     });
   });
 
-exports.getAll = (Model) =>
+exports.getAll = (Model, secretKey) =>
   asyncError(async (req, res, next) => {
     const features = new APIFeatures(Model.find({}), req.query)
       .filter()
@@ -54,10 +62,18 @@ exports.getAll = (Model) =>
     res.status(200).json({
       status: 'success',
       results: doc.length,
-      data: {
-        data: doc,
-        count
-      }
+      data: secretKey
+        ? encrypt(
+            {
+              data: doc,
+              count
+            },
+            secretKey
+          )
+        : {
+            data: doc,
+            count
+          }
     });
   });
 
