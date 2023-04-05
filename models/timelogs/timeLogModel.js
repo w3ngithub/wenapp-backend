@@ -40,6 +40,21 @@ const timeLogSchema = new mongoose.Schema(
       trim: true,
       required: [true, 'Please provide remarks.'],
       minlength: [10, 'Remarks must have more or equal then 50 characters']
+    },
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
+    },
+    isOt: {
+      type: Boolean,
+      default: false
+    },
+    otStatus: {
+      type: String,
+      enum: ['P', 'A', 'R']
+    },
+    otRejectReason: {
+      type: String
     }
   },
   {
@@ -62,6 +77,27 @@ timeLogSchema.post('findOneAndUpdate', async function (next) {
     ? docToUpdate.project._id
     : process.env.OTHER_PROJECT_ID;
   docToUpdate.save();
+});
+
+timeLogSchema.pre('findOneAndUpdate', async function (next) {
+  const docToUpdate = await this.model.findOne(this.getQuery());
+  const projectId = docToUpdate.project
+    ? docToUpdate.project._id
+    : process.env.OTHER_PROJECT_ID;
+
+  const logTime = docToUpdate.project ? docToUpdate.totalHours : 0;
+
+  if (
+    docToUpdate.project &&
+    mongoose.Types.ObjectId(this._update.project).toString() !==
+      projectId.toString()
+  ) {
+    const project = await Project.findById(projectId);
+    project.totalTimeSpent -= logTime;
+    project.save();
+  }
+
+  next();
 });
 
 // Calculate total time spent for project before deletoin of log from db

@@ -7,9 +7,15 @@ const asyncError = require('../../utils/asyncError');
 const common = require('../../utils/common');
 const APIFeatures = require('../../utils/apiFeatures');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
+const {
+  WEEKLY_REPORT_KEY,
+  encrypt,
+  WORK_LOG_REPORT_KEY,
+  LOG_KEY
+} = require('../../utils/crypto');
 
 exports.getTimeLog = factory.getOne(TimeLog);
-exports.getAllTimeLogs = factory.getAll(TimeLog);
+// exports.getAllTimeLogs = factory.getAll(TimeLog);
 exports.createTimeLog = factory.createOne(TimeLog);
 exports.updateTimeLog = factory.updateOne(TimeLog);
 exports.deleteTimeLog = factory.deleteOne(TimeLog, ActivityLogs, 'TimeLog');
@@ -19,8 +25,7 @@ exports.deleteTimeLog = factory.deleteOne(TimeLog, ActivityLogs, 'TimeLog');
 exports.getAllTimeLogs = asyncError(async (req, res, next) => {
   if (
     TimeLog.schema.path(req.query.sort.replace('-', '')) instanceof
-      mongoose.Schema.Types.ObjectId &&
-    req.query.sort.includes('user')
+    mongoose.Schema.Types.ObjectId
   ) {
     const ApiInstance = new APIFeatures(TimeLog.find({}), req.query)
       .filter()
@@ -34,11 +39,21 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     Object.keys(newfeatures).forEach((data) => {
       if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
         newFilter[data] = new mongoose.Types.ObjectId(newfeatures[data]);
+      } else if (data === 'isOt') {
+        newFilter[data] = !!newfeatures[data];
+      } else if (data === 'logDate') {
+        newFilter[data] = {
+          $gte: new Date(newfeatures[data].$gte),
+          $lte: new Date(newfeatures[data].$lte)
+        };
       } else {
         newFilter[data] = newfeatures[data];
       }
     });
     const orderSort = req.query.sort[0] === '-' ? -1 : 1;
+    const sortField = req.query.sort.replace('-', '');
+
+    const sortObject = { $sort: { [`${sortField}.name`]: orderSort } };
 
     const [sortedData, totalCount] = await Promise.all([
       TimeLog.aggregate([
@@ -63,9 +78,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
         {
           $unwind: '$user'
         },
-        {
-          $sort: { 'user.name': orderSort }
-        },
+
         {
           $lookup: {
             from: 'projects',
@@ -74,7 +87,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
               { $match: { $expr: { $eq: ['$$project_id', '$_id'] } } },
               { $project: { name: 1, slug: 1 } }
             ],
-            as: 'projects'
+            as: 'project'
           }
         },
         {
@@ -85,19 +98,19 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
               { $match: { $expr: { $eq: ['$$logtype_id', '$_id'] } } },
               { $project: { name: 1 } }
             ],
-            as: 'logTypes'
+            as: 'logType'
           }
+        },
+        {
+          ...sortObject
         },
         { $skip: paginatedfeature.skip },
         { $limit: paginatedfeature.limit },
         {
           $set: {
-            project: { $arrayElemAt: ['$projects', 0] },
-            logType: { $arrayElemAt: ['$logTypes', 0] }
+            project: { $arrayElemAt: ['$project', 0] },
+            logType: { $arrayElemAt: ['$logType', 0] }
           }
-        },
-        {
-          $unset: ['logTypes', 'projects']
         }
       ]),
       TimeLog.countDocuments(newfeatures)
@@ -106,10 +119,13 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
     return res.status(200).json({
       status: 'success',
       results: sortedData.length,
-      data: {
-        data: sortedData,
-        count: totalCount
-      }
+      data: encrypt(
+        {
+          data: sortedData,
+          count: totalCount
+        },
+        LOG_KEY
+      )
     });
   }
   const features = new APIFeatures(TimeLog.find({}), req.query)
@@ -127,10 +143,13 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: doc.length,
-    data: {
-      data: doc,
-      count
-    }
+    data: encrypt(
+      {
+        data: doc,
+        count
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -246,10 +265,13 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
     return res.status(200).json({
       status: 'success',
       results: sortedData.length,
-      data: {
-        data: sortedData,
-        count: totalCount
-      }
+      data: encrypt(
+        {
+          data: sortedData,
+          count: totalCount
+        },
+        LOG_KEY
+      )
     });
   }
 
@@ -264,10 +286,13 @@ exports.getWeeklyLogsOfUser = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: doc.length,
-    data: {
-      data: doc,
-      count
-    }
+    data: encrypt(
+      {
+        data: doc,
+        count
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -280,8 +305,22 @@ exports.checkTimeLogDays = (req, res, next) => {
 
   const allowedTimeLogDays = process.env.ALLOWED_TIMELOG_DAYS;
 
+  const allowedTImeLogsOnMonday = 3;
+
   if (!['admin', 'manager'].includes(req.user.roleKey)) {
-    if (!(today - logDay <= allowedTimeLogDays)) {
+    // allow log before 3 days on monday
+    if (new Date().getDay() === 1) {
+      if (!(today - logDay <= allowedTImeLogsOnMonday)) {
+        return next(
+          new AppError(
+            `You are not allowed to add/edit time log after ${allowedTImeLogsOnMonday} Days`,
+            400
+          )
+        );
+      }
+    }
+
+    if (!(today - logDay <= allowedTimeLogDays) && new Date().getDay() !== 1) {
       return next(
         new AppError(
           `You are not allowed to add/edit time log after ${allowedTimeLogDays} Days`,
@@ -361,9 +400,12 @@ exports.getUserWeeklyTimeSpent = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      weeklySummary: userTimeSummary
-    }
+    data: encrypt(
+      {
+        weeklySummary: userTimeSummary
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -396,9 +438,84 @@ exports.getWeeklyTimeSpentProject = asyncError(async (req, res, next) => {
   ]);
   res.status(200).json({
     status: 'success',
-    data: {
-      weeklySummary: timeSpendWeekly
+    data: encrypt(
+      {
+        weeklySummary: timeSpendWeekly
+      },
+      LOG_KEY
+    )
+  });
+});
+
+// Get weekly time summary of timelogs
+exports.getWeeklyOtherTimeLog = asyncError(async (req, res) => {
+  const projectId = mongoose.Types.ObjectId(process.env.OTHER_PROJECT_ID);
+
+  const { firstDayOfWeek, lastDayOfWeek } = common.dateInThisWeek();
+
+  const OtherProjectTimeSummary = await TimeLog.aggregate([
+    {
+      $match: {
+        project: projectId,
+        $and: [
+          { logDate: { $gte: firstDayOfWeek } },
+          { logDate: { $lte: lastDayOfWeek } }
+        ]
+      }
+    },
+
+    {
+      $group: {
+        _id: null,
+        timeSpentThisWeek: { $sum: '$totalHours' }
+      }
     }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: encrypt(
+      {
+        weeklySummary: OtherProjectTimeSummary
+      },
+      LOG_KEY
+    )
+  });
+});
+
+//today time spent on other project
+exports.getTodayOtherTimeLog = asyncError(async (req, res) => {
+  const projectId = mongoose.Types.ObjectId(process.env.OTHER_PROJECT_ID);
+
+  const { todayDate, tomorrowDate } = common.todayTomorrowDate();
+
+  const timeSpentToday = await TimeLog.aggregate([
+    {
+      $match: {
+        project: projectId,
+        $and: [
+          { logDate: { $gte: todayDate } },
+          { logDate: { $lt: tomorrowDate } }
+        ]
+      }
+    },
+
+    {
+      $group: {
+        _id: null,
+        timeSpentToday: { $sum: '$totalHours' }
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: encrypt(
+      {
+        timeSpentToday
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -428,9 +545,12 @@ exports.getUserTodayTimeSpent = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      timeSpentToday
-    }
+    data: encrypt(
+      {
+        timeSpentToday
+      },
+      LOG_KEY
+    )
   });
 });
 
@@ -508,9 +628,12 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      report
-    }
+    data: encrypt(
+      {
+        report
+      },
+      WEEKLY_REPORT_KEY
+    )
   });
 });
 
@@ -652,8 +775,11 @@ exports.getWorklogReport = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      report
-    }
+    data: encrypt(
+      {
+        report
+      },
+      WORK_LOG_REPORT_KEY
+    )
   });
 });

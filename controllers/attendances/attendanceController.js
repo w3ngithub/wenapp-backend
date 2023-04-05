@@ -11,9 +11,14 @@ const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 
 const EmailNotification = require('../../utils/email');
 const { HRWENEMAIL, INFOWENEMAIL } = require('../../utils/constants');
+const {
+  encrypt,
+  LATE_ARRIVAL_KEY,
+  ATTENDANCE_KEY
+} = require('../../utils/crypto');
 
 exports.getAttendance = factory.getOne(Attendance);
-exports.getAllAttendances = factory.getAll(Attendance);
+exports.getAllAttendances = factory.getAll(Attendance, ATTENDANCE_KEY);
 exports.createAttendance = factory.createOne(
   Attendance,
   ActivityLogs,
@@ -56,7 +61,19 @@ exports.updatePunchOutTime = asyncError(async (req, res, next) => {
 
 // office hour calculate
 exports.calculateTotalUserOfficeHour = asyncError(async (req, res, next) => {
-  const { fromDate, toDate, user } = req.query;
+  const { fromDate, toDate, user, officehour } = req.query;
+
+  const totalhourCondition = {};
+
+  if (officehour) {
+    let officeHourQuery = JSON.stringify(req.query.officehour).replace(
+      /\b(gte|gt|lte|lt|eq)\b/g,
+      (match) => `$${match}`
+    );
+    officeHourQuery = JSON.parse(officeHourQuery);
+    const op = Object.keys(officeHourQuery)[0];
+    totalhourCondition[op] = ['$officehour', Number(officeHourQuery[op])];
+  }
 
   const matchConditions = [
     { attendanceDate: { $gte: new Date(fromDate) } },
@@ -64,35 +81,78 @@ exports.calculateTotalUserOfficeHour = asyncError(async (req, res, next) => {
     { user: mongoose.Types.ObjectId(user) }
   ];
 
-  const totalHours = await Attendance.aggregate([
-    {
-      $match: {
-        $and: matchConditions
-      }
-    },
-    {
-      $addFields: {
-        punchTimeDifference: {
-          $ifNull: [
-            {
-              $dateDiff: {
-                startDate: '$punchInTime',
-                endDate: '$punchOutTime',
-                unit: 'millisecond'
-              }
-            },
-            0
-          ]
+  const totalHourQuery = !officehour
+    ? [
+        {
+          $match: {
+            $and: matchConditions
+          }
+        },
+        {
+          $addFields: {
+            punchTimeDifference: {
+              $ifNull: [
+                {
+                  $dateDiff: {
+                    startDate: '$punchInTime',
+                    endDate: '$punchOutTime',
+                    unit: 'millisecond'
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalhours: { $sum: '$punchTimeDifference' }
+          }
         }
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalhours: { $sum: '$punchTimeDifference' }
-      }
-    }
-  ]);
+      ]
+    : [
+        {
+          $match: {
+            $and: matchConditions
+          }
+        },
+        {
+          $addFields: {
+            punchTimeDifference: {
+              $ifNull: [
+                {
+                  $dateDiff: {
+                    startDate: '$punchInTime',
+                    endDate: '$punchOutTime',
+                    unit: 'millisecond'
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: '$attendanceDate',
+            officehour: { $sum: '$punchTimeDifference' }
+          }
+        },
+        {
+          $match: {
+            $expr: totalhourCondition
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalhours: { $sum: '$officehour' }
+          }
+        }
+      ];
+
+  const totalHours = await Attendance.aggregate(totalHourQuery);
 
   res.status(200).json({
     status: 'success',
@@ -222,6 +282,7 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
             punchOutLocation: '$punchOutLocation',
             punchInIp: '$punchInIp',
             punchOutIp: '$punchOutIp',
+            isLateArrival: '$isLateArrival',
             punchTimeDifference: {
               $dateDiff: {
                 startDate: '$punchInTime',
@@ -309,9 +370,12 @@ exports.searchAttendances = asyncError(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: {
-      attendances
-    }
+    data: encrypt(
+      {
+        attendances
+      },
+      ATTENDANCE_KEY
+    )
   });
 });
 
@@ -430,7 +494,7 @@ exports.getLateArrivalAttendances = asyncError(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: {
-      attendances: attendances
+      attendances: encrypt(attendances, LATE_ARRIVAL_KEY)
     }
   });
 });

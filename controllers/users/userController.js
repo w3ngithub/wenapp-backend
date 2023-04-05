@@ -20,6 +20,7 @@ const UserLeave = require('../../models/leaves/UserLeavesModel');
 const Notifications = require('../../models/notification/notificationModel');
 const Leave = require('../../models/leaves/leaveModel');
 const LeaveType = require('../../models/leaves/leaveTypeModel');
+const { USERS_KEY, encrypt, SALARY_REVIEW_KEY } = require('../../utils/crypto');
 
 // Compare two object and keep allowed fields to be updated
 const filterObj = (obj, ...allowedFields) => {
@@ -133,7 +134,7 @@ exports.importUsers = asyncError(async (req, res, next) => {
     name: user.name,
     username: user.username,
     email: user.email,
-    password: user.password,
+    password: 'test',
     photoUrl: null,
     status: 'Permanent',
     allocatedLeaves: {
@@ -145,15 +146,20 @@ exports.importUsers = asyncError(async (req, res, next) => {
     active: user.active === 'TRUE',
     dob: user.dob ? new Date(tranformDate(user.dob)) : new Date(),
     gender: user.gender,
-    primaryPhone: user.primaryPhone || 123456,
-    joinDate: user.joinDate
-      ? new Date(tranformDate(user.joinDate))
+    primaryPhone: +user.primaryphone || 123456,
+    joinDate: user.joindate
+      ? new Date(tranformDate(user.joindate))
       : new Date(),
-    maritalStatus: user.maritalStatus,
-    role:
-      userRoles.find((role) => role.key === user.role)._id ||
-      userRoles.find((role) => role.key === 'subscriber')._id
+    maritalStatus: user.maritalstatus,
+    role: userRoles.find(
+      (role) => role.key.toLowerCase() === user.role.toLowerCase()
+    )
+      ? userRoles.find(
+          (role) => role.key.toLowerCase() === user.role.toLowerCase()
+        )._id
+      : userRoles.find((role) => role.key.toLowerCase() === 'subscriber')._id
   }));
+
   await User.insertMany([...users], { lean: true });
 
   res.status(200).json({
@@ -365,17 +371,19 @@ exports.getSalarayReviewUsers = asyncError(async (req, res, next) => {
         _id: 1,
         name: 1,
         newSalaryReviewDate: 1,
-        lastReviewDate: 1,
-        photoURL: 1
+        lastReviewDate: 1
       }
     }
   ]);
 
   res.status(200).json({
     status: 'success',
-    data: {
-      users: users
-    }
+    data: encrypt(
+      {
+        users: users
+      },
+      SALARY_REVIEW_KEY
+    )
   });
 });
 
@@ -610,6 +618,6 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
 });
 
 exports.getUser = factory.getOne(User);
-exports.getAllUsers = factory.getAll(User);
+exports.getAllUsers = factory.getAll(User, USERS_KEY);
 exports.updateUser = factory.updateOne(User, ActivityLogs, 'User');
 exports.deleteUser = factory.deleteOne(User);
