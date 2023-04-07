@@ -20,6 +20,49 @@ exports.createTimeLog = factory.createOne(TimeLog);
 exports.updateTimeLog = factory.updateOne(TimeLog);
 exports.deleteTimeLog = factory.deleteOne(TimeLog, ActivityLogs, 'TimeLog');
 
+//calculate total office hour
+exports.CalculateOtherTotalHour = asyncError(async (req, res, next) => {
+  const ApiInstance = new APIFeatures(TimeLog.find({}), req.query).filter();
+  const newfeatures = ApiInstance.formattedQuery;
+
+  const newFilter = { isOt: true };
+
+  Object.keys(newfeatures).forEach((data) => {
+    if (TimeLog.schema.path(data) instanceof mongoose.Schema.Types.ObjectId) {
+      newFilter[data] = new mongoose.Types.ObjectId(newfeatures[data]);
+    } else if (data === 'logDate') {
+      newFilter[data] = {
+        $gte: new Date(newfeatures[data].$gte),
+        $lte: new Date(newfeatures[data].$lte)
+      };
+    } else {
+      newFilter[data] = newfeatures[data];
+    }
+  });
+
+  const totalHour = await TimeLog.aggregate([
+    {
+      $match: newFilter
+    },
+    {
+      $group: {
+        _id: null,
+        totalHour: { $sum: '$totalHours' }
+      }
+    }
+  ]);
+
+  return res.status(200).json({
+    status: 'success',
+    data: encrypt(
+      {
+        data: totalHour
+      },
+      LOG_KEY
+    )
+  });
+});
+
 //get all the timelogs with sorting
 
 exports.getAllTimeLogs = asyncError(async (req, res, next) => {
@@ -50,6 +93,7 @@ exports.getAllTimeLogs = asyncError(async (req, res, next) => {
         newFilter[data] = newfeatures[data];
       }
     });
+
     const orderSort = req.query.sort[0] === '-' ? -1 : 1;
     const sortField = req.query.sort.replace('-', '');
 

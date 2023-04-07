@@ -18,6 +18,7 @@ router.get('/users/weeklyLogs', timeLogController.getWeeklyLogsOfUser);
 
 router.get('/other/todaytime', timeLogController.getTodayOtherTimeLog);
 router.get('/other/weeklytime', timeLogController.getWeeklyOtherTimeLog);
+router.get('/other/totalhour', timeLogController.CalculateOtherTotalHour);
 
 router.post('/weeklyreport', timeLogController.getWeeklyReport);
 router.post('/chart', timeLogController.getTimelogForChart);
