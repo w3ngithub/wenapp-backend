@@ -739,7 +739,19 @@ exports.getTimelogForChart = asyncError(async (req, res, next) => {
 
 // Get worklog reports
 exports.getWorklogReport = asyncError(async (req, res, next) => {
-  const { fromDate, toDate, logType, user, project } = req.query;
+  const { fromDate, toDate, logType, user, project, sort } = req.query;
+
+  const page = req.query.page * 1 || 1;
+  const limit = req.query.limit * 1 || 100;
+  const skip = (page - 1) * limit;
+
+  let sortOrder = 1;
+  let sortField = 'name';
+
+  if (sort) {
+    sortOrder = sort[0] === '-' ? -1 : 1;
+    sortField = sort.replace('-', '');
+  }
 
   const matchConditions = [
     { logDate: { $gte: new Date(fromDate) } },
@@ -802,7 +814,7 @@ exports.getWorklogReport = asyncError(async (req, res, next) => {
     },
     {
       $group: {
-        _id: '$user',
+        _id: { userId: '$user._id', name: '$user.name' },
         timeLogs: {
           $push: {
             project: '$project',
@@ -813,6 +825,40 @@ exports.getWorklogReport = asyncError(async (req, res, next) => {
           }
         },
         totalTimeSpent: { $sum: '$totalHours' }
+      }
+    },
+    {
+      $facet: {
+        totalCount: [{ $count: 'count' }],
+        otherData: [
+          {
+            $project: {
+              _id: 1,
+              userId: '$_id.userId',
+              name: '$_id.name',
+              totalTimeSpent: '$totalTimeSpent',
+              timeLogs: '$timeLogs',
+              totalCount: '$totalDocuments'
+            }
+          },
+          {
+            $sort: {
+              [sortField]: sortOrder
+            }
+          },
+          {
+            $skip: skip
+          },
+          {
+            $limit: limit
+          }
+        ]
+      }
+    },
+    {
+      $project: {
+        totalCount: { $arrayElemAt: ['$totalCount.count', 0] },
+        otherData: 1
       }
     }
   ]);
