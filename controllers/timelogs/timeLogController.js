@@ -603,8 +603,6 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
   const { fromDate, toDate, projectStatus, logType, client, project } =
     req.query;
 
-  console.log(req.query);
-
   const matchConditions = [
     { logDate: { $gte: new Date(fromDate) } },
     { logDate: { $lte: new Date(toDate) } }
