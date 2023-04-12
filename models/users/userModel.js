@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema(
       hour: { type: String, default: '3' },
       minute: { type: String, default: '25' }
     },
+    officeEndTime: {
+      type: String,
+      default: '2022-11-13T12:15:00.000Z'
+    },
     email: {
       type: String,
       required: [true, 'Please provide your email.'],
