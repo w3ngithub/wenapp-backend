@@ -76,6 +76,9 @@ leaveSchema.pre(/^find/, function (next) {
 });
 
 leaveSchema.pre('save', async function (next) {
+  if (!['pending'].includes(this.leaveStatus)) {
+    return next();
+  }
   const leaves = await this.constructor.aggregate([
     {
       $match: {
