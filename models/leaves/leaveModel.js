@@ -75,6 +75,37 @@ leaveSchema.pre(/^find/, function (next) {
   next();
 });
 
+leaveSchema.pre('save', async function (next) {
+  const leaves = await this.constructor.aggregate([
+    {
+      $match: {
+        user: mongoose.Types.ObjectId(this.user),
+        leaveStatus: { $in: ['approved', 'pending'] }
+      }
+    },
+    {
+      $unwind: '$leaveDates'
+    },
+    {
+      $match: {
+        leaveDates: { $in: this.leaveDates }
+      }
+    }
+  ]);
+  if (leaves && leaves.length === 0) {
+    next();
+    return;
+  }
+
+  const err = new Error(
+    `Leave has been already applied for ${
+      leaves[0].leaveDates.toISOString().split('T')[0]
+    }`
+  );
+
+  next(err);
+});
+
 // update userLeave Document of user with approve status
 leaveSchema.post('save', async (doc) => {
   // update when applied leave is directed applied fom apply section and role is hr/admin
