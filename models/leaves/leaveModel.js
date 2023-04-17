@@ -147,14 +147,20 @@ leaveSchema.post('save', async (doc) => {
                 approvedLeaves: {
                   sickLeaves:
                     leaveType.sickLeave === leaveTypeDoc.name
-                      ? x.approvedLeaves.sickLeaves + 1
+                      ? doc.halfDay
+                        ? x.approvedLeaves.sickLeaves + 0.5
+                        : x.approvedLeaves.sickLeaves + 1
                       : x.approvedLeaves.sickLeaves,
                   casualLeaves:
                     leaveType.casualLeave === leaveTypeDoc.name
-                      ? x.approvedLeaves.casualLeaves + 1
+                      ? doc.halfDay
+                        ? x.approvedLeaves.casualLeaves + 0.5
+                        : x.approvedLeaves.casualLeaves + 1
                       : x.approvedLeaves.casualLeaves
                 },
-                remainingLeaves: x.remainingLeaves - 1
+                remainingLeaves: doc.halfDay
+                  ? x.remainingLeaves - 0.5
+                  : x.remainingLeaves - 1
               }
             : x
         );

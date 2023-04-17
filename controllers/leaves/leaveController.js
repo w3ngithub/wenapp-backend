@@ -146,14 +146,20 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
                 approvedLeaves: {
                   sickLeaves:
                     leaveType.sickLeave === leave.leaveType.name
-                      ? x.approvedLeaves.sickLeaves + 1
+                      ? leave.halfDay
+                        ? x.approvedLeaves.sickLeaves + 0.5
+                        : x.approvedLeaves.sickLeaves + 1
                       : x.approvedLeaves.sickLeaves,
                   casualLeaves:
                     leaveType.casualLeave === leave.leaveType.name
-                      ? x.approvedLeaves.casualLeaves + 1
+                      ? leave.halfDay
+                        ? x.approvedLeaves.casualLeaves + 0.5
+                        : x.approvedLeaves.casualLeaves + 1
                       : x.approvedLeaves.casualLeaves
                 },
-                remainingLeaves: x.remainingLeaves - 1
+                remainingLeaves: leave.halfDay
+                  ? x.remainingLeaves - 0.5
+                  : x.remainingLeaves - 1
               }
             : x
         );
@@ -181,14 +187,20 @@ exports.updateLeaveStatus = asyncError(async (req, res, next) => {
                 approvedLeaves: {
                   sickLeaves:
                     leaveType.sickLeave === leave.leaveType.name
-                      ? x.approvedLeaves.sickLeaves - 1
+                      ? leave.halfDay
+                        ? x.approvedLeaves.sickLeaves - 0.5
+                        : x.approvedLeaves.sickLeaves - 1
                       : x.approvedLeaves.sickLeaves,
                   casualLeaves:
                     leaveType.casualLeave === leave.leaveType.name
-                      ? x.approvedLeaves.casualLeaves - 1
+                      ? leave.halfDay
+                        ? x.approvedLeaves.casualLeaves - 0.5
+                        : x.approvedLeaves.casualLeaves - 1
                       : x.approvedLeaves.casualLeaves
                 },
-                remainingLeaves: x.remainingLeaves + 1
+                remainingLeaves: leave.halfDay
+                  ? x.remainingLeaves + 0.5
+                  : x.remainingLeaves + 1
               }
             : x
         );
