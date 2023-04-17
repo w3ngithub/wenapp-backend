@@ -100,6 +100,11 @@ leaveSchema.pre('save', async function (next) {
     return;
   }
 
+  if (leaves && leaves.length === 1 && leaves[0].halfDay) {
+    next();
+    return;
+  }
+
   const err = new Error(
     `Leave has been already applied for ${
       leaves[0].leaveDates.toISOString().split('T')[0]
