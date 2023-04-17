@@ -201,12 +201,12 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
         const sickLeave = leaveTypes.find(
           (type) =>
             type.name.toString().toLowerCase() ===
-            LEAVETYPES.casualLeave.toString().toLowerCase()
+            LEAVETYPES.sickLeave.toString().toLowerCase()
         );
         const causalLeave = leaveTypes.find(
           (type) =>
             type.name.toString().toLowerCase() ===
-            LEAVETYPES.sickLeave.toString().toLowerCase()
+            LEAVETYPES.casualLeave.toString().toLowerCase()
         );
 
         const indexOfCurrentQuarter = latestYearQuarter.quarters.findIndex(
@@ -228,6 +228,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
         const leaveNotEntitled =
           totalSickCausalLeave - (updatedYearAllocatedLeave || 0);
 
+        // if leave not entitled is greater than sick leaves, no sick leave is allocated.
         userLeaveDoc.yearSickAllocatedLeaves =
           leaveNotEntitled > sickLeave.leaveDays
             ? 0
@@ -236,7 +237,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
         userLeaveDoc.yearCausalAllocatedLeaves =
           leaveNotEntitled > sickLeave.leaveDays
             ? causalLeave.leaveDays - (leaveNotEntitled - sickLeave.leaveDays)
-            : sickLeave.leaveDays;
+            : causalLeave.leaveDays;
 
         await userLeaveDoc.save();
       }
