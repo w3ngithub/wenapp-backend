@@ -600,7 +600,8 @@ exports.getUserTodayTimeSpent = asyncError(async (req, res, next) => {
 
 // Get weekly time summary of user with time log details
 exports.getWeeklyReport = asyncError(async (req, res, next) => {
-  const { fromDate, toDate, projectStatus, logType, client } = req.query;
+  const { fromDate, toDate, projectStatus, logType, client, project } =
+    req.query;
 
   const matchConditions = [
     { logDate: { $gte: new Date(fromDate) } },
@@ -622,6 +623,12 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
   if (client) {
     matchConditions.push({
       'project.client': { $eq: mongoose.Types.ObjectId(client) }
+    });
+  }
+
+  if (project) {
+    matchConditions.push({
+      'project._id': { $eq: mongoose.Types.ObjectId(project) }
     });
   }
 
