@@ -28,6 +28,7 @@ router.route('/').get(timeLogController.getAllTimeLogs).post(
   projectController.setProjectUserIds,
   // projectController.checkProjectOfUser,
   timeLogController.checkTimeLogDays,
+  timeLogController.checkLogTimeHours,
   timeLogController.createTimeLog
 );
 
@@ -37,6 +38,7 @@ router
   .patch(
     // projectController.checkProjectOfUser,
     timeLogController.checkTimeLogDays,
+    timeLogController.checkLogTimeHours,
     timeLogController.updateTimeLog
   )
   .delete(

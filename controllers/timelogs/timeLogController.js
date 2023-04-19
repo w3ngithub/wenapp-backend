@@ -376,6 +376,79 @@ exports.checkTimeLogDays = (req, res, next) => {
   next();
 };
 
+// check per day logtime of user
+exports.checkLogTimeHours = asyncError(async (req, res, next) => {
+  const { logDate, user, hours, minutes } = req.body;
+
+  const LogDay = logDate.split('T')[0].concat('T00:00:00.000Z');
+
+  // for edit case
+  if (req.body._id) {
+    const timeLogs = await TimeLog.aggregate([
+      {
+        $match: {
+          $and: [
+            { user: { $eq: mongoose.Types.ObjectId(user) } },
+            { logDate: { $eq: new Date(LogDay) } },
+            { _id: { $ne: mongoose.Types.ObjectId(req.body._id) } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalHours: { $sum: '$totalHours' }
+        }
+      }
+    ]);
+
+    let totalHours = hours + minutes / 60;
+
+    if (timeLogs.length !== 0) {
+      totalHours += timeLogs[0].totalHours;
+    }
+
+    if (totalHours > 24) {
+      return next(
+        new AppError(`You are not allowed to log more than 24 hours a day`, 400)
+      );
+    }
+    return next();
+  }
+
+  // for add case
+  const timeLogs = await TimeLog.aggregate([
+    {
+      $match: {
+        $and: [
+          { user: { $eq: mongoose.Types.ObjectId(user) } },
+          { logDate: { $eq: new Date(LogDay) } }
+        ]
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalHours: { $sum: '$totalHours' }
+      }
+    }
+  ]);
+
+  let totalHours = hours + minutes / 60;
+
+  if (timeLogs.length !== 0) {
+    totalHours += timeLogs[0].totalHours;
+  }
+
+  if (totalHours > 24) {
+    return next(
+      new AppError(`You are not allowed to log more than 24 hours a day`, 400)
+    );
+  }
+
+  next();
+});
+
 // Get weekly time summary of user with time log details
 exports.getUserWeeklyTimeSpent = asyncError(async (req, res, next) => {
   const userId = mongoose.Types.ObjectId(req.user.id);
