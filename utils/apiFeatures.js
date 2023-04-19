@@ -70,10 +70,13 @@ class APIFeatures {
 
   search() {
     const searchTerm = this.queryString.search;
+
+    const regx = new RegExp(`^${searchTerm}`, 'i');
+
     const query = searchTerm
       ? {
-          name: { $regex: searchTerm, $options: 'i' },
-          title: { $regex: searchTerm, $options: 'i' }
+          name: { $regex: regx },
+          title: { $regex: regx }
         }
       : {};
     this.query = this.query.find(query);
@@ -82,4 +85,5 @@ class APIFeatures {
     return this;
   }
 }
+
 module.exports = APIFeatures;
