@@ -103,7 +103,7 @@ const registerNotificationHandlers = (io, socket) => {
     io.sockets.emit('bell-notification', bellNotification);
   });
 
-  socket.on('approve-ot-log', async (response) => {
+  socket.on('resolve-ot-log', async (response) => {
     const bellNotification = await Notifications.create(response);
     io.sockets.emit('bell-notification-for-user', bellNotification);
   });
