@@ -12,7 +12,8 @@ const notificationSchema = new mongoose.Schema(
     viewedBy: {
       type: [String],
       default: []
-    }
+    },
+    extraInfo: String
   },
   {
     timestamps: true
