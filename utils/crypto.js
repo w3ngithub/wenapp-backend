@@ -1,9 +1,9 @@
 const CryptoJS = require('crypto-js');
 
 function encrypt(data, key) {
-  // if (process.env.NODE_ENV === 'development') {
-  //   return data;
-  // }
+  if (process.env.NODE_ENV === 'development') {
+    return data;
+  }
   // Encrypt
   const ciphertext = CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
 
