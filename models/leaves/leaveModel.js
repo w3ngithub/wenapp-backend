@@ -56,6 +56,10 @@ const leaveSchema = new mongoose.Schema(
     },
     leaveDocument: {
       type: String
+    },
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User'
     }
   },
   {
@@ -71,6 +75,10 @@ leaveSchema.pre(/^find/, function (next) {
   }).populate({
     path: 'leaveType',
     select: 'name isSpecial'
+  });
+  this.populate({
+    path: 'createdBy',
+    select: '-role -position name '
   });
   next();
 });
