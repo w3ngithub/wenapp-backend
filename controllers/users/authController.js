@@ -149,7 +149,6 @@ exports.signup = asyncError(async (req, res, next) => {
 
   const invitedUser = await Invite.findOne({
     email,
-    inviteTokenExpires: { $gt: Date.now() },
     inviteTokenUsed: false
   });
 
@@ -159,7 +158,16 @@ exports.signup = asyncError(async (req, res, next) => {
     );
   }
 
-  if (invitedUser && invitedUser.inviteToken !== hashedToken) {
+  const validTokenInvitedUser = await Invite.findOne({
+    email,
+    inviteTokenExpires: { $gt: Date.now() },
+    inviteTokenUsed: false
+  });
+
+  if (
+    !validTokenInvitedUser ||
+    (invitedUser && invitedUser.inviteToken !== hashedToken)
+  ) {
     return next(new AppError('Your sign up token has expired.', 400));
   }
 
