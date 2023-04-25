@@ -108,6 +108,10 @@ const registerNotificationHandlers = (io, socket) => {
     io.sockets.emit('bell-notification-for-user', bellNotification);
   });
 
+  socket.on('setting-attendance', async (response) => {
+    const bellNotification = await Notifications.create(response);
+    io.sockets.emit('bell-notification', bellNotification);
+  });
 };
 
 module.exports = { registerNotificationHandlers };
