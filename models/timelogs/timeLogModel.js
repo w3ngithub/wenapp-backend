@@ -89,12 +89,13 @@ timeLogSchema.pre('findOneAndUpdate', async function (next) {
 
   if (
     docToUpdate.project &&
+    this._update.project &&
     mongoose.Types.ObjectId(this._update.project).toString() !==
       projectId.toString()
   ) {
     const project = await Project.findById(projectId);
     project.totalTimeSpent -= logTime;
-    project.save();
+    await project.save();
   }
 
   next();
