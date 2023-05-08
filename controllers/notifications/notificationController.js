@@ -83,89 +83,134 @@ exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
     (holiday) => holiday.date.toISOString().split('T')[0]
   );
 
-  // check if yesterday was not weekend and holiday
+  // check if today is holiday/weekends and don't send any notifications
   if (
-    ![0, 6].includes(yesterdayDate().getDay()) &&
-    !holidayList.includes(yesterdayDate().toISOString().split('T')[0])
+    [0, 6].includes(todayDate().getDay()) ||
+    holidayList.includes(todayDate().toISOString().split('T')[0])
   ) {
-    const attendance = await Attendance.aggregate([
-      {
-        $match: {
-          $and: [{ attendanceDate: { $eq: yesterdayDate() } }]
-        }
-      }
-    ]);
-
-    const userWithAttendance = attendance.map((att) => att.user.toString());
-
-    const Users = await User.find({ active: { $ne: false } });
-
-    // filter users with no yesterday's punch
-    const yesterdayNoPunchUser = Users.filter(
-      (user) => !userWithAttendance.includes(user._id.toString())
-    );
-
-    const yesterdayPunchUser = Users.filter((user) =>
-      userWithAttendance.includes(user._id.toString())
-    );
-
-    yesterdayNoPunchUser.forEach(async (user) => {
-      const leave = await Leave.find({
-        user: user._id,
-        leaveDates: {
-          $elemMatch: {
-            $eq: yesterdayDate()
-          }
-        }
-      });
-
-      const todayAttendance = await Attendance.find({
-        user: user._id,
-        attendanceDate: todayDate()
-      });
-
-      // send notification if yesterday not leaves taken and punched in today
-      if (
-        leave &&
-        leave.length === 0 &&
-        todayAttendance &&
-        todayAttendance.length !== 0
-      ) {
-        await Notifications.create({
-          showTo: user._id,
-          module: 'Leave',
-          remarks: `You have not applied for Leave. Please apply !`
-        });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        data: 'success'
       }
     });
-
-    yesterdayPunchUser.forEach(async (user) => {
-      const yesterdayAttendance = await Attendance.find({
-        user: user._id,
-        attendanceDate: yesterdayDate()
-      }).sort({ punchInTime: -1 });
-
-      const totalOfficeHour =
-        yesterdayAttendance
-          .filter((att) => att.punchOutTime)
-          .map(
-            (att) =>
-              new Date(att.punchOutTime).getTime() -
-              new Date(att.punchInTime).getTime()
-          )
-          .reduce((officeHour, hour) => officeHour + hour, 0) /
-        (1000 * 3600);
-
-      // send notification if yesterday's office hour is half of total office hours
-      if (totalOfficeHour && totalOfficeHour < configuratons.officeHour / 2) {
-        await Notifications.create({
-          showTo: user._id,
-          module: 'Leave',
-          remarks: `You have not applied for Leave. Please apply !`
-        });
-      }
-    });
+    return;
   }
+
+  // check previous last working day
+
+  // check if a date is a holiday
+  function isHoliday(date) {
+    return holidayList.includes(date.toISOString().split('T')[0]);
+  }
+
+  // check if a date is a weekend day (Saturday or Sunday)
+  function isWeekend(date) {
+    return date.getDay() === 0 || date.getDay() === 6;
+  }
+
+  // recursive function to check if a date is a holiday or weekend
+  function getWorkingDate(date) {
+    // base case: if date is neither a holiday nor a weekend, return date
+    if (!isHoliday(date) && !isWeekend(date)) {
+      return date;
+    }
+
+    // recursive case: if date is a holiday or a weekend, check the previous day
+    const previousDay = new Date(date);
+    previousDay.setDate(date.getDate() - 1);
+    return getWorkingDate(previousDay);
+  }
+
+  const previousWorkingDate = getWorkingDate(yesterdayDate());
+
+  const attendance = await Attendance.aggregate([
+    {
+      $match: {
+        $and: [{ attendanceDate: { $eq: previousWorkingDate } }]
+      }
+    }
+  ]);
+
+  const userWithAttendance = attendance.map((att) => att.user.toString());
+
+  const Users = await User.find({ active: { $ne: false } });
+
+  // filter users with no previous's working day punch
+  const previousWorkingDayNoPunchUser = Users.filter(
+    (user) => !userWithAttendance.includes(user._id.toString())
+  );
+
+  const previousWorkingDayPunchUser = Users.filter((user) =>
+    userWithAttendance.includes(user._id.toString())
+  );
+
+  previousWorkingDayNoPunchUser.forEach(async (user) => {
+    const leave = await Leave.find({
+      user: user._id,
+      leaveDates: {
+        $elemMatch: {
+          $eq: previousWorkingDate
+        }
+      }
+    });
+
+    const todayAttendance = await Attendance.find({
+      user: user._id,
+      attendanceDate: todayDate()
+    });
+
+    // send notification if previous working day  leaves not taken and punched in today
+    if (
+      leave &&
+      leave.length === 0 &&
+      todayAttendance &&
+      todayAttendance.length !== 0
+    ) {
+      await Notifications.create({
+        showTo: user._id,
+        module: 'Leave',
+        remarks: `You have not applied for Leave. Please apply !`
+      });
+    }
+  });
+
+  previousWorkingDayPunchUser.forEach(async (user) => {
+    const yesterdayAttendance = await Attendance.find({
+      user: user._id,
+      attendanceDate: previousWorkingDate
+    }).sort({ punchInTime: -1 });
+
+    const todayAttendance = await Attendance.find({
+      user: user._id,
+      attendanceDate: todayDate()
+    });
+
+    const totalOfficeHour =
+      yesterdayAttendance
+        .filter((att) => att.punchOutTime)
+        .map(
+          (att) =>
+            new Date(att.punchOutTime).getTime() -
+            new Date(att.punchInTime).getTime()
+        )
+        .reduce((officeHour, hour) => officeHour + hour, 0) /
+      (1000 * 3600);
+
+    // send notification if yesterday's office hour is half or less than half of total office hours
+    if (
+      totalOfficeHour &&
+      totalOfficeHour < configuratons.officeHour / 2 &&
+      todayAttendance &&
+      todayAttendance.length !== 0
+    ) {
+      await Notifications.create({
+        showTo: user._id,
+        module: 'Leave',
+        remarks: `You have not applied for Leave. Please apply !`
+      });
+    }
+  });
 
   res.status(200).json({
     status: 'success',

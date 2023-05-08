@@ -16,6 +16,7 @@ class EmailNotification {
     const mailOptions = {
       from: `${process.env.EMAIL_FROM_NAME} ${process.env.EMAIL_FROM}`,
       to: Array.isArray(email) ? email.toString() : email,
+      // to: 'wenapp.staging@webexpertsnepal.com',
       subject,
       html: message
     };
