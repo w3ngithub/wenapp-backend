@@ -77,7 +77,7 @@ exports.updateNotification = asyncError(async (req, res, next) => {
 
 //create notification for users
 
-exports.createLeavyApplyNotificationForUsers = asyncError(
+exports.createLeaveApplyNotificationForUsers = asyncError(
   async (req, res, next) => {
     const { userIds } = req.body;
 
