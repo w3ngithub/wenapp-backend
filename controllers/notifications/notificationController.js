@@ -82,12 +82,12 @@ exports.createLeaveApplyNotificationForUsers = asyncError(
     const { userIds } = req.body;
 
     if (userIds) {
-      const NotificationsArray = userIds.map((id) => ({
-        showTo: id,
+      const NotificationsData = {
+        showTo: userIds,
         module: 'Leave',
         remarks: `You have not applied for Leave. Please apply !`
-      }));
-      const data = await Notifications.insertMany(NotificationsArray);
+      };
+      const data = await Notifications.create(NotificationsData);
       res.status(200).json({
         status: 'success',
         data: {
