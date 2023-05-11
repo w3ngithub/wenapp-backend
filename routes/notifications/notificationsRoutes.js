@@ -8,7 +8,8 @@ router
   .route('/')
   .get(notificationsController.getAllNotifications)
   .delete(notificationsController.deleteNotification)
-  .patch(notificationsController.updateNotification);
+  .patch(notificationsController.updateNotification)
+  .post(notificationsController.createNotification);
 
 router
   .route('/apply-leave-notification')

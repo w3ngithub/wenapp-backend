@@ -77,26 +77,15 @@ exports.updateNotification = asyncError(async (req, res, next) => {
 
 //create notification for users
 
-exports.createLeaveApplyNotificationForUsers = asyncError(
-  async (req, res, next) => {
-    const { userIds } = req.body;
-
-    if (userIds) {
-      const NotificationsData = {
-        showTo: userIds,
-        module: 'Leave',
-        remarks: `You have not applied for Leave. Please apply !`
-      };
-      const data = await Notifications.create(NotificationsData);
-      res.status(200).json({
-        status: 'success',
-        data: {
-          data
-        }
-      });
+exports.createNotification = asyncError(async (req, res, next) => {
+  const data = await Notifications.create(req.body);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data
     }
-  }
-);
+  });
+});
 
 exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
   const configuratons = await Configurations.findOne();
