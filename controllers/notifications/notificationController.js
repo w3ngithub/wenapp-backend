@@ -75,9 +75,43 @@ exports.updateNotification = asyncError(async (req, res, next) => {
   });
 });
 
+//create notification for users
+
+exports.createLeaveApplyNotificationForUsers = asyncError(
+  async (req, res, next) => {
+    const { userIds } = req.body;
+
+    if (userIds) {
+      const NotificationsData = {
+        showTo: userIds,
+        module: 'Leave',
+        remarks: `You have not applied for Leave. Please apply !`
+      };
+      const data = await Notifications.create(NotificationsData);
+      res.status(200).json({
+        status: 'success',
+        data: {
+          data
+        }
+      });
+    }
+  }
+);
+
 exports.notifyToApplyLeave = asyncError(async (req, res, next) => {
-  const holidays = await Holidays.findOne().sort({ createdAt: -1 }).limit(1);
   const configuratons = await Configurations.findOne();
+
+  if (configuratons.SendLeaveApplyNotification === false) {
+    res.status(200).json({
+      status: 'success',
+      data: {
+        data: 'success'
+      }
+    });
+    return;
+  }
+
+  const holidays = await Holidays.findOne().sort({ createdAt: -1 }).limit(1);
 
   const holidayList = holidays.holidays.map(
     (holiday) => holiday.date.toISOString().split('T')[0]

@@ -14,6 +14,10 @@ const configurationsSchema = new mongoose.Schema(
     officeHour: {
       type: Number,
       default: 9
+    },
+    SendLeaveApplyNotification: {
+      type: Boolean,
+      default: true
     }
   },
   {
