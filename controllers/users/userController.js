@@ -545,10 +545,10 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
     const leaveTypes = await LeaveType.find();
 
     const sickLeave = leaveTypes.find(
-      (type) => type.name === LEAVETYPES.casualLeave
+      (type) => type.name === LEAVETYPES.sickLeave
     );
     const causalLeave = leaveTypes.find(
-      (type) => type.name === LEAVETYPES.sickLeave
+      (type) => type.name === LEAVETYPES.casualLeave
     );
 
     allUsers.forEach(async (user) => {
