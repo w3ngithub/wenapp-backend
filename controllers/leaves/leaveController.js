@@ -278,7 +278,7 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
     {
       $match: {
         user: userId,
-        leaveStatus: 'approved',
+        leaveStatus: { $in: ['approved', 'user cancelled'] },
         $and: [
           { leaveDates: { $gte: new Date(currentFiscalYearStartDate) } },
           { leaveDates: { $lte: new Date(currentFiscalYearEndDate) } }
