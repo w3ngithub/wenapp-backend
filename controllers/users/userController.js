@@ -532,11 +532,14 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         );
 
         await doc.save();
-        await Notifications.create({
-          showTo: user._id,
-          module: 'Leave',
-          remarks: `Your quarterly leave has been updated.`
-        });
+
+        if (POSITIONS.probation !== user.status) {
+          await Notifications.create({
+            showTo: user._id,
+            module: 'Leave',
+            remarks: `Your quarterly leave has been updated.`
+          });
+        }
       })
     );
   } else {
@@ -584,11 +587,13 @@ exports.resetAllocatedLeaves = asyncError(async (req, res, next) => {
         }))
       });
       await userLeave.save();
-      await Notifications.create({
-        showTo: user._id,
-        module: 'Leave',
-        remarks: `Your quarterly leave has been updated.`
-      });
+      if (POSITIONS.probation !== user.status) {
+        await Notifications.create({
+          showTo: user._id,
+          module: 'Leave',
+          remarks: `Your quarterly leave has been updated.`
+        });
+      }
     });
   }
 
