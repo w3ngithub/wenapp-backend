@@ -270,6 +270,15 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
   const { currentFiscalYearStartDate, currentFiscalYearEndDate } =
     req.fiscalYear;
   const userId = mongoose.Types.ObjectId(req.params.userId);
+  let startDate = currentFiscalYearStartDate;
+  const isPermanentDateInThisFiscalYear =
+    new Date(currentFiscalYearStartDate) <=
+      new Date(req.user.statusChangeDate) &&
+    new Date(req.user.statusChangeDate) <= new Date(currentFiscalYearEndDate);
+
+  if (req.user.statusChangeDate && isPermanentDateInThisFiscalYear) {
+    startDate = req.user.statusChangeDate;
+  }
 
   const leaveCounts = await Leave.aggregate([
     {
@@ -280,7 +289,7 @@ exports.calculateLeaveDays = asyncError(async (req, res, next) => {
         user: userId,
         leaveStatus: { $in: ['approved', 'user cancelled'] },
         $and: [
-          { leaveDates: { $gte: new Date(currentFiscalYearStartDate) } },
+          { leaveDates: { $gte: new Date(startDate) } },
           { leaveDates: { $lte: new Date(currentFiscalYearEndDate) } }
         ]
       }
