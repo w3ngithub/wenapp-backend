@@ -17,6 +17,10 @@ const noticeSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Notice_Type'
     },
+    image: {
+      url: String,
+      name: String
+    },
     startDate: Date,
     endDate: Date,
     startTime: String,
