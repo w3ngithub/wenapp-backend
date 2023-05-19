@@ -10,9 +10,11 @@ const {
 const User = require('../models/users/userModel');
 const UserLeave = require('../models/leaves/UserLeavesModel');
 const LeaveTypes = require('../models/leaves/leaveTypeModel');
+const Leave = require('../models/leaves/leaveModel');
 const { LeaveQuarter } = require('../models/leaves/leaveQuarter');
 const { todayDate, getNumberOfMonthsInAQuarter } = require('../utils/common');
 const { encrypt } = require('../utils/crypto');
+const { default: mongoose } = require('mongoose');
 
 exports.getOne = (Model, popOptions, secretKey) =>
   asyncError(async (req, res, next) => {
@@ -181,15 +183,79 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
           currentQuarter.leaves -
           getNumberOfMonthsInAQuarter(todayDate(), currentQuarter.fromDate);
 
+        const casualSickLeaves = await Leave.aggregate([
+          {
+            $match: {
+              user: mongoose.Types.ObjectId(req.params.id),
+              leaveStatus: { $in: ['approved', 'user cancelled'] },
+              leaveDates: { $gte: todayDate() }
+            }
+          },
+          {
+            $lookup: {
+              from: 'leave_types',
+              localField: 'leaveType',
+              foreignField: '_id',
+              as: 'leaveType',
+              pipeline: [
+                {
+                  $project: {
+                    _id: 0,
+                    name: 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            $match: {
+              'leaveType.name': {
+                $in: [LEAVETYPES.casualLeave, LEAVETYPES.sickLeave]
+              }
+            }
+          },
+
+          {
+            $group: {
+              _id: {
+                leaveType: '$leaveType.name'
+              },
+              leavesTaken: {
+                $sum: {
+                  $cond: [{ $eq: ['$halfDay', ''] }, 1, 0.5]
+                }
+              }
+            }
+          }
+        ]);
+        const sickLeaves =
+          casualSickLeaves &&
+          casualSickLeaves.length > 0 &&
+          casualSickLeaves.find(
+            (leave) => leave._id.leaveType[0] === LEAVETYPES.sickLeave
+          );
+        const casualLeaves =
+          casualSickLeaves &&
+          casualSickLeaves.length > 0 &&
+          casualSickLeaves.find(
+            (leave) => leave._id.leaveType[0] === LEAVETYPES.casualLeave
+          );
+
+        const sickLeavesCount = sickLeaves ? sickLeaves.leavesTaken : 0;
+        const casualLeavesCount = casualLeaves ? casualLeaves.leavesTaken : 0;
+
         userLeaveDoc.leaves = userLeaveDoc.leaves.map((leave) =>
           leave.quarter._id.toString() === currentQuarter._id.toString()
             ? {
                 ...leave,
                 allocatedLeaves: currentQuarterAllocatedLeaves,
-                remainingLeaves: currentQuarterAllocatedLeaves,
+                remainingLeaves:
+                  currentQuarterAllocatedLeaves -
+                  sickLeavesCount -
+                  casualLeavesCount,
                 approvedLeaves: {
-                  sickLeaves: 0,
-                  casualLeaves: 0
+                  sickLeaves: sickLeavesCount,
+                  casualLeaves: casualLeavesCount
                 },
                 carriedOverLeaves: 0
               }
@@ -328,8 +394,8 @@ exports.deleteOne = (Model, LogModel, ModelToLog) =>
       });
     }
 
-    res.status(204).json({
+    res.status(200).json({
       status: 'success',
-      data: null
+      data: doc
     });
   });
