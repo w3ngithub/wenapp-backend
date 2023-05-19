@@ -8,6 +8,7 @@ const Email = require('../../models/email/emailSettingModel');
 const UserRole = require('../../models/users/userRoleModel');
 const ActivityLogs = require('../../models/activityLogs/activityLogsModel');
 const { LeaveQuarter } = require('../../models/leaves/leaveQuarter');
+const LeaveTypes = require('../../models/leaves/leaveTypeModel');
 const common = require('../../utils/common');
 const {
   HRWENEMAIL,
@@ -153,12 +154,107 @@ exports.importUsers = asyncError(async (req, res, next) => {
       : userRoles.find((role) => role.key.toLowerCase() === 'subscriber')._id
   }));
 
-  await User.insertMany([...users], { lean: true });
+  const importedUsers = await User.insertMany([...users], { lean: true });
+
+  const latestYearQuarter = await LeaveQuarter.findOne().sort({
+    createdAt: -1
+  });
+
+  const currentQuarter = latestYearQuarter.quarters.find(
+    (quarter) =>
+      new Date(quarter.fromDate) <= new Date(common.todayDate()) &&
+      new Date(common.todayDate()) <= new Date(quarter.toDate)
+  );
+
+  const currentQuarterAllocatedLeaves =
+    currentQuarter.leaves -
+    common.getNumberOfMonthsInAQuarter(
+      common.todayDate(),
+      currentQuarter.fromDate
+    );
+
+  const leaveTypes = await LeaveTypes.find();
+
+  const sickLeave = leaveTypes.find(
+    (type) =>
+      type.name.toString().toLowerCase() ===
+      LEAVETYPES.sickLeave.toString().toLowerCase()
+  );
+  const causalLeave = leaveTypes.find(
+    (type) =>
+      type.name.toString().toLowerCase() ===
+      LEAVETYPES.casualLeave.toString().toLowerCase()
+  );
+
+  const indexOfCurrentQuarter = latestYearQuarter.quarters.findIndex(
+    (quarter) =>
+      new Date(quarter.fromDate) <= new Date(common.todayDate()) &&
+      new Date(common.todayDate()) <= new Date(quarter.toDate)
+  );
+
+  const futureQuartersLeaves = latestYearQuarter.quarters
+    .slice(indexOfCurrentQuarter + 1)
+    .reduce((acc, q) => (q.leaves ? acc + q.leaves : 0), 0);
+
+  const updatedYearAllocatedLeave =
+    futureQuartersLeaves + currentQuarterAllocatedLeaves;
+
+  const totalSickCausalLeave = sickLeave.leaveDays + causalLeave.leaveDays;
+
+  const leaveNotEntitled =
+    totalSickCausalLeave - (updatedYearAllocatedLeave || 0);
+
+  importedUsers.forEach(async (user) => {
+    // update status change Date of user
+    await User.findByIdAndUpdate(
+      user._id,
+      { statusChangeDate: common.todayDate() },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+    const userLeaveDoc = new UserLeave({
+      user: user._id,
+      fiscalYear: latestYearQuarter.fiscalYear,
+
+      // if leave not entitled is greater than sick leaves, no sick leave is allocated.
+      yearSickAllocatedLeaves:
+        leaveNotEntitled > sickLeave.leaveDays
+          ? 0
+          : sickLeave.leaveDays - leaveNotEntitled,
+
+      yearCausalAllocatedLeaves:
+        leaveNotEntitled > sickLeave.leaveDays
+          ? causalLeave.leaveDays - (leaveNotEntitled - sickLeave.leaveDays)
+          : causalLeave.leaveDays,
+
+      leaves: latestYearQuarter.quarters.map((quarter) => ({
+        approvedLeaves: {
+          sickLeaves: 0,
+          casualLeaves: 0
+        },
+        allocatedLeaves:
+          currentQuarter._id.toString() === quarter._id.toString()
+            ? currentQuarterAllocatedLeaves
+            : quarter.leaves,
+        remainingLeaves:
+          currentQuarter._id.toString() === quarter._id.toString()
+            ? currentQuarterAllocatedLeaves
+            : quarter.leaves,
+        carriedOverLeaves: 0,
+        leaveDeductionBalance: 0,
+        quarter: quarter
+      }))
+    });
+    await userLeaveDoc.save();
+  });
 
   res.status(200).json({
     status: 'success',
     data: {
-      message: 'Users Imported.'
+      message: 'Users Imported.',
+      users: importedUsers
     }
   });
 });
