@@ -707,11 +707,7 @@ exports.getWeeklyReport = asyncError(async (req, res, next) => {
         'project.createdAt': -1
       }
     },
-    {
-      $sort: {
-        'project.createdAt': -1
-      }
-    },
+
     {
       $project: {
         _id: 0,
