@@ -132,7 +132,7 @@ exports.importUsers = asyncError(async (req, res, next) => {
     email: user.email,
     password: 'test',
     photoUrl: null,
-    status: 'Permanent',
+    status: 'Probation',
     allocatedLeaves: {
       firstQuarter: 4,
       secondQuarter: 4,
