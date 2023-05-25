@@ -191,6 +191,7 @@ exports.updateOne = (Model, LogModel, ModelToLog) =>
               leaveDates: { $gte: todayDate() }
             }
           },
+          { $unwind: '$leaveDates' },
           {
             $lookup: {
               from: 'leave_types',
